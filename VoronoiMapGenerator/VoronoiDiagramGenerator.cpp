@@ -6,6 +6,9 @@
 #include "Epsilon.h"
 #include <algorithm>
 #include <iostream>
+
+#include <queue>
+
 using std::cout;
 using std::cin;
 using std::endl;
@@ -165,28 +168,16 @@ void VoronoiDiagramGenerator::SetLand(int seed, double radius, Diagram* diagram)
 
 
 		for (Cell* c : diagram->cells) {
-			//double test = noise.GetNoise((float)100, (float)100);
-			//std::cout << test << "\n";
+
 			double scale = 3000;
 			double dist = radius / (calcDistance(c->site.p, center) + 1);
 			double value = (1 + (noise.GetNoise(round(c->site.p.x / scale), round(c->site.p.y / scale)))) / 2;
 
-			//temp.x /= 10000;
-			//temp.y /= 10000;
-
-			//double value = temp.x * temp.x + temp.y * temp.y;
-			//std::cout << "round(c->site.p.x / scale): " << round(c->site.p.x / scale) << "\n";
-			//std::cout << "value: " << value << "\n";
-			//std::cout << "dist: " << dist << "\n";
 			if (value * pow(dist, 2) >= 1) {
-			//if (value >= 0.5) {
-				//c->color = Color(0.4, 0.2, 0, 1);
 				c->detail.color = Color(0.6, 0.4, 0, 1);
 				c->detail.terrain = Terrain::LAND;
 			}
 			else {
-				//c->detail.terrain = Terrain::OCEAN;
-				//c->detail.color = Color(0.2, 0, 0.6, 1);
 				for (HalfEdge* he : c->halfEdges) {
 					if (!he->edge->rSite) {
 						c->detail.color = Color(0.1, 0, 0.3, 1);
@@ -196,6 +187,7 @@ void VoronoiDiagramGenerator::SetLand(int seed, double radius, Diagram* diagram)
 				}
 			}
 		}
+
 		for (Edge* e : diagram->edges) {
 			if (e->lSite && e->rSite) {
 				Cell* l_cell = e->lSite->cell;
@@ -206,26 +198,68 @@ void VoronoiDiagramGenerator::SetLand(int seed, double radius, Diagram* diagram)
 			}
 		}
 
+		std::queue<Cell*> landQueue;
+
 		for (Edge* e : diagram->edges) {
 			if (e->lSite && e->rSite) {
 				Cell* l_cell = e->lSite->cell;
 				Cell* r_cell = e->rSite->cell;
-				if (l_cell->detail.terrain == Terrain::OCEAN) {
+				auto& l_detail = l_cell->detail;
+				auto& r_detail = r_cell->detail;
+				if (l_detail.terrain == Terrain::OCEAN) {
 
 					//l_cell->detail.findUnionCell()->detail.color = Color(0, 0, 0, 0);
-					if (r_cell->detail.terrain == Terrain::LAND && l_cell->detail.findUnionCell()->detail.outer) {
-						l_cell->detail.color *= 2;
-						l_cell->detail.terrain = Terrain::COAST;
+					if (r_detail.terrain == Terrain::LAND && l_detail.findUnionCell()->detail.outer) {
+						l_detail.color *= 2;
+						l_detail.terrain = Terrain::COAST;
+						l_detail.elevation = 1;
+						landQueue.push(l_cell);
 					}
 				}
-				else if (r_cell->detail.terrain == Terrain::OCEAN) {
+				else if (r_detail.terrain == Terrain::OCEAN) {
 
 					//r_cell->detail.findUnionCell()->detail.color = Color(0, 0, 0, 0);
-					if (l_cell->detail.terrain == Terrain::LAND && r_cell->detail.findUnionCell()->detail.outer) {
-						r_cell->detail.color *= 2;
-						r_cell->detail.terrain = Terrain::COAST;
+					if (l_detail.terrain == Terrain::LAND && r_detail.findUnionCell()->detail.outer) {
+						r_detail.color *= 2;
+						r_detail.terrain = Terrain::COAST;
+						r_detail.elevation = 1;
+						landQueue.push(r_cell);
 					}
 				}
+			}
+		}
+
+		while (!landQueue.empty()) {
+			Cell* c = landQueue.front();
+			landQueue.pop();
+			for (HalfEdge* he : c->halfEdges) {
+				Edge* e = he->edge;
+				
+				if (e->lSite->cell != c) {
+					//std::cout << e->lSite->cell->detail.elevation << " | " << c->detail.elevation << "\n";
+					//if (e->lSite->cell->detail.elevation < c->detail.elevation) {
+					if (e->lSite->cell->detail.terrain == Terrain::LAND && e->lSite->cell->detail.elevation == 0) {
+						e->lSite->cell->detail.elevation = c->detail.elevation + 1;
+						landQueue.push(e->lSite->cell);
+						//std::cout << "test\n";
+					}
+				}
+				else if(e->rSite ) {
+					//if (e->rSite->cell->detail.elevation < c->detail.elevation) {
+					if (e->rSite->cell->detail.terrain == Terrain::LAND && e->rSite->cell->detail.elevation == 0) {
+						e->rSite->cell->detail.elevation = c->detail.elevation + 1;
+						landQueue.push(e->rSite->cell);
+					}
+				}
+
+			}
+
+		}
+		for (Cell* c : diagram->cells) {
+			if (c->detail.elevation != 0) {
+				c->detail.color.r += (float)pow(c->detail.elevation, 2) / 80;
+				c->detail.color.g += (float)pow(c->detail.elevation, 2) / 80;
+				c->detail.color.b += (float)pow(c->detail.elevation, 2) / 50;
 			}
 		}
 	}
