@@ -178,10 +178,11 @@ void VoronoiDiagramGenerator::SetLand(int seed, double radius, Diagram* diagram)
 				c->detail.terrain = Terrain::LAND;
 			}
 			else {
+				c->detail.is_peak = false;
 				for (HalfEdge* he : c->halfEdges) {
 					if (!he->edge->rSite) {
 						c->detail.color = Color(0.1, 0, 0.3, 1);
-						c->detail.outer = true;
+						c->detail.is_edge = true;
 						break;
 					}
 				}
@@ -204,62 +205,87 @@ void VoronoiDiagramGenerator::SetLand(int seed, double radius, Diagram* diagram)
 			if (e->lSite && e->rSite) {
 				Cell* l_cell = e->lSite->cell;
 				Cell* r_cell = e->rSite->cell;
-				auto& l_detail = l_cell->detail;
-				auto& r_detail = r_cell->detail;
-				if (l_detail.terrain == Terrain::OCEAN) {
+				//auto& l_detail = l_cell->detail;
+				//auto& r_detail = r_cell->detail;
 
-					//l_cell->detail.findUnionCell()->detail.color = Color(0, 0, 0, 0);
-					if (r_detail.terrain == Terrain::LAND && l_detail.findUnionCell()->detail.outer) {
-						l_detail.color *= 2;
-						l_detail.terrain = Terrain::COAST;
-						l_detail.elevation = 1;
-						landQueue.push(l_cell);
-					}
+				Cell* landCell, *oceanCell;
+				if (l_cell->detail.terrain == Terrain::OCEAN) {
+					landCell = r_cell;
+					oceanCell = l_cell;
 				}
-				else if (r_detail.terrain == Terrain::OCEAN) {
+				else {
+					landCell = l_cell;
+					oceanCell = r_cell;
+				}
 
-					//r_cell->detail.findUnionCell()->detail.color = Color(0, 0, 0, 0);
-					if (l_detail.terrain == Terrain::LAND && r_detail.findUnionCell()->detail.outer) {
-						r_detail.color *= 2;
-						r_detail.terrain = Terrain::COAST;
-						r_detail.elevation = 1;
-						landQueue.push(r_cell);
+				if (landCell->detail.terrain == Terrain::LAND && oceanCell->detail.terrain == Terrain::OCEAN) {
+					if (oceanCell->detail.unionFindCell()->detail.is_edge) {
+						oceanCell->detail.color *= 2;
+						oceanCell->detail.terrain = Terrain::COAST;
+						oceanCell->detail.elevation = 1;
+						landQueue.push(oceanCell);
 					}
 				}
 			}
 		}
 
-		while (!landQueue.empty()) {
+		while (!landQueue.empty() ) {
 			Cell* c = landQueue.front();
 			landQueue.pop();
+
+			unsigned int land_cnt = 0, low_cnt = 0;
 			for (HalfEdge* he : c->halfEdges) {
 				Edge* e = he->edge;
-				
-				if (e->lSite->cell != c) {
-					//std::cout << e->lSite->cell->detail.elevation << " | " << c->detail.elevation << "\n";
-					//if (e->lSite->cell->detail.elevation < c->detail.elevation) {
-					if (e->lSite->cell->detail.terrain == Terrain::LAND && e->lSite->cell->detail.elevation == 0) {
-						e->lSite->cell->detail.elevation = c->detail.elevation + 1;
-						landQueue.push(e->lSite->cell);
-						//std::cout << "test\n";
+				Cell* targetCell = (e->lSite->cell == c && e->rSite) ? e->rSite->cell : e->lSite->cell;
+				//if (targetCell->detail.elevation < c->detail.elevation) {
+				if (targetCell->detail.terrain == Terrain::LAND) {
+					land_cnt++;
+					if (targetCell->detail.elevation == 0) {
+						targetCell->detail.elevation = c->detail.elevation + 1;
+						landQueue.push(targetCell);
+						c->detail.is_peak = false;
+						c->detail.unionFindCell()->detail.is_peak = false;
+					}
+					else if (c->detail.elevation > 2){
+						if (targetCell->detail.elevation <= c->detail.elevation) {
+							low_cnt++;
+						}
+						else {
+							c->detail.is_peak = false;
+							c->detail.unionFindCell()->detail.is_peak = false;
+						}
+						
+					}
+
+
+					if (c->detail.terrain == Terrain::LAND && c->detail.elevation > 2 && c->detail.elevation == targetCell->detail.elevation) {
+						targetCell->detail.setUnionCell(c);
 					}
 				}
-				else if(e->rSite ) {
-					//if (e->rSite->cell->detail.elevation < c->detail.elevation) {
-					if (e->rSite->cell->detail.terrain == Terrain::LAND && e->rSite->cell->detail.elevation == 0) {
-						e->rSite->cell->detail.elevation = c->detail.elevation + 1;
-						landQueue.push(e->rSite->cell);
-					}
-				}
+
 
 			}
-
+			if (land_cnt != 0 && land_cnt == low_cnt) { // ÆòÁö
+				//c->detail.color += Color(0,0.1,0);
+				c->detail.is_flat = true;
+			}
+			else {
+				c->detail.unionFindCell()->detail.is_peak = false;
+			}
 		}
 		for (Cell* c : diagram->cells) {
 			if (c->detail.elevation != 0) {
-				c->detail.color.r += (float)pow(c->detail.elevation, 2) / 80;
-				c->detail.color.g += (float)pow(c->detail.elevation, 2) / 80;
-				c->detail.color.b += (float)pow(c->detail.elevation, 2) / 50;
+				c->detail.color.r += ((float)pow(c->detail.elevation, 1) - 1) / (80 * 0.2);
+				c->detail.color.g += ((float)pow(c->detail.elevation, 1) - 1) / (80 * 0.2);
+				c->detail.color.b += ((float)pow(c->detail.elevation, 1) - 1) / (50 * 0.2);
+			}
+			if (c->detail.terrain == Terrain::OCEAN && !c->detail.unionFindCell()->detail.is_edge) {
+				c->detail.terrain = Terrain::LAKE;
+				c->detail.color = Color(0.2, 0.4, 0.6);
+			}
+			if (c->detail.unionFindCell()->detail.is_peak) {
+				//c->detail.color = Color(0.1, 0.1, 0.1);
+				//c->detail.unionFindCell()->detail.color = Color(0.5, 0.5, 0.5);
 			}
 		}
 	}

@@ -83,8 +83,12 @@ void genRandomSites(int seed, std::vector<Point2>& sites, BoundingBox& bbox, uns
 	srand(seed);
 	for (unsigned int i = 0; i < numSites; ++i) {
 		for (unsigned int j = 0; j < numSites; ++j) {
-			s.x = 1 + (i * step) + (rand() / (double)RAND_MAX) * (half_step);
-			s.y = 1 + (j * step) + (rand() / (double)RAND_MAX) * (half_step);
+			
+			s.x = (i * step) + (rand() / ((double)RAND_MAX)) * (half_step);
+			s.y = (j * step) + (rand() / ((double)RAND_MAX)) * (half_step);
+			//std::cout << "rand: " << (rand() / ((double)RAND_MAX)) * (half_step) << "\n";
+			//std::cout << "x: " << s.x << "\n";
+			//std::cout << "y: " << s.y << "\n";
 			tmpSites.push_back(s);
 		}
 	}
@@ -98,10 +102,14 @@ void genRandomSites(int seed, std::vector<Point2>& sites, BoundingBox& bbox, uns
 }
 
 int main() {
-	unsigned int nPoints = 500;
+	unsigned int nPoints = 1500;
 	unsigned int dimension = 1000000;
-	int seed = 1111;
+
+	int seed = 0;
 	double radius = dimension / 2.1;
+
+	unsigned int loop_cnt = 3;
+	unsigned int pointSize = 5;
 
 	VoronoiDiagramGenerator vdg = VoronoiDiagramGenerator();
 	Diagram* diagram = nullptr;
@@ -109,6 +117,7 @@ int main() {
 	std::vector<Point2>* sites = nullptr;
 	BoundingBox bbox;
 
+	bool draw_line = true;
 
 	// Init GLFW
 	glfwInit();
@@ -155,7 +164,7 @@ int main() {
 			if (diagram) delete diagram;
 			diagram = vdg.compute(*sites, bbox);
 
-			diagram = vdg.relaxLoop(10, diagram);
+			diagram = vdg.relaxLoop(loop_cnt, diagram);
 			vdg.SetLand(seed, radius, diagram);
 
 			duration = 1000 * (std::clock() - start) / (double)CLOCKS_PER_SEC;
@@ -170,18 +179,15 @@ int main() {
 
 		for (Edge* e : diagram->edges) {
 			if (e->vertA && e->vertB) {
-				
 				Point2& p1 = *e->vertA;
 				Point2& p2 = *e->vertB;
-				
-				
-
 				glBegin(GL_TRIANGLES);
 				glColor4f(e->lSite->cell->detail.color.r, e->lSite->cell->detail.color.g, e->lSite->cell->detail.color.b, e->lSite->cell->detail.color.a);
 				glVertex3d(normalize(e->lSite->cell->site.p[0], dimension), -normalize(e->lSite->cell->site.p[1], dimension), 0.0);
 				glVertex3d(normalize(p1[0], dimension), -normalize(p1[1], dimension), 0.0);
 				glVertex3d(normalize(p2[0], dimension), -normalize(p2[1], dimension), 0.0);
 				glEnd();
+
 
 				if (e->rSite) {
 					glBegin(GL_TRIANGLES);
@@ -191,13 +197,21 @@ int main() {
 					glVertex3d(normalize(p2[0], dimension), -normalize(p2[1], dimension), 0.0);
 					glEnd();
 				}
-				
+			}
+		}
+
+
+
+		if (draw_line) {
+			for (Edge* e : diagram->edges) {
+				Point2& p1 = *e->vertA;
+				Point2& p2 = *e->vertB;
+
 				glBegin(GL_LINES);
 				glColor4f(0, 0, 0, 1);
 				glVertex3d(normalize(p1[0], dimension), -normalize(p1[1], dimension), 0.0);
 				glVertex3d(normalize(p2[0], dimension), -normalize(p2[1], dimension), 0.0);
 				glEnd();
-
 			}
 		}
 
@@ -227,16 +241,26 @@ int main() {
 				
 			}
 		}
-		glPointSize(2.0);
+		glPointSize(pointSize);
 		glBegin(GL_POINTS);
 		for (Cell* c : diagram->cells) {
 			Point2& p = c->site.p;
-			glColor4f(255, 255, 255, 255);
+			if (c->detail.unionFindCell()->detail.is_peak) {
+				glColor4f(0, 0, 0, 1);
+			}
+			else if (c->detail.is_flat) {
+				glColor4f(0.7, 0.7, 0, 1);
+			}
+			else {
+				glColor4f(1, 1, 1, 1);
+			}
+			
 			glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
 		}
 		glEnd();
 
 		if (relax || relaxForever) {
+			seed++;
 			start = std::clock();
 			//diagram = vdg.relax();
 			//diagram = vdg.relax();
@@ -244,8 +268,7 @@ int main() {
 			genRandomSites(seed, *sites, bbox, dimension, nPoints);
 			delete diagram;
 			diagram = vdg.compute(*sites, bbox);
-			diagram = vdg.relaxLoop(10, diagram);
-
+			diagram = vdg.relaxLoop(loop_cnt, diagram);
 			vdg.SetLand(seed, radius, diagram);
 			duration = 1000 * (std::clock() - start) / (double)CLOCKS_PER_SEC;
 
@@ -258,7 +281,7 @@ int main() {
 			--relax;
 			if (relax < 0) relax = 0;
 		}
-		seed++;
+		
 		// Swap the screen buffers
 		glfwSwapBuffers(window);
 	}

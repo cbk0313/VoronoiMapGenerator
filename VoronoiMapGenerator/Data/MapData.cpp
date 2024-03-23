@@ -3,21 +3,21 @@
 #include "../Cell.h"
 
 
-Cell* CellDetail::findUnionCell() {
+Cell* CellDetail::unionFindCell() {
 	if (unionCell == unionCell->detail.unionCell) {
 		return unionCell;
 	}
 	else {
-		return unionCell = unionCell->detail.findUnionCell();
+		return unionCell = unionCell->detail.unionFindCell();
 	}
 }
 
 void CellDetail::setUnionCell(Cell* target) {
-	auto vim_d = findUnionCell()->detail;
-	target = target->detail.findUnionCell();
-	if (vim_d.outer) target->detail.unionCell = vim_d.unionCell;
+	auto vim_d = unionFindCell()->detail;
+	target = target->detail.unionFindCell();
+	if (vim_d.is_edge) target->detail.unionCell = vim_d.unionCell;
 	else {
-		findUnionCell()->detail.unionCell = target;
+		unionFindCell()->detail.unionCell = target;
 	}
 	
 }
