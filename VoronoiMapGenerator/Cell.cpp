@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <limits>
 
+unsigned int Cell::s_unique = 0;
+
 std::vector<Cell*> Cell::getNeighbors() {
 	std::vector<Cell*> neighbors;
 	Edge* e;

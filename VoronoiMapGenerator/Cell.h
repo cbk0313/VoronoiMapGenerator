@@ -1,3 +1,4 @@
+
 #ifndef _CELL_H_
 #define _CELL_H_
 
@@ -26,14 +27,21 @@ struct Site {
 
 struct HalfEdge;
 struct Cell {
+
+private:
+	static unsigned int s_unique;
+	unsigned int unique;
+public:
 	Site site;
 	std::vector<HalfEdge*> halfEdges;
 	bool closeMe;
 
 	CellDetail detail;
 
-	Cell() : closeMe(false), detail(CellDetail(this)) { };
-	Cell(Point2 _site) : site(_site, this), closeMe(false), detail(CellDetail(this)) { };
+	Cell() : closeMe(false), detail(CellDetail(this)) { unique = s_unique++; };
+	Cell(Point2 _site) : site(_site, this), closeMe(false), detail(CellDetail(this)) { unique = s_unique++; };
+
+	unsigned int getUnique() { return unique; };
 
 	std::vector<Cell*> getNeighbors();
 	cellBoundingBox getBoundingBox();
@@ -46,5 +54,7 @@ struct Cell {
 
 	static bool edgesCCW(HalfEdge* a, HalfEdge* b);
 };
+
+
 
 #endif

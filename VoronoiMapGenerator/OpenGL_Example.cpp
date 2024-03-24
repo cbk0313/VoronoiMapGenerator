@@ -245,7 +245,7 @@ int main() {
 		glBegin(GL_POINTS);
 		for (Cell* c : diagram->cells) {
 			Point2& p = c->site.p;
-			if (c->detail.unionFindCell()->detail.is_peak) {
+			if (c->detail.unionfind.unionFindCell(static_cast<int>(Terrain::PEAK))->detail.is_peak) {
 				glColor4f(0, 0, 0, 1);
 			}
 			else if (c->detail.is_flat) {
@@ -256,6 +256,47 @@ int main() {
 			}
 			
 			glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
+		}
+		glEnd();
+
+		double color = 0;
+		glPointSize(pointSize);
+		glBegin(GL_POINTS);
+		for (auto item : diagram->islandUnion.unions) {
+			auto island = item.second;
+			/*
+			color = 0;
+			std::cout << island.lakeUnion.unions.size() << "\n";
+			for (auto lake_union : island.lakeUnion.unions) {
+
+				glColor4f(1 - color, 0, color, 1);
+				for (auto lake : lake_union.second) {
+					Point2& p = lake->site.p;
+					glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
+				}
+				color += 0.2;
+			}
+			color = 0;
+			for (auto peak_union : island.peakUnion.unions) {
+				for (auto peak : peak_union.second) {
+					Point2& p = peak->site.p;
+					glColor4f(0, color, 1 - color, 1);
+					glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
+				}
+				color += 0.4;
+			}*/
+
+
+			//auto island = item.second;
+			//for (auto cell : island.land) {
+
+			//	Point2& p = cell->site.p;
+			//	glColor4f(1 - color, color, 0, 1);
+			//	glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
+			//}
+			//color += 0.5;
+
+		
 		}
 		glEnd();
 

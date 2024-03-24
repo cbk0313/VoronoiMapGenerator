@@ -7,12 +7,19 @@
 #include "Cell.h"
 #include <set>
 
+template<typename T>
+struct UnionArray;
+
+
 struct BoundingBox;
 class Diagram {
 public:
 	std::vector<Cell*> cells;
 	std::vector<Edge*> edges;
 	std::vector<Point2*> vertices;
+	UnionArray<std::vector<Cell*>> oceanUnion;
+	UnionArray<IslandUnion> islandUnion;
+
 
 	~Diagram();
 	void printDiagram();
