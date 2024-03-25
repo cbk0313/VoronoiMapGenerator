@@ -10,7 +10,7 @@ bool CellDetail::isFlat() {
 	return b_flat;
 }
 bool CellDetail::isPeak() {
-	return unionfind.unionFindCell(static_cast<int>(Terrain::PEAK))->detail.b_peak;
+	return unionfind.unionFindCell(Terrain::PEAK)->detail.b_peak;
 }
 
 

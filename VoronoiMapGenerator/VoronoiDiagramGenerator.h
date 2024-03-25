@@ -48,6 +48,7 @@ private:
 	inline double calcDistance(Point2& a, Point2& b);
 
 	void initWorld(int seed, double radius, Diagram* diagram);
+	void createRiver(Diagram* diagram);
 	
 };
 

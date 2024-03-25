@@ -168,6 +168,7 @@ Diagram* VoronoiDiagramGenerator::relaxLoop(int num, Diagram* diagram) {
 void VoronoiDiagramGenerator::createWorld(int seed, double radius, Diagram* diagram) {
 	if (diagram) {
 		initWorld(seed, radius, diagram);
+		createRiver(diagram);
 	}
 }
 void VoronoiDiagramGenerator::initWorld(int seed, double radius, Diagram* diagram) {
@@ -207,11 +208,11 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, Diagram* diagra
 			Cell* r_cell = e->rSite->cell;
 
 			if (l_cell->detail.terrain == Terrain::OCEAN && r_cell->detail.terrain == Terrain::OCEAN) { // Set 'union' between connected seas
-				if (l_cell->detail.unionfind.unionFindCell(static_cast<int>(Terrain::OCEAN))->detail.b_edge) {
-					r_cell->detail.unionfind.setUnionCell(static_cast<int>(Terrain::OCEAN), l_cell);
+				if (l_cell->detail.unionfind.unionFindCell(Terrain::OCEAN)->detail.b_edge) {
+					r_cell->detail.unionfind.setUnionCell(Terrain::OCEAN, l_cell);
 				}
 				else {
-					l_cell->detail.unionfind.setUnionCell(static_cast<int>(Terrain::OCEAN), r_cell);
+					l_cell->detail.unionfind.setUnionCell(Terrain::OCEAN, r_cell);
 				}
 			}
 		}
@@ -231,7 +232,7 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, Diagram* diagra
 
 			if (landCell->detail.terrain == Terrain::LAND && oceanCell->detail.terrain == Terrain::OCEAN) {
 				CellDetail& cd = oceanCell->detail;
-				if (cd.unionfind.unionFindCell(static_cast<int>(Terrain::OCEAN))->detail.b_edge) { // check if it's lake or not
+				if (cd.unionfind.unionFindCell(Terrain::OCEAN)->detail.b_edge) { // check if it's lake or not
 					cd.color *= 2;
 					cd.terrain = Terrain::COAST;
 					cd.elevation = 1;
@@ -258,7 +259,7 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, Diagram* diagra
 					tcd.elevation = cd.elevation + 1;
 					landQueue.push(targetCell);
 					cd.b_peak = false;
-					cd.unionfind.unionFindCell(static_cast<int>(Terrain::PEAK))->detail.b_peak = false;
+					cd.unionfind.unionFindCell(Terrain::PEAK)->detail.b_peak = false;
 				}
 				else if (cd.elevation > 2){
 					if (tcd.elevation <= cd.elevation) {
@@ -266,14 +267,14 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, Diagram* diagra
 					}
 					else {
 						cd.b_peak = false;
-						cd.unionfind.unionFindCell(static_cast<int>(Terrain::PEAK))->detail.b_peak = false;
+						cd.unionfind.unionFindCell(Terrain::PEAK)->detail.b_peak = false;
 					}
 						
 				}
 
-
 				if (cd.terrain == Terrain::LAND && cd.elevation > 2 && cd.elevation == tcd.elevation) {
-					tcd.unionfind.setUnionCell(static_cast<int>(Terrain::PEAK), c);
+					 c->detail.b_peak = tcd.unionfind.unionFindCell(Terrain::PEAK)->detail.b_peak;
+					tcd.unionfind.setUnionCell(Terrain::PEAK, c);
 				}
 			}
 
@@ -284,7 +285,8 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, Diagram* diagra
 			cd.b_flat = true;
 		}
 		else {
-			cd.unionfind.unionFindCell(static_cast<int>(Terrain::PEAK))->detail.b_peak = false;
+			cd.b_peak = false;
+			cd.unionfind.unionFindCell(Terrain::PEAK)->detail.b_peak = false;
 		}
 	}
 
@@ -293,8 +295,8 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, Diagram* diagra
 		Terrain ct = cd.terrain;
 		if (ct == Terrain::OCEAN) {
 
-			auto unique = cd.unionfind.unionFindCell(static_cast<int>(Terrain::OCEAN))->getUnique();
-			if (!cd.unionfind.unionFindCell(static_cast<int>(Terrain::OCEAN))->detail.b_edge) {
+			auto unique = cd.unionfind.unionFindCell(Terrain::OCEAN)->getUnique();
+			if (!cd.unionfind.unionFindCell(Terrain::OCEAN)->detail.b_edge) {
 				cd.terrain = Terrain::LAKE;
 				cd.color = Color(0.2, 0.4, 0.6);
 				//diagram->lakeUnion.insertCell(unique, c);
@@ -302,7 +304,7 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, Diagram* diagra
 			}
 		}
 		else if (ct == Terrain::COAST) {
-			auto unique = cd.unionfind.unionFindCell(static_cast<int>(Terrain::COAST))->getUnique();
+			auto unique = cd.unionfind.unionFindCell(Terrain::COAST)->getUnique();
 			//diagram->oceanUnion.insertCell(unique, c);
 		}
 	}
@@ -314,7 +316,7 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, Diagram* diagra
 			Terrain l_t = l_cell->detail.terrain;
 			Terrain r_t = r_cell->detail.terrain;
 			if ((l_t == Terrain::LAND || l_t == Terrain::LAKE) && (r_t == Terrain::LAND || r_t == Terrain::LAKE)) {
-				l_cell->detail.unionfind.setUnionCell(static_cast<int>(Terrain::LAND), r_cell);
+				l_cell->detail.unionfind.setUnionCell(Terrain::LAND, r_cell);
 			}
 		}
 	}
@@ -330,19 +332,20 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, Diagram* diagra
 
 		Terrain ct = cd.terrain;
 		if (ct == Terrain::LAND) {
-			auto arr = diagram->islandUnion.insert(cd.unionfind.unionFindCell(static_cast<int>(Terrain::LAND))->getUnique());
+			auto arr = diagram->islandUnion.insert(cd.unionfind.unionFindCell(Terrain::LAND)->getUnique());
 			arr->land.push_back(c);
 
-			if (cd.unionfind.unionFindCell(static_cast<int>(Terrain::PEAK))->detail.b_peak) {
-				auto unique = cd.unionfind.unionFindCell(static_cast<int>(Terrain::PEAK))->getUnique();
+			if (cd.unionfind.unionFindCell(Terrain::PEAK)->detail.b_peak) {
+				auto unique = cd.unionfind.unionFindCell(Terrain::PEAK)->getUnique();
 				cd.terrain = Terrain::PEAK;
 				arr->peakUnion.insert(unique)->push_back(c);
+				cd.unionfind.unionFindCell(Terrain::PEAK)->detail.color = Color(0.3, 0.3, 0.3);
 			}
 		}
 		else if (ct == Terrain::LAKE) {
-			auto arr = diagram->islandUnion.insert(cd.unionfind.unionFindCell(static_cast<int>(Terrain::LAND))->getUnique());
+			auto arr = diagram->islandUnion.insert(cd.unionfind.unionFindCell(Terrain::LAND)->getUnique());
 			arr->land.push_back(c);
-			auto unique = cd.unionfind.unionFindCell(static_cast<int>(Terrain::OCEAN))->getUnique();
+			auto unique = cd.unionfind.unionFindCell(Terrain::OCEAN)->getUnique();
 			arr->lakeUnion.insert(unique)->push_back(c);
 
 		}
@@ -351,3 +354,7 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, Diagram* diagra
 	
 }
 
+
+void VoronoiDiagramGenerator::createRiver(Diagram* diagram) {
+
+}

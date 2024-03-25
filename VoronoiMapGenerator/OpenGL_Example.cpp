@@ -105,7 +105,7 @@ int main() {
 	unsigned int nPoints = 1500;
 	unsigned int dimension = 1000000;
 
-	int seed = 0;
+	int seed = 0;//18;
 	double radius = dimension / 2.1;
 
 	unsigned int loop_cnt = 3;

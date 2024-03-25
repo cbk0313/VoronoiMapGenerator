@@ -69,8 +69,8 @@ struct UnionFind {
 private:
 	T* cell[N];
 public:
-	T* unionFindCell(std::size_t t);
-	void setUnionCell(std::size_t t, T* target);
+	T* unionFindCell(Terrain t);
+	void setUnionCell(Terrain t, T* target);
 
 	UnionFind(T* c) {
 		for (int i = 0; i < N; i++) {
@@ -89,20 +89,22 @@ public:
 
 
 template<typename T, std::size_t N>
-T* UnionFind<T, N>::unionFindCell(std::size_t t) {
-	if (cell[t] == cell[t]->detail.unionfind[t]) {
-		return cell[t];
+T* UnionFind<T, N>::unionFindCell(Terrain t) {
+	unsigned int num = static_cast<unsigned int>(t);
+	if (cell[num] == cell[num]->detail.unionfind[num]) {
+		return cell[num];
 	}
 	else {
-		return cell[t] = cell[t]->detail.unionfind.unionFindCell(t);
+		return cell[num] = cell[num]->detail.unionfind.unionFindCell(t);
 	}
 }
 
 template<typename T, std::size_t N>
-void UnionFind<T, N>::setUnionCell(std::size_t t, T* target) {
+void UnionFind<T, N>::setUnionCell(Terrain t, T* target) {
+	unsigned int num = static_cast<unsigned int>(t);
 	auto& vim_d = unionFindCell(t)->detail;
 	target = target->detail.unionfind.unionFindCell(t);
-	vim_d.unionfind[t] = target;
+	vim_d.unionfind[num] = target;
 	//if (vim_d.b_edge) target->detail.unionfind[t] = vim_d.unionfind[t];
 	//else {
 	//	vim_d.unionfind[t] = target;
@@ -130,6 +132,7 @@ private:
 	Terrain terrain;
 	Color color;
 	UnionFind<Cell, TERRAIN_CNT> unionfind;
+
 public:
 	Terrain getTerrain();
 	Color getColor();
