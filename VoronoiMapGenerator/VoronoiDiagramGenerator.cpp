@@ -9,8 +9,6 @@
 
 #include <queue>
 
-#include "data/MapData.cpp"
-
 using std::cout;
 using std::cin;
 using std::endl;
@@ -157,197 +155,199 @@ Diagram* VoronoiDiagramGenerator::relax(Diagram* diagram) {
 }
 
 
-
-void VoronoiDiagramGenerator::SetLand(int seed, double radius, Diagram* diagram) {
-
-	if (diagram) {
-
-		Point2 center = Point2((boundingBox.xR - boundingBox.xL) / 2, (boundingBox.yB - boundingBox.yT) / 2); // Center of the circular island.
-
-		FastNoiseLite noise;
-		noise.SetSeed(seed);
-		noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2S);
-
-		for (Cell* c : diagram->cells) {
-
-			double scale = 3000;
-			double dist = radius / (calcDistance(c->site.p, center) + 1);
-			double value = (1 + (noise.GetNoise(round(c->site.p.x / scale), round(c->site.p.y / scale)))) / 2; // Add noise to shape the circular island.
-
-			if (value * pow(dist, 2) >= 1) { // Set Land
-				c->detail.color = Color(0.6, 0.4, 0, 1);
-				c->detail.terrain = Terrain::LAND; // detail.terrain default value is Terrain::OCEAN
-			}
-			else {
-				c->detail.is_peak = false;
-				for (HalfEdge* he : c->halfEdges) {
-					if (!he->edge->rSite) { // Check whether it is the outermost border.
-						c->detail.color = Color(0.1, 0, 0.3, 1);
-						c->detail.is_edge = true;
-						break;
-					}
-				}
-			}
-		}
-
-		for (Edge* e : diagram->edges) {
-			if (e->lSite && e->rSite) {
-				Cell* l_cell = e->lSite->cell;
-				Cell* r_cell = e->rSite->cell;
-
-				if (l_cell->detail.terrain == Terrain::OCEAN && r_cell->detail.terrain == Terrain::OCEAN) { // Set 'union' between connected seas
-					if (l_cell->detail.unionfind.unionFindCell(static_cast<int>(Terrain::OCEAN))->detail.is_edge) {
-						r_cell->detail.unionfind.setUnionCell(static_cast<int>(Terrain::OCEAN), l_cell);
-					}
-					else {
-						l_cell->detail.unionfind.setUnionCell(static_cast<int>(Terrain::OCEAN), r_cell);
-					}
-				}
-			}
-		}
-
-		std::queue<Cell*> landQueue;
-
-		for (Edge* e : diagram->edges) {
-			if (e->lSite && e->rSite) {
-				Cell* l_cell = e->lSite->cell;
-				Cell* r_cell = e->rSite->cell;
-				//auto& l_detail = l_cell->detail;
-				//auto& r_detail = r_cell->detail;
-
-				Cell* landCell, *oceanCell;
-				if (l_cell->detail.terrain == Terrain::OCEAN) {
-					landCell = r_cell;
-					oceanCell = l_cell;
-				}
-				else {
-					landCell = l_cell;
-					oceanCell = r_cell;
-				}
-
-				if (landCell->detail.terrain == Terrain::LAND && oceanCell->detail.terrain == Terrain::OCEAN) {
-					if (oceanCell->detail.unionfind.unionFindCell(static_cast<int>(Terrain::OCEAN))->detail.is_edge) {
-						oceanCell->detail.color *= 2;
-						oceanCell->detail.terrain = Terrain::COAST;
-						oceanCell->detail.elevation = 1;
-						landQueue.push(oceanCell);
-					}
-				}
-			}
-		}
-
-		while (!landQueue.empty() ) {
-			Cell* c = landQueue.front();
-			landQueue.pop();
-
-			unsigned int land_cnt = 0, low_cnt = 0;
-			for (HalfEdge* he : c->halfEdges) {
-				Edge* e = he->edge;
-				Cell* targetCell = (e->lSite->cell == c && e->rSite) ? e->rSite->cell : e->lSite->cell;
-				//if (targetCell->detail.elevation < c->detail.elevation) {
-				if (targetCell->detail.terrain == Terrain::LAND) {
-					land_cnt++;
-					if (targetCell->detail.elevation == 0) {
-						targetCell->detail.elevation = c->detail.elevation + 1;
-						landQueue.push(targetCell);
-						c->detail.is_peak = false;
-						c->detail.unionfind.unionFindCell(static_cast<int>(Terrain::PEAK))->detail.is_peak = false;
-					}
-					else if (c->detail.elevation > 2){
-						if (targetCell->detail.elevation <= c->detail.elevation) {
-							low_cnt++;
-						}
-						else {
-							c->detail.is_peak = false;
-							c->detail.unionfind.unionFindCell(static_cast<int>(Terrain::PEAK))->detail.is_peak = false;
-						}
-						
-					}
-
-
-					if (c->detail.terrain == Terrain::LAND && c->detail.elevation > 2 && c->detail.elevation == targetCell->detail.elevation) {
-						targetCell->detail.unionfind.setUnionCell(static_cast<int>(Terrain::PEAK), c);
-					}
-				}
-
-
-			}
-			if (land_cnt != 0 && land_cnt == low_cnt) { // 평지
-				//c->detail.color += Color(0,0.1,0);
-				c->detail.is_flat = true;
-			}
-			else {
-				c->detail.unionfind.unionFindCell(static_cast<int>(Terrain::PEAK))->detail.is_peak = false;
-			}
-		}
-
-		for (Cell* c : diagram->cells) {
-			Terrain ct = c->detail.terrain;
-			if (ct == Terrain::OCEAN) {
-
-				auto unique = c->detail.unionfind.unionFindCell(static_cast<int>(Terrain::OCEAN))->getUnique();
-				if (!c->detail.unionfind.unionFindCell(static_cast<int>(Terrain::OCEAN))->detail.is_edge) {
-					c->detail.terrain = Terrain::LAKE;
-					c->detail.color = Color(0.2, 0.4, 0.6);
-					//diagram->lakeUnion.insertCell(unique, c);
-
-				}
-			}
-			else if (ct == Terrain::COAST) {
-				auto unique = c->detail.unionfind.unionFindCell(static_cast<int>(Terrain::COAST))->getUnique();
-				//diagram->oceanUnion.insertCell(unique, c);
-			}
-		}
-
-		for (Edge* e : diagram->edges) {
-			if (e->lSite && e->rSite) {
-				Cell* l_cell = e->lSite->cell;
-				Cell* r_cell = e->rSite->cell;
-				Terrain l_t = l_cell->detail.terrain;
-				Terrain r_t = r_cell->detail.terrain;
-				if ((l_t == Terrain::LAND || l_t == Terrain::LAKE) && (r_t == Terrain::LAND || r_t == Terrain::LAKE)) {
-					l_cell->detail.unionfind.setUnionCell(static_cast<int>(Terrain::LAND), r_cell);
-				}
-			}
-		}
-
-
-		for (Cell* c : diagram->cells) {
-			if (c->detail.elevation != 0) {
-				c->detail.color.r += ((float)pow(c->detail.elevation, 1) - 1) / (80 * 0.2);
-				c->detail.color.g += ((float)pow(c->detail.elevation, 1) - 1) / (80 * 0.2);
-				c->detail.color.b += ((float)pow(c->detail.elevation, 1) - 1) / (50 * 0.2);
-			}
-
-			Terrain ct = c->detail.terrain;
-			if (ct == Terrain::LAND) {
-				auto arr = diagram->islandUnion.insert(c->detail.unionfind.unionFindCell(static_cast<int>(Terrain::LAND))->getUnique());
-				arr->land.push_back(c);
-
-				if (c->detail.unionfind.unionFindCell(static_cast<int>(Terrain::PEAK))->detail.is_peak) {
-					auto unique = c->detail.unionfind.unionFindCell(static_cast<int>(Terrain::PEAK))->getUnique();
-					c->detail.terrain = Terrain::PEAK;
-					arr->peakUnion.insert(unique)->push_back(c);
-				}
-			}
-			else if (ct == Terrain::LAKE) {
-				auto arr = diagram->islandUnion.insert(c->detail.unionfind.unionFindCell(static_cast<int>(Terrain::LAND))->getUnique());
-				arr->land.push_back(c);
-				auto unique = c->detail.unionfind.unionFindCell(static_cast<int>(Terrain::OCEAN))->getUnique();
-				arr->lakeUnion.insert(unique)->push_back(c);
-
-			}
-		}
-	}
-	
-}
-
-
 Diagram* VoronoiDiagramGenerator::relaxLoop(int num, Diagram* diagram) {
 	for (int i = 0; i < num; i++) {
 		diagram = relax(diagram);
 	}
 
 	return diagram;
+}
+
+
+
+void VoronoiDiagramGenerator::createWorld(int seed, double radius, Diagram* diagram) {
+	if (diagram) {
+		initWorld(seed, radius, diagram);
+	}
+}
+void VoronoiDiagramGenerator::initWorld(int seed, double radius, Diagram* diagram) {
+
+	
+	Point2 center = Point2((boundingBox.xR - boundingBox.xL) / 2, (boundingBox.yB - boundingBox.yT) / 2); // Center of the circular island.
+
+	FastNoiseLite noise;
+	noise.SetSeed(seed);
+	noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2S);
+
+	for (Cell* c : diagram->cells) {
+
+		double scale = 3000;
+		double dist = radius / (calcDistance(c->site.p, center) + 1);
+		double value = (1 + (noise.GetNoise(round(c->site.p.x / scale), round(c->site.p.y / scale)))) / 2; // Add noise to shape the circular island.
+
+		if (value * pow(dist, 2) >= 1) { // Set Land
+			c->detail.color = Color(0.6, 0.4, 0, 1);
+			c->detail.terrain = Terrain::LAND; // detail.terrain default value is Terrain::OCEAN
+		}
+		else {
+			c->detail.b_peak = false;
+			for (HalfEdge* he : c->halfEdges) {
+				if (!he->edge->rSite) { // Check whether it is the outermost border.
+					c->detail.color = Color(0.1, 0, 0.3, 1);
+					c->detail.b_edge = true;
+					break;
+				}
+			}
+		}
+	}
+
+	for (Edge* e : diagram->edges) {
+		if (e->lSite && e->rSite) {
+			Cell* l_cell = e->lSite->cell;
+			Cell* r_cell = e->rSite->cell;
+
+			if (l_cell->detail.terrain == Terrain::OCEAN && r_cell->detail.terrain == Terrain::OCEAN) { // Set 'union' between connected seas
+				if (l_cell->detail.unionfind.unionFindCell(static_cast<int>(Terrain::OCEAN))->detail.b_edge) {
+					r_cell->detail.unionfind.setUnionCell(static_cast<int>(Terrain::OCEAN), l_cell);
+				}
+				else {
+					l_cell->detail.unionfind.setUnionCell(static_cast<int>(Terrain::OCEAN), r_cell);
+				}
+			}
+		}
+	}
+
+	std::queue<Cell*> landQueue;
+
+	for (Edge* e : diagram->edges) {
+		if (e->lSite && e->rSite) {
+			Cell* l_cell = e->lSite->cell;
+			Cell* r_cell = e->rSite->cell;
+			//auto& l_detail = l_cell->detail;
+			//auto& r_detail = r_cell->detail;
+
+			Cell* landCell, *oceanCell;
+			(l_cell->detail.terrain == Terrain::OCEAN) ? (landCell = r_cell, oceanCell = l_cell) : (landCell = l_cell, oceanCell = r_cell);
+
+			if (landCell->detail.terrain == Terrain::LAND && oceanCell->detail.terrain == Terrain::OCEAN) {
+				CellDetail& cd = oceanCell->detail;
+				if (cd.unionfind.unionFindCell(static_cast<int>(Terrain::OCEAN))->detail.b_edge) { // check if it's lake or not
+					cd.color *= 2;
+					cd.terrain = Terrain::COAST;
+					cd.elevation = 1;
+					landQueue.push(oceanCell);
+				}
+			}
+		}
+	}
+
+	while (!landQueue.empty() ) {
+		Cell* c = landQueue.front();
+		landQueue.pop();
+
+		CellDetail& cd = c->detail;
+		unsigned int land_cnt = 0, low_cnt = 0;
+		for (HalfEdge* he : c->halfEdges) {
+			Edge* e = he->edge;
+			Cell* targetCell = (e->lSite->cell == c && e->rSite) ? e->rSite->cell : e->lSite->cell;
+			//if (targetCell->detail.elevation < c->detail.elevation) {
+			CellDetail& tcd = targetCell->detail;
+			if (tcd.terrain == Terrain::LAND) {
+				land_cnt++;
+				if (tcd.elevation == 0) {
+					tcd.elevation = cd.elevation + 1;
+					landQueue.push(targetCell);
+					cd.b_peak = false;
+					cd.unionfind.unionFindCell(static_cast<int>(Terrain::PEAK))->detail.b_peak = false;
+				}
+				else if (cd.elevation > 2){
+					if (tcd.elevation <= cd.elevation) {
+						low_cnt++;
+					}
+					else {
+						cd.b_peak = false;
+						cd.unionfind.unionFindCell(static_cast<int>(Terrain::PEAK))->detail.b_peak = false;
+					}
+						
+				}
+
+
+				if (cd.terrain == Terrain::LAND && cd.elevation > 2 && cd.elevation == tcd.elevation) {
+					tcd.unionfind.setUnionCell(static_cast<int>(Terrain::PEAK), c);
+				}
+			}
+
+
+		}
+		if (land_cnt != 0 && land_cnt == low_cnt) { // 평지
+			//c->detail.color += Color(0,0.1,0);
+			cd.b_flat = true;
+		}
+		else {
+			cd.unionfind.unionFindCell(static_cast<int>(Terrain::PEAK))->detail.b_peak = false;
+		}
+	}
+
+	for (Cell* c : diagram->cells) {
+		CellDetail& cd = c->detail;
+		Terrain ct = cd.terrain;
+		if (ct == Terrain::OCEAN) {
+
+			auto unique = cd.unionfind.unionFindCell(static_cast<int>(Terrain::OCEAN))->getUnique();
+			if (!cd.unionfind.unionFindCell(static_cast<int>(Terrain::OCEAN))->detail.b_edge) {
+				cd.terrain = Terrain::LAKE;
+				cd.color = Color(0.2, 0.4, 0.6);
+				//diagram->lakeUnion.insertCell(unique, c);
+
+			}
+		}
+		else if (ct == Terrain::COAST) {
+			auto unique = cd.unionfind.unionFindCell(static_cast<int>(Terrain::COAST))->getUnique();
+			//diagram->oceanUnion.insertCell(unique, c);
+		}
+	}
+
+	for (Edge* e : diagram->edges) {
+		if (e->lSite && e->rSite) {
+			Cell* l_cell = e->lSite->cell;
+			Cell* r_cell = e->rSite->cell;
+			Terrain l_t = l_cell->detail.terrain;
+			Terrain r_t = r_cell->detail.terrain;
+			if ((l_t == Terrain::LAND || l_t == Terrain::LAKE) && (r_t == Terrain::LAND || r_t == Terrain::LAKE)) {
+				l_cell->detail.unionfind.setUnionCell(static_cast<int>(Terrain::LAND), r_cell);
+			}
+		}
+	}
+
+
+	for (Cell* c : diagram->cells) {
+		CellDetail& cd = c->detail;
+		if (cd.elevation != 0) {
+			cd.color.r += ((float)pow(cd.elevation, 1) - 1) / (80 * 0.2);
+			cd.color.g += ((float)pow(cd.elevation, 1) - 1) / (80 * 0.2);
+			cd.color.b += ((float)pow(cd.elevation, 1) - 1) / (50 * 0.2);
+		}
+
+		Terrain ct = cd.terrain;
+		if (ct == Terrain::LAND) {
+			auto arr = diagram->islandUnion.insert(cd.unionfind.unionFindCell(static_cast<int>(Terrain::LAND))->getUnique());
+			arr->land.push_back(c);
+
+			if (cd.unionfind.unionFindCell(static_cast<int>(Terrain::PEAK))->detail.b_peak) {
+				auto unique = cd.unionfind.unionFindCell(static_cast<int>(Terrain::PEAK))->getUnique();
+				cd.terrain = Terrain::PEAK;
+				arr->peakUnion.insert(unique)->push_back(c);
+			}
+		}
+		else if (ct == Terrain::LAKE) {
+			auto arr = diagram->islandUnion.insert(cd.unionfind.unionFindCell(static_cast<int>(Terrain::LAND))->getUnique());
+			arr->land.push_back(c);
+			auto unique = cd.unionfind.unionFindCell(static_cast<int>(Terrain::OCEAN))->getUnique();
+			arr->lakeUnion.insert(unique)->push_back(c);
+
+		}
+	}
+	
+	
 }
 

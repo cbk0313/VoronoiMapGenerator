@@ -165,7 +165,7 @@ int main() {
 			diagram = vdg.compute(*sites, bbox);
 
 			diagram = vdg.relaxLoop(loop_cnt, diagram);
-			vdg.SetLand(seed, radius, diagram);
+			vdg.createWorld(seed, radius, diagram);
 
 			duration = 1000 * (std::clock() - start) / (double)CLOCKS_PER_SEC;
 			std::cout << "Computing a diagram of " << nPoints << " points took " << duration << "ms.\n";
@@ -181,8 +181,9 @@ int main() {
 			if (e->vertA && e->vertB) {
 				Point2& p1 = *e->vertA;
 				Point2& p2 = *e->vertB;
+				Color l_c = e->lSite->cell->detail.getColor();
 				glBegin(GL_TRIANGLES);
-				glColor4f(e->lSite->cell->detail.color.r, e->lSite->cell->detail.color.g, e->lSite->cell->detail.color.b, e->lSite->cell->detail.color.a);
+				glColor4f(l_c.r, l_c.g, l_c.b, l_c.a);
 				glVertex3d(normalize(e->lSite->cell->site.p[0], dimension), -normalize(e->lSite->cell->site.p[1], dimension), 0.0);
 				glVertex3d(normalize(p1[0], dimension), -normalize(p1[1], dimension), 0.0);
 				glVertex3d(normalize(p2[0], dimension), -normalize(p2[1], dimension), 0.0);
@@ -190,8 +191,9 @@ int main() {
 
 
 				if (e->rSite) {
+					Color r_c = e->rSite->cell->detail.getColor();
 					glBegin(GL_TRIANGLES);
-					glColor4f(e->rSite->cell->detail.color.r, e->rSite->cell->detail.color.g, e->rSite->cell->detail.color.b, e->lSite->cell->detail.color.a);
+					glColor4f(r_c.r, r_c.g, r_c.b, r_c.a);
 					glVertex3d(normalize(e->rSite->cell->site.p[0], dimension), -normalize(e->rSite->cell->site.p[1], dimension), 0.0);
 					glVertex3d(normalize(p1[0], dimension), -normalize(p1[1], dimension), 0.0);
 					glVertex3d(normalize(p2[0], dimension), -normalize(p2[1], dimension), 0.0);
@@ -245,10 +247,10 @@ int main() {
 		glBegin(GL_POINTS);
 		for (Cell* c : diagram->cells) {
 			Point2& p = c->site.p;
-			if (c->detail.unionfind.unionFindCell(static_cast<int>(Terrain::PEAK))->detail.is_peak) {
+			if (c->detail.isPeak()) {
 				glColor4f(0, 0, 0, 1);
 			}
-			else if (c->detail.is_flat) {
+			else if (c->detail.isFlat()) {
 				glColor4f(0.7, 0.7, 0, 1);
 			}
 			else {
@@ -310,7 +312,7 @@ int main() {
 			delete diagram;
 			diagram = vdg.compute(*sites, bbox);
 			diagram = vdg.relaxLoop(loop_cnt, diagram);
-			vdg.SetLand(seed, radius, diagram);
+			vdg.createWorld(seed, radius, diagram);
 			duration = 1000 * (std::clock() - start) / (double)CLOCKS_PER_SEC;
 
 			delete sites;

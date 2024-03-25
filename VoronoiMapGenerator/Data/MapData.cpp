@@ -1,26 +1,27 @@
 #pragma once
 #include "MapData.h"
+#include "../Cell.h"
 
-template<typename T, std::size_t N>
-T* UnionFind<T, N>::unionFindCell(std::size_t t) {
-	if (cell[t] == cell[t]->detail.unionfind[t]) {
-		return cell[t];
-	}
-	else {
-		return cell[t] = cell[t]->detail.unionfind.unionFindCell(t);
-	}
+
+bool CellDetail::isEdge() {
+	return b_edge;
+}
+bool CellDetail::isFlat() {
+	return b_flat;
+}
+bool CellDetail::isPeak() {
+	return unionfind.unionFindCell(static_cast<int>(Terrain::PEAK))->detail.b_peak;
 }
 
-template<typename T, std::size_t N>
-void UnionFind<T, N>::setUnionCell(std::size_t t, T* target) {
-	auto& vim_d = unionFindCell(t)->detail;
-	target = target->detail.unionfind.unionFindCell(t);
-	vim_d.unionfind[t] = target;
-	//if (vim_d.is_edge) target->detail.unionfind[t] = vim_d.unionfind[t];
-	//else {
-	//	vim_d.unionfind[t] = target;
-	//}
+
+Terrain CellDetail::getTerrain() {
+	return terrain;
 }
+
+Color CellDetail::getColor() {
+	return color;
+}
+
 
 //
 //
@@ -36,7 +37,7 @@ void UnionFind<T, N>::setUnionCell(std::size_t t, T* target) {
 //void CellDetail::setUnionCell(Cell* target) {
 //	auto vim_d = unionFindCell()->detail;
 //	target = target->detail.unionFindCell();
-//	if (vim_d.is_edge) target->detail.unionCell = vim_d.unionCell;
+//	if (vim_d.b_edge) target->detail.unionCell = vim_d.unionCell;
 //	else {
 //		unionFindCell()->detail.unionCell = target;
 //	}

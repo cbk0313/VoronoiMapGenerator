@@ -88,25 +88,59 @@ public:
 };
 
 
+template<typename T, std::size_t N>
+T* UnionFind<T, N>::unionFindCell(std::size_t t) {
+	if (cell[t] == cell[t]->detail.unionfind[t]) {
+		return cell[t];
+	}
+	else {
+		return cell[t] = cell[t]->detail.unionfind.unionFindCell(t);
+	}
+}
+
+template<typename T, std::size_t N>
+void UnionFind<T, N>::setUnionCell(std::size_t t, T* target) {
+	auto& vim_d = unionFindCell(t)->detail;
+	target = target->detail.unionfind.unionFindCell(t);
+	vim_d.unionfind[t] = target;
+	//if (vim_d.b_edge) target->detail.unionfind[t] = vim_d.unionfind[t];
+	//else {
+	//	vim_d.unionfind[t] = target;
+	//}
+}
+
+//typedef UnionFind<Cell, TERRAIN_CNT> UF;
+
 struct CellDetail {
-public:
-	bool is_edge;
-	bool is_flat;
-	bool is_peak;
+
+	friend class VoronoiDiagramGenerator;
+	friend struct UnionFind<Cell, TERRAIN_CNT>;
 private:
+
+	bool b_edge;
+	bool b_flat;
+	bool b_peak;
+
 	//Cell* unionCell;
 
-public:
 	unsigned int elevation;
+	unsigned int moisture;
+	unsigned int biome;
+
 	Terrain terrain;
 	Color color;
 	UnionFind<Cell, TERRAIN_CNT> unionfind;
-
+public:
+	Terrain getTerrain();
+	Color getColor();
+	bool isEdge();
+	bool isFlat();
+	bool isPeak();
 	/*Cell* getUnionCell() {
 		return unionCell;
 	}*/
 public: 
-	CellDetail() : is_edge(false), is_flat(false), is_peak(true), unionfind(UnionFind<Cell, TERRAIN_CNT>(nullptr)), elevation(0), terrain(Terrain::OCEAN), color(Color(0.2, 0, 0.6, 1)) {};
+	CellDetail() : b_edge(false), b_flat(false), b_peak(true), unionfind(UnionFind<Cell, TERRAIN_CNT>(nullptr)), elevation(0), terrain(Terrain::OCEAN), color(Color(0.2, 0, 0.6, 1)) {};
 	CellDetail(Cell* c) : CellDetail() { unionfind = UnionFind<Cell, TERRAIN_CNT>(c); };
 
 	//Cell* unionFindCell();

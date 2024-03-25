@@ -28,7 +28,7 @@ public:
 
 	Diagram* relaxLoop(int num, Diagram* diagram);
 
-	void SetLand(int seed, double radius, Diagram* diagram);
+	void createWorld(int seed, double radius, Diagram* diagram);
 private:
 	//Diagram* diagram;
 	CircleEventQueue* circleEventQueue;
@@ -46,6 +46,9 @@ private:
 	double rightBreakpoint(treeNode<BeachSection>* section, double directrix);
 
 	inline double calcDistance(Point2& a, Point2& b);
+
+	void initWorld(int seed, double radius, Diagram* diagram);
+	
 };
 
 inline double VoronoiDiagramGenerator::calcDistance(Point2& a, Point2& b) {
