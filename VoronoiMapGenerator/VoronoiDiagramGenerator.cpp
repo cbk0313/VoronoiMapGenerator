@@ -36,7 +36,9 @@ bool pointComparator(Point2* a, Point2* b) {
 
 Diagram* VoronoiDiagramGenerator::compute(std::vector<Point2>& sites, BoundingBox bbox) {
 
-	siteEventQueue = new std::vector<Point2*>();
+	//siteEventQueue = new std::vector<Point2*>();
+	std::vector<Point2*> siteEventQueue = std::vector<Point2*>();
+	siteEventQueue.reserve(sites.size());
 	boundingBox = bbox;
 
 	for (size_t i = 0; i < sites.size(); ++i) {
@@ -44,21 +46,22 @@ Diagram* VoronoiDiagramGenerator::compute(std::vector<Point2>& sites, BoundingBo
 		sites[i].x = round(sites[i].x / EPSILON)*EPSILON;
 		sites[i].y = round(sites[i].y / EPSILON)*EPSILON;
 
-		siteEventQueue->push_back(&(sites[i]));
+		siteEventQueue.push_back(&(sites[i]));
 	}
 
 	Diagram* diagram = new Diagram();
 	circleEventQueue = new CircleEventQueue();
 	beachLine = new RBTree<BeachSection>();
-
+	
+	std::sort(siteEventQueue.begin(), siteEventQueue.end(), pointComparator);
 	// Initialize site event queue
-	std::sort(siteEventQueue->begin(), siteEventQueue->end(), pointComparator);
+	
 
 	// process queue
-	Point2* site = siteEventQueue->empty() ? nullptr : siteEventQueue->back();
-	if (!siteEventQueue->empty()) siteEventQueue->pop_back();
+	Point2* site = siteEventQueue.empty() ? nullptr : siteEventQueue.back();
+	if (!siteEventQueue.empty()) siteEventQueue.pop_back();
 	treeNode<CircleEvent>* circle;
-
+	
 	// main loop
 	for (;;) {
 		// figure out whether to handle a site or circle event
@@ -68,13 +71,14 @@ Diagram* VoronoiDiagramGenerator::compute(std::vector<Point2>& sites, BoundingBo
 
 		// add beach section
 		if (site && (!circle || site->y < circle->data.y || (site->y == circle->data.y && site->x < circle->data.x))) {
+			
+			
 			// first create cell for new site
 			Cell* cell = diagram->createCell(*site);
 			// then create a beachsection for that site
 			addBeachSection(&cell->site, diagram);
-
-			site = siteEventQueue->empty() ? nullptr : siteEventQueue->back();
-			if (!siteEventQueue->empty()) siteEventQueue->pop_back();
+			site = siteEventQueue.empty() ? nullptr : siteEventQueue.back();
+			if (!siteEventQueue.empty()) siteEventQueue.pop_back();
 		}
 
 		// remove beach section
@@ -85,24 +89,25 @@ Diagram* VoronoiDiagramGenerator::compute(std::vector<Point2>& sites, BoundingBo
 		else
 			break;
 	}
-
+	
 	// wrapping-up:
 	//   connect dangling edges to bounding box
 	//   cut edges as per bounding box
 	//   discard edges completely outside bounding box
 	//   discard edges which are point-like
+	
 	diagram->clipEdges(boundingBox);
 
 	//   add missing edges in order to close open cells
 	diagram->closeCells(boundingBox);
-
-	diagram->finalize();
+	
+	//diagram->finalize();
 
 	delete circleEventQueue;
 	circleEventQueue = nullptr;
 
-	delete siteEventQueue;
-	siteEventQueue = nullptr;
+	//delete siteEventQueue;
+	//siteEventQueue = nullptr;
 
 	delete beachLine;
 	beachLine = nullptr;

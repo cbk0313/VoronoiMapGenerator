@@ -20,7 +20,7 @@ struct BoundingBox {
 
 class VoronoiDiagramGenerator {
 public:
-	VoronoiDiagramGenerator() : circleEventQueue(nullptr), siteEventQueue(nullptr), beachLine(nullptr) {};
+	VoronoiDiagramGenerator() : circleEventQueue(nullptr), beachLine(nullptr) {};
 	~VoronoiDiagramGenerator() {};
 
 	Diagram* compute(std::vector<Point2>& sites, BoundingBox bbox);
@@ -32,7 +32,7 @@ public:
 private:
 	//Diagram* diagram;
 	CircleEventQueue* circleEventQueue;
-	std::vector<Point2*>* siteEventQueue;
+	//std::vector<Point2*>* siteEventQueue;
 	BoundingBox	boundingBox;
 
 	void printBeachLine();
