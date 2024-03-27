@@ -18,7 +18,7 @@
 // Function prototypes
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 // Window dimensions
-const GLuint WINDOW_WIDTH = 1200, WINDOW_HEIGHT = 1200;
+const GLuint WINDOW_WIDTH = 1080, WINDOW_HEIGHT = 1080;
 // Shaders
 const GLchar* vertexShaderSource =
 	"#version 330 core\n"
@@ -41,6 +41,10 @@ double normalize(double in, int dimension) {
 int relax = 0;
 bool startOver = true;
 bool relaxForever = false;
+bool oneSec = false;
+std::clock_t startOneSec = NULL;
+unsigned int oneSecCnt = 0;
+
 // Is called whenever a key is pressed/released via GLFW
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode) {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
@@ -54,6 +58,11 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if (key == GLFW_KEY_Y && action == GLFW_PRESS) {
 		if (relaxForever) relaxForever = false;
 		else relaxForever = true;
+	}
+	if (key == GLFW_KEY_S && action == GLFW_PRESS) {
+		startOneSec = std::clock();
+		oneSec = true;
+		oneSecCnt = 0;
 	}
 }
 
@@ -78,14 +87,15 @@ void genRandomSites(int seed, std::vector<Point2>& sites, BoundingBox& bbox, uns
 	Point2 s;
 
 	double step = dimension / numSites;
-	double half_step = step * 0.9;
+	int half_step = step / 1.5;
 	
 	srand(seed);
 	for (unsigned int i = 0; i < numSites; ++i) {
 		for (unsigned int j = 0; j < numSites; ++j) {
 			
-			s.x = (i * step) + (rand() / ((double)RAND_MAX)) * (half_step);
-			s.y = (j * step) + (rand() / ((double)RAND_MAX)) * (half_step);
+			//s.x = (i * step) + (rand() / ((double)RAND_MAX)) * (half_step);
+			s.x = (i * step) + (rand() % (int)half_step);
+			s.y = (j * step) + (rand() % (int)half_step);
 			//std::cout << "rand: " << (rand() / ((double)RAND_MAX)) * (half_step) << "\n";
 			//std::cout << "x: " << s.x << "\n";
 			//std::cout << "y: " << s.y << "\n";
@@ -102,13 +112,13 @@ void genRandomSites(int seed, std::vector<Point2>& sites, BoundingBox& bbox, uns
 }
 
 int main() {
-	unsigned int nPoints = 1500;
+	unsigned int nPoints = 10000;
 	unsigned int dimension = 1000000;
 
 	int seed = 0;//18;
 	double radius = dimension / 2.1;
 
-	unsigned int loop_cnt = 3;
+	unsigned int loop_cnt = 0;
 	unsigned int pointSize = 5;
 
 	VoronoiDiagramGenerator vdg = VoronoiDiagramGenerator();
@@ -266,9 +276,9 @@ int main() {
 		glBegin(GL_POINTS);
 		for (auto item : diagram->islandUnion.unions) {
 			auto island = item.second;
-			/*
+			
 			color = 0;
-			std::cout << island.lakeUnion.unions.size() << "\n";
+			//std::cout << island.lakeUnion.unions.size() << "\n";
 			for (auto lake_union : island.lakeUnion.unions) {
 
 				glColor4f(1 - color, 0, color, 1);
@@ -278,6 +288,8 @@ int main() {
 				}
 				color += 0.2;
 			}
+			
+			/*
 			color = 0;
 			for (auto peak_union : island.peakUnion.unions) {
 				for (auto peak : peak_union.second) {
@@ -302,7 +314,7 @@ int main() {
 		}
 		glEnd();
 
-		if (relax || relaxForever) {
+		if (relax || relaxForever || startOneSec) {
 			seed++;
 			start = std::clock();
 			//diagram = vdg.relax();
@@ -311,8 +323,8 @@ int main() {
 			genRandomSites(seed, *sites, bbox, dimension, nPoints);
 			delete diagram;
 			diagram = vdg.compute(*sites, bbox);
-			diagram = vdg.relaxLoop(loop_cnt, diagram);
-			vdg.createWorld(seed, radius, diagram);
+			//diagram = vdg.relaxLoop(loop_cnt, diagram);
+			//vdg.createWorld(seed, radius, diagram);
 			duration = 1000 * (std::clock() - start) / (double)CLOCKS_PER_SEC;
 
 			delete sites;
@@ -323,6 +335,14 @@ int main() {
 			}
 			--relax;
 			if (relax < 0) relax = 0;
+
+			if (startOneSec) {
+				oneSecCnt++;
+				if (std::clock() - startOneSec >= 1000) {
+					startOneSec = false;
+					std::cout << "1 sec: " << oneSecCnt << "\n";
+				}
+			}
 		}
 		
 		// Swap the screen buffers

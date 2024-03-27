@@ -307,10 +307,15 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, Diagram* diagra
 				//diagram->lakeUnion.insertCell(unique, c);
 
 			}
+			else {
+				auto unique = cd.unionfind.unionFindCell(Terrain::OCEAN)->getUnique();
+				diagram->oceanUnion.insert(unique)->push_back(c);
+			}
+
 		}
 		else if (ct == Terrain::COAST) {
-			auto unique = cd.unionfind.unionFindCell(Terrain::COAST)->getUnique();
-			//diagram->oceanUnion.insertCell(unique, c);
+			auto unique = cd.unionfind.unionFindCell(Terrain::OCEAN)->getUnique();
+			diagram->oceanUnion.insert(unique)->push_back(c);
 		}
 	}
 
@@ -320,7 +325,7 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, Diagram* diagra
 			Cell* r_cell = e->rSite->cell;
 			Terrain l_t = l_cell->detail.terrain;
 			Terrain r_t = r_cell->detail.terrain;
-			if ((l_t == Terrain::LAND || l_t == Terrain::LAKE) && (r_t == Terrain::LAND || r_t == Terrain::LAKE)) {
+			if ((l_t == Terrain::LAND || l_t == Terrain::LAKE) && (r_t == Terrain::LAND || r_t == Terrain::LAKE)) { // land ¶¥ °øÀ¯
 				l_cell->detail.unionfind.setUnionCell(Terrain::LAND, r_cell);
 			}
 		}
@@ -361,5 +366,8 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, Diagram* diagra
 
 
 void VoronoiDiagramGenerator::createRiver(Diagram* diagram) {
-
+	for (auto item : diagram->islandUnion.unions) {
+		auto island = item.second;
+		island.peakUnion.unions;
+	}
 }
