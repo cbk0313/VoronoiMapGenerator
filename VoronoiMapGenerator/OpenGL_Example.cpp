@@ -11,10 +11,20 @@
 
 // GLEW
 #define GLEW_STATIC
+#if DEBUG
 #include "../lib/GLEW/glew.h"
+#else
+#include "../lib/release_lib/GLEW/glew.h"
+#endif
 
 // GLFW
+
+#if DEBUG
 #include "../lib/GLFW/glfw3.h"
+#else
+#include "../lib/release_lib/GLFW/glfw3.h"
+#endif
+
 // Function prototypes
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 // Window dimensions
@@ -112,13 +122,13 @@ void genRandomSites(int seed, std::vector<Point2>& sites, BoundingBox& bbox, uns
 }
 
 int main() {
-	unsigned int nPoints = 10000;
+	unsigned int nPoints = 1000;
 	unsigned int dimension = 1000000;
 
 	int seed = 0;//18;
 	double radius = dimension / 2.1;
 
-	unsigned int loop_cnt = 0;
+	unsigned int loop_cnt = 3;
 	unsigned int pointSize = 5;
 
 	VoronoiDiagramGenerator vdg = VoronoiDiagramGenerator();
@@ -323,8 +333,8 @@ int main() {
 			genRandomSites(seed, *sites, bbox, dimension, nPoints);
 			delete diagram;
 			diagram = vdg.compute(*sites, bbox);
-			//diagram = vdg.relaxLoop(loop_cnt, diagram);
-			//vdg.createWorld(seed, radius, diagram);
+			diagram = vdg.relaxLoop(loop_cnt, diagram);
+			vdg.createWorld(seed, radius, diagram);
 			duration = 1000 * (std::clock() - start) / (double)CLOCKS_PER_SEC;
 
 			delete sites;
