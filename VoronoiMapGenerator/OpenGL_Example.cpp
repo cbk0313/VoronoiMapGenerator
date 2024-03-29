@@ -89,15 +89,15 @@ void genRandomSites(int seed, std::vector<Point2>& sites, BoundingBox& bbox, uns
 
 	bbox = BoundingBox(0, dimension, dimension, 0);
 	std::vector<Point2> tmpSites;
-	numSites = sqrt(numSites);
-	int pow_site = pow(numSites, 2);
+	numSites = (unsigned int)sqrt(numSites);
+	unsigned int pow_site = (unsigned int)pow(numSites, 2);
 	tmpSites.reserve(pow_site);
 	sites.reserve(pow_site);
 
 	Point2 s;
 
 	double step = dimension / numSites;
-	int half_step = step / 1.5;
+	int half_step = (int)(step / 1.5);
 	
 	srand(seed);
 	for (unsigned int i = 0; i < numSites; ++i) {
@@ -122,14 +122,15 @@ void genRandomSites(int seed, std::vector<Point2>& sites, BoundingBox& bbox, uns
 }
 
 int main() {
-	unsigned int nPoints = 1000;
+	unsigned int nPoints = 10000;
 	unsigned int dimension = 1000000;
 
 	int seed = 0;//18;
 	double radius = dimension / 2.1;
 
 	unsigned int loop_cnt = 3;
-	unsigned int pointSize = 5;
+	GLfloat pointSize = 4;
+	GLfloat whitePointSize = 1;
 
 	VoronoiDiagramGenerator vdg = VoronoiDiagramGenerator();
 	Diagram* diagram = nullptr;
@@ -203,7 +204,7 @@ int main() {
 				Point2& p2 = *e->vertB;
 				Color l_c = e->lSite->cell->detail.getColor();
 				glBegin(GL_TRIANGLES);
-				glColor4f(l_c.r, l_c.g, l_c.b, l_c.a);
+				glColor4f((GLfloat)l_c.r, (GLfloat)l_c.g, (GLfloat)l_c.b, (GLfloat)l_c.a);
 				glVertex3d(normalize(e->lSite->cell->site.p[0], dimension), -normalize(e->lSite->cell->site.p[1], dimension), 0.0);
 				glVertex3d(normalize(p1[0], dimension), -normalize(p1[1], dimension), 0.0);
 				glVertex3d(normalize(p2[0], dimension), -normalize(p2[1], dimension), 0.0);
@@ -213,7 +214,7 @@ int main() {
 				if (e->rSite) {
 					Color r_c = e->rSite->cell->detail.getColor();
 					glBegin(GL_TRIANGLES);
-					glColor4f(r_c.r, r_c.g, r_c.b, r_c.a);
+					glColor4f((GLfloat)r_c.r, (GLfloat)r_c.g, (GLfloat)r_c.b, (GLfloat)r_c.a);
 					glVertex3d(normalize(e->rSite->cell->site.p[0], dimension), -normalize(e->rSite->cell->site.p[1], dimension), 0.0);
 					glVertex3d(normalize(p1[0], dimension), -normalize(p1[1], dimension), 0.0);
 					glVertex3d(normalize(p2[0], dimension), -normalize(p2[1], dimension), 0.0);
@@ -263,23 +264,30 @@ int main() {
 				
 			}
 		}
-		glPointSize(pointSize);
-		glBegin(GL_POINTS);
+		
 		for (Cell* c : diagram->cells) {
 			Point2& p = c->site.p;
 			if (c->detail.isPeak()) {
+				glPointSize(pointSize);
+				glBegin(GL_POINTS);
 				glColor4f(0, 0, 0, 1);
 			}
 			else if (c->detail.isFlat()) {
-				glColor4f(0.7, 0.7, 0, 1);
+				glPointSize(pointSize);
+				glBegin(GL_POINTS);
+				glColor4f((GLfloat)0.7, (GLfloat)0.7, (GLfloat)0, (GLfloat)1);
+				
 			}
 			else {
+				glPointSize(whitePointSize);
+				glBegin(GL_POINTS);
 				glColor4f(1, 1, 1, 1);
 			}
 			
 			glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
+			glEnd();
 		}
-		glEnd();
+		
 
 		double color = 0;
 		glPointSize(pointSize);
@@ -291,7 +299,7 @@ int main() {
 			//std::cout << island.lakeUnion.unions.size() << "\n";
 			for (auto lake_union : island.lakeUnion.unions) {
 
-				glColor4f(1 - color, 0, color, 1);
+				glColor4f((GLfloat)(1 - color), (GLfloat)0, (GLfloat)color, (GLfloat)1);
 				for (auto lake : lake_union.second) {
 					Point2& p = lake->site.p;
 					glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
