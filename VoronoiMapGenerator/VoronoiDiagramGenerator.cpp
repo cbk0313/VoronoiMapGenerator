@@ -172,22 +172,28 @@ Diagram* VoronoiDiagramGenerator::relaxLoop(int num, Diagram* diagram) {
 
 void VoronoiDiagramGenerator::createWorld(int seed, double radius, Diagram* diagram) {
 	if (diagram) {
-		initWorld(seed, radius, 10, radius / 3, diagram);
+		srand(seed);
+		initWorld(seed, radius, 10 + (rand() % 21 - 5), radius / 3, radius / 5, diagram);
 		createRiver(diagram);
 	}
 }
 
-double VoronoiDiagramGenerator::getMinDist(std::vector<Point2>& points, Point2& c_p, double radius) {
+std::pair<double, double> VoronoiDiagramGenerator::getMinDist(std::vector<std::pair<Point2, double>>& points, Point2& c_p, double radius) {
 	double min_dist = radius;
-	for (Point2& const p : points) {
-		min_dist = std::min(min_dist, calcDistance(p, c_p));
+	double min_r = radius;
+	for (std::pair<Point2, double>& p : points) {
+		double dist = calcDistance(p.first, c_p);
+		if (min_dist - min_r > dist - p.second) {
+			min_dist = dist;
+			min_r = p.second;
+		}
 	}
 
-	return min_dist;
+	return std::make_pair(min_dist, min_r);
 }
 
 
-void VoronoiDiagramGenerator::initWorld(int seed, double radius, unsigned int p_cnt, double p_radius, Diagram* diagram) {
+void VoronoiDiagramGenerator::initWorld(int seed, double radius, unsigned int p_cnt, double p_max_r, double p_min_r, Diagram* diagram) {
 
 	
 	Point2 center = Point2((boundingBox.xR - boundingBox.xL) / 2, (boundingBox.yB - boundingBox.yT) / 2); // Center of the circular island.
@@ -198,41 +204,44 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, unsigned int p_
 
 	FastNoiseLite p_noise;
 	p_noise.SetSeed(seed);
-	p_noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
+	p_noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
 
 	unsigned int max_elevation = 0;
-
-	srand(seed);
+	double p_r_step = p_max_r - p_min_r;
+	
 
 
 	double continentSize = radius * 0.6;
 	double islandRange = radius * 0.2;	
-	std::vector<Point2> points;
+	std::vector<std::pair<Point2, double>> points;
 	for (int i = 0; i < p_cnt; i++) {
-		Point2 p = Point2(((rand() / ((double)RAND_MAX)) - 0.5) * islandRange, ((rand() / ((double)RAND_MAX)) - 0.5) * islandRange);
+		Point2 p = Point2((getRandom() - 0.5) * islandRange, (getRandom() - 0.5) * islandRange);
 		double length = calcDistance(Point2(0, 0), p);
 		Point2 dir = Point2((p.x / length) * continentSize + center.x, (p.y / length) * continentSize + center.y);
 		//std::cout << p_x << "\n";
 		//std::cout << p_y << "\n\n";
-		points.push_back(Point2(p.x + dir.x, p.y + dir.y));
+		points.push_back(std::make_pair(Point2(p.x + dir.x, p.y + dir.y), (p_max_r - (getRandom() * p_r_step))));
 	}
 
 
 	for (Cell* c : diagram->cells) {
 
-		double scale = 3000;
-		double p_scale = 1000;
+		double scale = 2000;
+		double p_scale = 500;
 		double dist = calcDistance(c->site.p, center);
-		double p_dist = getMinDist(points, c->site.p, radius);
+		std::pair<double, double> p_dist = getMinDist(points, c->site.p, radius);
 		//std::cout << p_dist << endl;
 
-		double dist_scale = dist == 0 ? 1 : radius / dist;
-		double p_dist_scale = p_dist == 0 ? 1 : p_radius / p_dist;
+		double dist_scale = 1 - pow(dist / radius, 1);
+		double p_dist_scale = 1 - pow(p_dist.first / p_dist.second, 2);
 
-		double value = (1 + (noise.GetNoise(round(c->site.p.x / scale), round(c->site.p.y / scale)))) / 2; // Add noise to shape the circular island.
-		double p_value = (1 + (p_noise.GetNoise(round(c->site.p.x / p_scale), round(c->site.p.y / p_scale)))) / 2; // Add noise to shape the circular island.
+		double value = (1 + (noise.GetNoise(round(c->site.p.x / scale), round(c->site.p.y / scale)))); // Add noise to shape the circular island.
+		double p_value = (1 + (p_noise.GetNoise(round(c->site.p.x / p_scale), round(c->site.p.y / p_scale)))); // Add noise to shape the circular island.
 
-		if (std::max(value * pow(dist_scale, 2), p_value * pow(p_dist_scale, 2)) >= 1) { // Set Land
+		//if (value * dist_scale >= 0.4) { // Set Land
+		//if (p_value * p_dist_scale >= 0.4) { // Set Land
+		//if (p_value > 1) { // Set Land
+		if (std::max(value * dist_scale, p_value *p_dist_scale) >= 0.4) { // Set Land
 			c->detail.color = Color(0.6, 0.4, 0, 1);
 			c->detail.terrain = Terrain::LAND; // detail.terrain default value is Terrain::OCEAN
 		}
@@ -378,7 +387,9 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, unsigned int p_
 				}
 
 				if (cd.terrain == Terrain::LAND && cd.elevation > 2 && cd.elevation == tcd.elevation) {
-					tcd.b_peak = cd.b_peak && tcd.unionfind.unionFindCell(Terrain::PEAK)->detail.b_peak; // Peak only if both are peaks
+					tcd.b_peak = cd.b_peak && tcd.unionfind.unionFindCell(Terrain::PEAK)->detail.b_peak && cd.unionfind.unionFindCell(Terrain::PEAK)->detail.b_peak; // Peak only if both are peaks
+					cd.b_peak = tcd.b_peak; // Peak only if both are peaks
+					cd.unionfind.unionFindCell(Terrain::PEAK)->detail.b_peak = tcd.b_peak; // Peak only if both are peaks
 					tcd.unionfind.setUnionCell(Terrain::PEAK, c);
 				}
 			}
@@ -444,8 +455,8 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, unsigned int p_
 					std::cout << "cell: " << c->getUnique() << "\n";
 					std::cout << "uni: " << unique << "\n";
 				}*/
-				//cd.color = Color(0.3, 0.3, 0.3);
-				//cd.unionfind.unionFindCell(Terrain::PEAK)->detail.color = Color(0, 0, 0);
+				cd.color = Color(0.3, 0.3, 0.3);
+				cd.unionfind.unionFindCell(Terrain::PEAK)->detail.color = Color(0, 0, 0);
 			}
 		}
 		else if (ct == Terrain::LAKE) {

@@ -46,10 +46,11 @@ private:
 	double rightBreakpoint(treeNode<BeachSection>* section, double directrix);
 
 	inline double calcDistance(const Point2& a, const Point2& b);
+	inline double getRandom();
 
-	void initWorld(int seed, double radius, unsigned int p_cnt, double p_radius, Diagram* diagram);
+	void initWorld(int seed, double radius, unsigned int p_cnt, double p_max_r, double p_min_r, Diagram* diagram);
 	void createRiver(Diagram* diagram);
-	double getMinDist(std::vector<Point2>& points, Point2& center, double radius);
+	std::pair<double, double> getMinDist(std::vector<std::pair<Point2, double>>& points, Point2& center, double radius);
 	
 };
 
@@ -57,6 +58,10 @@ inline double VoronoiDiagramGenerator::calcDistance(const Point2& a, const Point
 	double x = (b.x - a.x);
 	double y = (b.y - a.y);
 	return sqrt((x * x) + (y * y));
+}
+
+inline double VoronoiDiagramGenerator::getRandom() {
+	return rand() / ((double)RAND_MAX);
 }
 
 
