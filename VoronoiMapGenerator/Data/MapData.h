@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <vector>
 #include <unordered_map>
 #include <iostream>
@@ -129,6 +130,8 @@ private:
 	unsigned int moisture;
 	unsigned int biome;
 
+	Cell* cell;
+
 	Terrain terrain;
 	Color color;
 	UnionFind<Cell, TERRAIN_CNT> unionfind;
@@ -142,10 +145,62 @@ public:
 	/*Cell* getUnionCell() {
 		return unionCell;
 	}*/
-public: 
-	CellDetail() : b_edge(false), b_flat(false), b_peak(true), unionfind(UnionFind<Cell, TERRAIN_CNT>(nullptr)), elevation(0), terrain(Terrain::OCEAN), color(Color(0.2, 0, 0.6, 1)) {};
-	CellDetail(Cell* c) : CellDetail() { unionfind = UnionFind<Cell, TERRAIN_CNT>(c); };
+	void setTerrain(Terrain t) {
+		terrain = t;
+		switch (t)
+		{
+		case Terrain::OCEAN:
+			if(b_edge)
+				color = Color(0.1, 0, 0.3, 1);
+			else
+				color = Color(0.2, 0, 0.6, 1);
+			break;
+		case Terrain::LAND:
+			color = Color(0.6, 0.4, 0, 1);
+			break;
+		default:
+			break;
+		}
+	}
+private:
+	void setEdge(bool b) {
+		if (terrain == Terrain::OCEAN) {
+			if (b) {
+				color = Color(0.1, 0, 0.3, 1);
+			}
+			else {
+				color = Color(0.2, 0, 0.6, 1);
+			}
+		}
+		
+		b_edge = b;
+	}
 
+public: 
+	CellDetail() : b_edge(false), b_flat(false), b_peak(true), cell(nullptr), unionfind(UnionFind<Cell, TERRAIN_CNT>(nullptr)), elevation(0) { setTerrain(Terrain::OCEAN); };
+	CellDetail(Cell* c) : CellDetail() {
+		cell = c;
+		unionfind = UnionFind<Cell, TERRAIN_CNT>(c);
+	};
+
+private:
+	void reset(bool reset_edge = true, bool reset_terrain = true) {
+		if (reset_edge) {
+			b_edge = false;
+		}
+		b_flat = false;
+		b_peak = true;
+		elevation = 0;
+		if (reset_terrain) {
+			setTerrain(Terrain::OCEAN);
+		}
+
+		for (unsigned int i = 0, cnt = (unsigned int)Terrain::COUNT; i < cnt; i++) {
+			unionfind.setUnionCell((Terrain)i, cell);
+		}
+		
+
+	}
 	//Cell* unionFindCell();
 	//void setUnionCell(Cell* target);
 };

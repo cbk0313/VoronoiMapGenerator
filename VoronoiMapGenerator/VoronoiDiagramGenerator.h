@@ -28,7 +28,7 @@ public:
 
 	Diagram* relaxLoop(int num, Diagram* diagram);
 
-	void createWorld(int seed, double radius, Diagram* diagram);
+	void createWorld(int seed, double radius, double lakeScale, double lakeSize, Diagram* diagram);
 private:
 	//Diagram* diagram;
 	CircleEventQueue* circleEventQueue;
@@ -48,7 +48,9 @@ private:
 	inline double calcDistance(const Point2& a, const Point2& b);
 	inline double getRandom();
 
-	void initWorld(int seed, double radius, unsigned int p_cnt, double p_max_r, double p_min_r, Diagram* diagram);
+	void setupOcean(Diagram* diagram);
+
+	void initWorld(int seed, double radius, double lakeScale, double lakeSize, unsigned int p_cnt, double p_max_r, double p_min_r, Diagram* diagram);
 	void createRiver(Diagram* diagram);
 	std::pair<double, double> getMinDist(std::vector<std::pair<Point2, double>>& points, Point2& center, double radius);
 	

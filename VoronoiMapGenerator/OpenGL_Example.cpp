@@ -127,6 +127,8 @@ int main() {
 
 	int seed = 0;//18;
 	double radius = dimension / 2.1;
+	double lakeScale = 0;
+	double lakeSize = 0.7;
 
 	unsigned int loop_cnt = 3;
 	GLfloat pointSize = 4;
@@ -186,7 +188,7 @@ int main() {
 			diagram = vdg.compute(*sites, bbox);
 
 			diagram = vdg.relaxLoop(loop_cnt, diagram);
-			vdg.createWorld(seed, radius, diagram);
+			vdg.createWorld(seed, radius, lakeScale, lakeSize, diagram);
 
 			duration = 1000 * (std::clock() - start) / (double)CLOCKS_PER_SEC;
 			std::cout << "Computing a diagram of " << nPoints << " points took " << duration << "ms.\n";
@@ -333,7 +335,11 @@ int main() {
 		glEnd();
 
 		if (relax || relaxForever || startOneSec) {
-			seed++;
+			//seed++;
+			//lakeScale += 0.01;
+			//lakeDense += 0.01;
+			std::cout << "lake size: " << lakeScale << ", lakeDense: " << lakeSize << "\n";
+
 			start = std::clock();
 			//diagram = vdg.relax();
 			//diagram = vdg.relax();
@@ -342,7 +348,7 @@ int main() {
 			delete diagram;
 			diagram = vdg.compute(*sites, bbox);
 			diagram = vdg.relaxLoop(loop_cnt, diagram);
-			vdg.createWorld(seed, radius, diagram);
+			vdg.createWorld(seed, radius, lakeScale, lakeSize, diagram);
 			duration = 1000 * (std::clock() - start) / (double)CLOCKS_PER_SEC;
 
 			delete sites;
