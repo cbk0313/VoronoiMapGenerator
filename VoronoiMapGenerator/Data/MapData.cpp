@@ -3,43 +3,43 @@
 #include "../Cell.h"
 
 
-bool CellDetail::isEdge() {
+bool CellDetail::IsEdge() {
 	return b_edge;
 }
-bool CellDetail::isFlat() {
+bool CellDetail::IsFlat() {
 	return b_flat;
 }
-bool CellDetail::isPeak() {
-	return unionfind.unionFindCell(Terrain::PEAK)->detail.b_peak;
+bool CellDetail::IsPeak() {
+	return unionfind.UnionFindCell(Terrain::PEAK)->detail.b_peak;
 }
 
 
-Terrain CellDetail::getTerrain() {
+Terrain CellDetail::GetTerrain() {
 	return terrain;
 }
 
-Color CellDetail::getColor() {
+Color CellDetail::GetColor() {
 	return color;
 }
 
 
 //
 //
-//Cell* CellDetail::unionFindCell() {
+//Cell* CellDetail::UnionFindCell() {
 //	if (unionCell == unionCell->detail.unionCell) {
 //		return unionCell;
 //	}
 //	else {
-//		return unionCell = unionCell->detail.unionFindCell();
+//		return unionCell = unionCell->detail.UnionFindCell();
 //	}
 //}
 //
-//void CellDetail::setUnionCell(Cell* target) {
-//	auto vim_d = unionFindCell()->detail;
-//	target = target->detail.unionFindCell();
+//void CellDetail::SetUnionCell(Cell* target) {
+//	auto vim_d = UnionFindCell()->detail;
+//	target = target->detail.UnionFindCell();
 //	if (vim_d.b_edge) target->detail.unionCell = vim_d.unionCell;
 //	else {
-//		unionFindCell()->detail.unionCell = target;
+//		UnionFindCell()->detail.unionCell = target;
 //	}
 //	
 //}

@@ -7,6 +7,11 @@
 #include "Diagram.h"
 #include <vector>
 
+enum class MapType {
+	CONTINENT,
+	ISLAND
+};
+
 struct BoundingBox {
 	double xL;
 	double xR;
@@ -18,7 +23,85 @@ struct BoundingBox {
 		xL(xmin), xR(xmax), yB(ymin), yT(ymax) {};
 };
 
+struct GenerateSetting {
+	friend class VoronoiDiagramGenerator;
+private:
+	MapType type;
+	int seed;
+	double radius; 
+	double lake_scale; 
+	double lake_size; 
+
+	unsigned int island_cnt; 
+	double island_radius_max;
+	double island_radius_min;
+
+	unsigned int lake_cnt;
+	double lake_radius_max;
+	double lake_radius_min;
+public:
+	GenerateSetting() 
+		: type(MapType::CONTINENT)
+		, seed(0)
+		, radius(500000) // radius, 0, 0.7, 10, radius / 3, radius / 5, 10, radius / 5, radius / 7)
+		, lake_scale(0)
+		, lake_size(0.7)
+		, island_cnt(10)
+		, island_radius_max(333333)
+		, island_radius_min(200000)
+		, lake_cnt(10)
+		, lake_radius_max(200000)
+		, lake_radius_min(142857.1428571429) {};
+	GenerateSetting(MapType _type, int _seed, double _radius, double _lake_scale, double _lake_size, unsigned int _island_cnt, double _island_radius_max, double _island_radius_min, unsigned int _lake_cnt, double _lake_radius_max, double _lake_radius_min)
+		: type(_type)
+		, seed(_seed)
+		, radius(_radius)
+		, lake_scale(_lake_scale)
+		, lake_size(_lake_size)
+		, island_cnt(_island_cnt)
+		, island_radius_max(_island_radius_max)
+		, island_radius_min(_island_radius_min)
+		, lake_cnt(_lake_cnt)
+		, lake_radius_max(_lake_radius_max)
+		, lake_radius_min(_lake_radius_min)
+	{};
+
+
+	inline void SetMapType(MapType new_type) { type = new_type; };
+	inline void SetSeed(int new_seed) { seed = new_seed; };
+	inline void SetRadius(double new_radius) { radius = new_radius; };
+	inline void SetLakeScale(double new_scale) { lake_scale = new_scale; };
+	inline void SetLakeSize(double new_size) { lake_size = new_size; };
+	inline void SetIslandCount(unsigned int new_cnt) { island_cnt = new_cnt; };
+	inline void SetIslandRadiusMax(double new_radius) { island_radius_max = new_radius; };
+	inline void SetIslandRadiusMin(double new_radius) { island_radius_min = new_radius; };
+	inline void SetLakeCount(unsigned int new_cnt) { lake_cnt = new_cnt; };
+	inline void SetLakeRadiusMax(double new_radius) { lake_radius_max = new_radius; };
+	inline void SetLakeRadiusMin(double new_radius) { lake_radius_min = new_radius; };
+
+	inline MapType GetMapType() { return type; };
+	inline int GetSeed() { return seed; };
+	inline double GetRadius() { return radius; };
+	inline double GetLakeScale() { return lake_scale; };
+	inline double GetLakeSize() { return lake_size; };
+	inline unsigned int GetIslandCount() { return island_cnt; };
+	inline double GetIslandRadiusMax() { return island_radius_max; };
+	inline double GetIslandRadiusMin() { return island_radius_min; };
+	inline unsigned int GetLakeCount() { return lake_cnt; };
+	inline double GetLakeRadiusMax() { return lake_radius_max; };
+	inline double GetLakeRadiusMin() { return lake_radius_min; };
+
+};
+
 class VoronoiDiagramGenerator {
+
+private:
+	//Diagram* diagram;
+	CircleEventQueue* circleEventQueue;
+	//std::vector<Point2*>* siteEventQueue;
+	BoundingBox	boundingBox;
+	GenerateSetting setting;
+
 public:
 	VoronoiDiagramGenerator() : circleEventQueue(nullptr), beachLine(nullptr) {};
 	~VoronoiDiagramGenerator() {};
@@ -28,12 +111,10 @@ public:
 
 	Diagram* relaxLoop(int num, Diagram* diagram);
 
-	void createWorld(int seed, double radius, double lakeScale, double lakeSize, Diagram* diagram);
-private:
-	//Diagram* diagram;
-	CircleEventQueue* circleEventQueue;
-	//std::vector<Point2*>* siteEventQueue;
-	BoundingBox	boundingBox;
+	void CreateWorld(Diagram* diagram);
+
+	inline void SetSetting(GenerateSetting newSetting) { setting = newSetting; };
+	inline GenerateSetting& GetSetting() { return setting; };
 
 	void printBeachLine();
 
@@ -45,24 +126,25 @@ private:
 	double leftBreakpoint(treeNode<BeachSection>* section, double directrix);
 	double rightBreakpoint(treeNode<BeachSection>* section, double directrix);
 
-	inline double calcDistance(const Point2& a, const Point2& b);
-	inline double getRandom();
+	inline double CalcDistance(const Point2& a, const Point2& b);
+	inline double GetRandom();
 
-	void setupOcean(Diagram* diagram);
+	void SetupOcean(Diagram* diagram);
 
-	void initWorld(int seed, double radius, double lakeScale, double lakeSize, unsigned int p_cnt, double p_max_r, double p_min_r, Diagram* diagram);
-	void createRiver(Diagram* diagram);
-	std::pair<double, double> getMinDist(std::vector<std::pair<Point2, double>>& points, Point2& center, double radius);
+	void InitWorld(Diagram* diagram);
+	void CreateRiver(Diagram* diagram);
+	std::pair<double, double> GetMinDist(std::vector<std::pair<Point2, double>>& points, Point2& center, double radius);
 	
 };
 
-inline double VoronoiDiagramGenerator::calcDistance(const Point2& a, const Point2& b) {
+inline double VoronoiDiagramGenerator::CalcDistance(const Point2& a, const Point2& b) {
 	double x = (b.x - a.x);
 	double y = (b.y - a.y);
 	return sqrt((x * x) + (y * y));
 }
 
-inline double VoronoiDiagramGenerator::getRandom() {
+// Returns a real number between 0 and 1
+inline double VoronoiDiagramGenerator::GetRandom() {
 	return rand() / ((double)RAND_MAX);
 }
 

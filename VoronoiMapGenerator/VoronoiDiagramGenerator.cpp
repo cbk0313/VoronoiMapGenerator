@@ -171,19 +171,20 @@ Diagram* VoronoiDiagramGenerator::relaxLoop(int num, Diagram* diagram) {
 
 
 
-void VoronoiDiagramGenerator::createWorld(int seed, double radius, double lakeScale, double lakeSize, Diagram* diagram) {
+void VoronoiDiagramGenerator::CreateWorld(Diagram* diagram) {
 	if (diagram) {
-		srand(seed);
-		initWorld(seed, radius, lakeScale, lakeSize, 0 /*10 + (rand() % 21 - 5)*/, radius / 3, radius / 5, diagram);
-		createRiver(diagram);
+		srand(setting.seed);
+		InitWorld(diagram);
+		//(seed, radius, lakeScale, lakeSize, 0, radius / 3, radius / 5, diagram);
+		CreateRiver(diagram);
 	}
 }
 
-std::pair<double, double> VoronoiDiagramGenerator::getMinDist(std::vector<std::pair<Point2, double>>& points, Point2& c_p, double radius) {
+std::pair<double, double> VoronoiDiagramGenerator::GetMinDist(std::vector<std::pair<Point2, double>>& points, Point2& c_p, double radius) {
 	double min_dist = radius;
 	double min_r = radius;
 	for (std::pair<Point2, double>& p : points) {
-		double dist = calcDistance(p.first, c_p);
+		double dist = CalcDistance(p.first, c_p);
 		if (min_dist - min_r > dist - p.second) {
 			min_dist = dist;
 			min_r = p.second;
@@ -194,142 +195,200 @@ std::pair<double, double> VoronoiDiagramGenerator::getMinDist(std::vector<std::p
 }
 
 
-void VoronoiDiagramGenerator::setupOcean(Diagram* diagram) {
+void VoronoiDiagramGenerator::SetupOcean(Diagram* diagram) {
 	for (Edge* e : diagram->edges) {
 		if (e->lSite && e->rSite) {
 			Cell* l_cell = e->lSite->cell;
 			Cell* r_cell = e->rSite->cell;
 
-			if (l_cell->detail.terrain == Terrain::OCEAN && r_cell->detail.terrain == Terrain::OCEAN) { // Set 'union' between connected seas
-				if (l_cell->detail.unionfind.unionFindCell(Terrain::OCEAN)->detail.b_edge) {
-					r_cell->detail.unionfind.setUnionCell(Terrain::OCEAN, l_cell);
+			if ((l_cell->detail.terrain == Terrain::OCEAN || l_cell->detail.terrain == Terrain::LAKE) &&
+				(r_cell->detail.terrain == Terrain::OCEAN || r_cell->detail.terrain == Terrain::LAKE )) { // Set 'union' between connected seas
+				if (l_cell->detail.unionfind.UnionFindCell(Terrain::OCEAN)->detail.b_edge) {
+					r_cell->detail.unionfind.SetUnionCell(Terrain::OCEAN, l_cell);
 				}
 				else {
-					l_cell->detail.unionfind.setUnionCell(Terrain::OCEAN, r_cell);
+					l_cell->detail.unionfind.SetUnionCell(Terrain::OCEAN, r_cell);
 				}
 			}
 		}
 	}
 }
 
-void VoronoiDiagramGenerator::initWorld(int seed, double radius, double lakeScale, double lakeSize, unsigned int p_cnt, double p_max_r, double p_min_r, Diagram* diagram) {
+void VoronoiDiagramGenerator::InitWorld(Diagram* diagram) {
 
-	lakeScale = std::clamp<double>(lakeScale, 0, 1);
-	lakeSize = std::clamp<double>(lakeSize, 0, 1);
-	lakeSize = 2 - lakeSize;
-	lakeScale /= 25;
+	double lakeScale = std::clamp<double>(setting.lake_scale, 0, 1);
+	double lakeSize = std::clamp<double>(setting.lake_size, 0, 1);
+	lakeSize = 2.3 - lakeSize * 2;
+	lakeSize /= 100;
+	lakeScale /= 2;
 
 	Point2 center = Point2((boundingBox.xR - boundingBox.xL) / 2, (boundingBox.yB - boundingBox.yT) / 2); // Center of the circular island.
 
 	FastNoiseLite noise;
-	noise.SetSeed(seed);
+	noise.SetSeed(setting.seed);
 	noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2S);
 	noise.SetFractalType(FastNoiseLite::FractalType_FBm);
 
 	FastNoiseLite island_noise;
-	island_noise.SetSeed(seed);
+	island_noise.SetSeed(setting.seed);
 	island_noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
 
 
 	FastNoiseLite lake_noise;
-	lake_noise.SetSeed(rand());
+	lake_noise.SetSeed(setting.seed);
 	lake_noise.SetNoiseType(FastNoiseLite::NoiseType_Cellular);
+	lake_noise.SetFrequency(lakeSize);
+	lake_noise.SetCellularDistanceFunction(FastNoiseLite::CellularDistanceFunction_Manhattan);
+	lake_noise.SetDomainWarpType(FastNoiseLite::DomainWarpType_OpenSimplex2);
+	lake_noise.SetDomainWarpAmp(300);
+	/*
 	lake_noise.SetFractalType(FastNoiseLite::FractalType_FBm);
 	lake_noise.SetFractalGain(lakeSize);
 	lake_noise.SetFractalOctaves(6);
-	lake_noise.SetFractalLacunarity(2);
+	lake_noise.SetFractalLacunarity(2);*/
 	//lake_noise.SetFrequency(0.2);
 
 	unsigned int max_elevation = 0;
-	double p_r_step = p_max_r - p_min_r;
-	
+
+	double continent_range = setting.radius * 0.5;
+	double island_range = setting.radius * 0.2;
+	double lake_range = setting.radius * 1;
+
+	double island_step = setting.island_radius_max - setting.island_radius_min;
+	double lake_step = setting.lake_radius_max - setting.lake_radius_min;
 
 
-	double continentSize = radius * 0.6;
-	double islandRange = radius * 0.2;	
-	std::vector<std::pair<Point2, double>> points;
-	for (int i = 0; i < p_cnt; i++) {
-		Point2 p = Point2((getRandom() - 0.5) * islandRange, (getRandom() - 0.5) * islandRange);
-		double length = calcDistance(Point2(0, 0), p);
-		Point2 dir = Point2((p.x / length) * continentSize + center.x, (p.y / length) * continentSize + center.y);
-		//std::cout << p_x << "\n";
-		//std::cout << p_y << "\n\n";
-		points.push_back(std::make_pair(Point2(p.x + dir.x, p.y + dir.y), (p_max_r - (getRandom() * p_r_step))));
+	std::vector<std::pair<Point2, double>> islands;
+	std::vector<std::pair<Point2, double>> lakes;
+
+	for (int i = 0; i < setting.island_cnt; i++) {
+		Point2 p = Point2((GetRandom() - 0.5) * 2 * island_range, (GetRandom() - 0.5) * 2 * island_range);
+		double length = CalcDistance(Point2(0, 0), p);
+		Point2 dir = Point2((p.x / length) * continent_range + center.x, (p.y / length) * continent_range + center.y);
+		islands.push_back(std::make_pair(Point2(p.x + dir.x, p.y + dir.y), (setting.island_radius_max - (GetRandom() * island_step))));
+	}
+
+	for (int i = 0; i < setting.lake_cnt; i++) {
+		Point2 p = Point2((GetRandom() - 0.5) * 2 * lake_range + center.x, (GetRandom() - 0.5) * 2 * lake_range + center.y);
+		lakes.push_back(std::make_pair(p, (setting.lake_radius_max - (GetRandom() * lake_step))));
 	}
 
 
+	std::vector<Cell*> lakeCells;
+
 	for (Cell* c : diagram->cells) {
 
-		double scale = 2000;
-		double p_scale = 1000;
-		double lake_scale = 1000;
+		double scale = 3000;
+		double island_scale = 1000;
 
-		double dist = calcDistance(c->site.p, center);
-		std::pair<double, double> p_dist = getMinDist(points, c->site.p, radius);
+		double dist = CalcDistance(c->site.p, center);
+		std::pair<double, double> p_dist = GetMinDist(islands, c->site.p, setting.radius);
 		//std::cout << p_dist << endl;
 
-		double dist_scale = (1 - pow(dist / radius, 1)) * 3;
+		double dist_scale = (1 - pow(dist / setting.radius, 1));
 		double island_dist_scale = (1 - pow(p_dist.first / p_dist.second, 2)) * 3;
 
-		double value = (1 + (noise.GetNoise(round(c->site.p.x / scale), round(c->site.p.y / scale))));
-		double island_value = (1 + (island_noise.GetNoise(round(c->site.p.x / p_scale), round(c->site.p.y / p_scale))));
-		double lake_value = (1 + (lake_noise.GetNoise(round(c->site.p.x / lake_scale), round(c->site.p.y / lake_scale))));
+		double value = noise.GetNoise(round(c->site.p.x / scale), round(c->site.p.y / scale));
+		double island_value = (1 + (island_noise.GetNoise(round(c->site.p.x / island_scale), round(c->site.p.y / island_scale))));
+		
+
+
+		double lake_scale = 500;
+		std::pair<double, double> lake_dist = GetMinDist(lakes, c->site.p, setting.radius);
+		double lake_dist_scale = (1 - (lake_dist.first / lake_dist.second));
+		double x = (c->site.p.x / lake_scale), y = (c->site.p.y / lake_scale);
+		lake_noise.DomainWarp(x, y);
+		double lake_value = (1 + (lake_noise.GetNoise(x, y)));
+		if ((pow(lake_value, 4) > 0.8 - lakeScale) && lake_dist_scale > 0) {
+			lakeCells.push_back(c);
+		}
+
+
+
+		
+		bool is_land;
+		switch (setting.type)
+		{
+		case MapType::CONTINENT:
+			is_land = (pow(1+value, 2) * dist_scale * 3 > 1);
+			break;
+		case MapType::ISLAND:
+			is_land = (pow(value, 1) * dist_scale * 50) > 1 && (dist_scale > 0);
+			break;
+		default:
+			is_land = false;
+			break;
+		}
+
 		//std::cout << lake_value << "\n";
-		//if (pow(value, 2) * dist_scale > 1 || pow(island_value, 2) * island_dist_scale > 1) { // Set Land
-		if (lake_value > 0.3 - lakeScale) { // Set Land ///lake min 0.26
-			c->detail.setTerrain(Terrain::LAND);
+		if (is_land || (pow(island_value, 2) > 1 && island_dist_scale > 1)) { // Set Land
+		//if (pow(lake_value, 4) > 0.8 - lakeScale) { // Set Land
+			c->detail.SetTerrain(Terrain::LAND);
 		}
 		else {
 			c->detail.b_peak = false;
 			for (HalfEdge* he : c->halfEdges) {
 				if (!he->edge->rSite) { // Check whether it is the outermost border.
-					c->detail.setEdge(true);
+					c->detail.SetEdge(true);
 					break;
 				}
 			}
 		}
+
+
+	// Set Land ///lake min 0.26
 	}
 
-	setupOcean(diagram);
+	SetupOcean(diagram);
 
 	for (Cell* c : diagram->cells) { // remove lake
 		CellDetail& cd = c->detail;
 		Terrain ct = cd.terrain;
 		if (ct == Terrain::OCEAN) {
-			auto unique = cd.unionfind.unionFindCell(Terrain::OCEAN)->getUnique();
-			if (!cd.unionfind.unionFindCell(Terrain::OCEAN)->detail.b_edge) {
-				cd.setTerrain(Terrain::LAND);
+			auto unique = cd.unionfind.UnionFindCell(Terrain::OCEAN)->getUnique();
+			if (!cd.unionfind.UnionFindCell(Terrain::OCEAN)->detail.b_edge) {
+				cd.SetTerrain(Terrain::LAND);
 			}
 		}
 	}
 
 	for (Cell* c : diagram->cells) { // reset cell unionfind and other
-		c->detail.reset(false, false);
+		c->detail.Reset(false, false);
 	}
-	setupOcean(diagram);
+
+	for (Cell* c : lakeCells) {
+		for (HalfEdge* he : c->halfEdges) {
+			if (!he->edge->lSite || !he->edge->rSite || he->edge->lSite->cell->detail.GetTerrain() == Terrain::OCEAN || he->edge->rSite->cell->detail.GetTerrain() == Terrain::OCEAN) {
+				goto LAKE_LOOP_POINT;
+			}
+		}
+		c->detail.SetTerrain(Terrain::LAKE);
+	LAKE_LOOP_POINT:;
+	}
+	SetupOcean(diagram);
 
 
 
 	for (Cell* c : diagram->cells) { // Set Lake
 		CellDetail& cd = c->detail;
 		Terrain ct = cd.terrain;
-		if (ct == Terrain::OCEAN) {
+		if (ct == Terrain::OCEAN || ct == Terrain::LAKE) {
 
-			auto unique = cd.unionfind.unionFindCell(Terrain::OCEAN)->getUnique();
-			if (!cd.unionfind.unionFindCell(Terrain::OCEAN)->detail.b_edge) {
+			auto unique = cd.unionfind.UnionFindCell(Terrain::OCEAN)->getUnique();
+			if (!cd.unionfind.UnionFindCell(Terrain::OCEAN)->detail.b_edge) {
 				cd.terrain = Terrain::LAKE;
 				cd.color = Color(0.2, 0.4, 0.6);
 				//diagram->lakeUnion.insertCell(unique, c);
 
 			}
 			else {
-				auto unique = cd.unionfind.unionFindCell(Terrain::OCEAN)->getUnique();
+				auto unique = cd.unionfind.UnionFindCell(Terrain::OCEAN)->getUnique();
 				diagram->oceanUnion.insert(unique)->push_back(c);
 			}
 
 		}
 		else if (ct == Terrain::COAST) {
-			auto unique = cd.unionfind.unionFindCell(Terrain::OCEAN)->getUnique();
+			auto unique = cd.unionfind.UnionFindCell(Terrain::OCEAN)->getUnique();
 			diagram->oceanUnion.insert(unique)->push_back(c);
 		}
 	}
@@ -349,7 +408,7 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, double lakeScal
 
 			if (landCell->detail.terrain == Terrain::LAND && oceanCell->detail.terrain == Terrain::OCEAN) {
 				CellDetail& cd = oceanCell->detail;
-				if (cd.unionfind.unionFindCell(Terrain::OCEAN)->detail.b_edge) { // check if it's lake or not
+				if (cd.unionfind.UnionFindCell(Terrain::OCEAN)->detail.b_edge) { // check if it's lake or not
 					cd.color *= 2;
 					cd.terrain = Terrain::COAST;
 					cd.elevation = 1;
@@ -391,7 +450,7 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, double lakeScal
 			CellDetail& tcd = targetCell->detail;
 			if (cd.terrain == Terrain::LAKE && tcd.terrain == Terrain::LAND) {
 				if (tcd.elevation == 0) {
-					tcd.elevation = cd.unionfind.unionFindCell(Terrain::OCEAN)->detail.elevation;
+					tcd.elevation = cd.unionfind.UnionFindCell(Terrain::OCEAN)->detail.elevation;
 					lakeQueue.push(targetCell);
 					continue;
 				}
@@ -411,7 +470,7 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, double lakeScal
 					}
 					
 					cd.b_peak = false;
-					cd.unionfind.unionFindCell(Terrain::PEAK)->detail.b_peak = false;
+					cd.unionfind.UnionFindCell(Terrain::PEAK)->detail.b_peak = false;
 				}
 				else if (cd.elevation > 2){
 					if (tcd.elevation <= cd.elevation) {
@@ -419,21 +478,21 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, double lakeScal
 					}
 					else {
 						cd.b_peak = false;
-						cd.unionfind.unionFindCell(Terrain::PEAK)->detail.b_peak = false;
+						cd.unionfind.UnionFindCell(Terrain::PEAK)->detail.b_peak = false;
 					}
 				}
 
 				if (cd.terrain == Terrain::LAND && cd.elevation > 2 && cd.elevation == tcd.elevation) {
-					tcd.b_peak = cd.b_peak && tcd.unionfind.unionFindCell(Terrain::PEAK)->detail.b_peak && cd.unionfind.unionFindCell(Terrain::PEAK)->detail.b_peak; // Peak only if both are peaks
+					tcd.b_peak = cd.b_peak && tcd.unionfind.UnionFindCell(Terrain::PEAK)->detail.b_peak && cd.unionfind.UnionFindCell(Terrain::PEAK)->detail.b_peak; // Peak only if both are peaks
 					cd.b_peak = tcd.b_peak; // Peak only if both are peaks
-					cd.unionfind.unionFindCell(Terrain::PEAK)->detail.b_peak = tcd.b_peak; // Peak only if both are peaks
-					tcd.unionfind.setUnionCell(Terrain::PEAK, c);
+					cd.unionfind.UnionFindCell(Terrain::PEAK)->detail.b_peak = tcd.b_peak; // Peak only if both are peaks
+					tcd.unionfind.SetUnionCell(Terrain::PEAK, c);
 				}
 			}
 			else if (tcd.terrain == Terrain::LAKE) {
 				//low_cnt++;
 				if (!is_lq) {
-					auto t_union = tcd.unionfind.unionFindCell(Terrain::OCEAN);
+					auto t_union = tcd.unionfind.UnionFindCell(Terrain::OCEAN);
 					if (t_union->detail.elevation == 0 || t_union->detail.elevation > cd.elevation) {
 						t_union->detail.elevation = cd.elevation;
 					}
@@ -447,7 +506,7 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, double lakeScal
 		}
 		else {
 			cd.b_peak = false;
-			cd.unionfind.unionFindCell(Terrain::PEAK)->detail.b_peak = false;
+			cd.unionfind.UnionFindCell(Terrain::PEAK)->detail.b_peak = false;
 		}
 	}
 
@@ -460,7 +519,7 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, double lakeScal
 			Terrain l_t = l_cell->detail.terrain;
 			Terrain r_t = r_cell->detail.terrain;
 			if ((l_t == Terrain::LAND || l_t == Terrain::LAKE) && (r_t == Terrain::LAND || r_t == Terrain::LAKE)) { // land ¶¥ °øÀ¯
-				l_cell->detail.unionfind.setUnionCell(Terrain::LAND, r_cell);
+				l_cell->detail.unionfind.SetUnionCell(Terrain::LAND, r_cell);
 			}
 		}
 	}
@@ -470,8 +529,16 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, double lakeScal
 
 	for (Cell* c : diagram->cells) {
 		CellDetail& cd = c->detail;
-		if (cd.elevation != 0) {
+		if (cd.GetTerrain() == Terrain::LAND && cd.elevation != 0) {
 			double elev_scale = (double)cd.elevation / max_elevation;
+			elev_scale = pow(elev_scale, 1);
+			double scale = 1.2;
+			cd.color.r += elev_scale * scale;
+			cd.color.g += elev_scale * scale;
+			cd.color.b += elev_scale * 0.7 * scale;
+		}
+		else if (cd.GetTerrain() == Terrain::LAKE) {
+			double elev_scale = (double)cd.unionfind.UnionFindCell(Terrain::OCEAN)->detail.elevation / (max_elevation * 2);
 			elev_scale = pow(elev_scale, 1);
 			double scale = 1.2;
 			cd.color.r += elev_scale * scale;
@@ -481,11 +548,11 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, double lakeScal
 
 		Terrain ct = cd.terrain;
 		if (ct == Terrain::LAND) {
-			auto arr = diagram->islandUnion.insert(cd.unionfind.unionFindCell(Terrain::LAND)->getUnique());
+			auto arr = diagram->islandUnion.insert(cd.unionfind.UnionFindCell(Terrain::LAND)->getUnique());
 			arr->land.push_back(c);
 
-			if (cd.unionfind.unionFindCell(Terrain::PEAK)->detail.b_peak) {
-				auto unique = cd.unionfind.unionFindCell(Terrain::PEAK)->getUnique();
+			if (cd.unionfind.UnionFindCell(Terrain::PEAK)->detail.b_peak) {
+				auto unique = cd.unionfind.UnionFindCell(Terrain::PEAK)->getUnique();
 				cd.terrain = Terrain::PEAK;
 				arr->peakUnion.insert(unique)->push_back(c);
 				/*if (c->getUnique() > unique) {
@@ -493,13 +560,13 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, double lakeScal
 					std::cout << "uni: " << unique << "\n";
 				}*/
 				cd.color = Color(0.3, 0.3, 0.3);
-				cd.unionfind.unionFindCell(Terrain::PEAK)->detail.color = Color(0, 0, 0);
+				cd.unionfind.UnionFindCell(Terrain::PEAK)->detail.color = Color(0, 0, 0);
 			}
 		}
 		else if (ct == Terrain::LAKE) {
-			auto arr = diagram->islandUnion.insert(cd.unionfind.unionFindCell(Terrain::LAND)->getUnique());
+			auto arr = diagram->islandUnion.insert(cd.unionfind.UnionFindCell(Terrain::LAND)->getUnique());
 			arr->land.push_back(c);
-			auto unique = cd.unionfind.unionFindCell(Terrain::OCEAN)->getUnique();
+			auto unique = cd.unionfind.UnionFindCell(Terrain::OCEAN)->getUnique();
 			arr->lakeUnion.insert(unique)->push_back(c);
 
 		}
@@ -512,7 +579,7 @@ void VoronoiDiagramGenerator::initWorld(int seed, double radius, double lakeScal
 }
 
 
-void VoronoiDiagramGenerator::createRiver(Diagram* diagram) {
+void VoronoiDiagramGenerator::CreateRiver(Diagram* diagram) {
 	for (auto item : diagram->islandUnion.unions) {
 		auto island = item.second;
 		island.peakUnion.unions;

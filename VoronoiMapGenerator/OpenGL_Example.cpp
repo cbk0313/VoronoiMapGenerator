@@ -127,14 +127,13 @@ int main() {
 
 	int seed = 0;//18;
 	double radius = dimension / 2.1;
-	double lakeScale = 0;
-	double lakeSize = 0.7;
 
 	unsigned int loop_cnt = 3;
 	GLfloat pointSize = 4;
 	GLfloat whitePointSize = 1;
 
 	VoronoiDiagramGenerator vdg = VoronoiDiagramGenerator();
+	vdg.SetSetting(GenerateSetting(MapType::CONTINENT, seed, radius, 0.5, 0.5, 10, radius / 3, radius / 5, 50, radius / 10, radius / 15));
 	Diagram* diagram = nullptr;
 	
 	std::vector<Point2>* sites = nullptr;
@@ -188,7 +187,7 @@ int main() {
 			diagram = vdg.compute(*sites, bbox);
 
 			diagram = vdg.relaxLoop(loop_cnt, diagram);
-			vdg.createWorld(seed, radius, lakeScale, lakeSize, diagram);
+			vdg.CreateWorld(diagram);
 
 			duration = 1000 * (std::clock() - start) / (double)CLOCKS_PER_SEC;
 			std::cout << "Computing a diagram of " << nPoints << " points took " << duration << "ms.\n";
@@ -204,7 +203,7 @@ int main() {
 			if (e->vertA && e->vertB) {
 				Point2& p1 = *e->vertA;
 				Point2& p2 = *e->vertB;
-				Color l_c = e->lSite->cell->detail.getColor();
+				Color l_c = e->lSite->cell->detail.GetColor();
 				glBegin(GL_TRIANGLES);
 				glColor4f((GLfloat)l_c.r, (GLfloat)l_c.g, (GLfloat)l_c.b, (GLfloat)l_c.a);
 				glVertex3d(normalize(e->lSite->cell->site.p[0], dimension), -normalize(e->lSite->cell->site.p[1], dimension), 0.0);
@@ -214,7 +213,7 @@ int main() {
 
 
 				if (e->rSite) {
-					Color r_c = e->rSite->cell->detail.getColor();
+					Color r_c = e->rSite->cell->detail.GetColor();
 					glBegin(GL_TRIANGLES);
 					glColor4f((GLfloat)r_c.r, (GLfloat)r_c.g, (GLfloat)r_c.b, (GLfloat)r_c.a);
 					glVertex3d(normalize(e->rSite->cell->site.p[0], dimension), -normalize(e->rSite->cell->site.p[1], dimension), 0.0);
@@ -269,12 +268,12 @@ int main() {
 		
 		for (Cell* c : diagram->cells) {
 			Point2& p = c->site.p;
-			if (c->detail.isPeak()) {
+			if (c->detail.IsPeak()) {
 				glPointSize(pointSize);
 				glBegin(GL_POINTS);
 				glColor4f(0, 0, 0, 1);
 			}
-			else if (c->detail.isFlat()) {
+			else if (c->detail.IsFlat()) {
 				glPointSize(pointSize);
 				glBegin(GL_POINTS);
 				glColor4f((GLfloat)0.7, (GLfloat)0.7, (GLfloat)0, (GLfloat)1);
@@ -335,20 +334,22 @@ int main() {
 		glEnd();
 
 		if (relax || relaxForever || startOneSec) {
-			//seed++;
+			vdg.GetSetting().SetSeed(vdg.GetSetting().GetSeed() + 1);
+			//vdg.GetSetting().SetLakeScale(vdg.GetSetting().GetLakeScale() + 0.01);
+			//std::cout << "vdg.GetSetting().GetLakeSize(): " << vdg.GetSetting().GetLakeScale() << "\n";
 			//lakeScale += 0.01;
 			//lakeDense += 0.01;
-			std::cout << "lake size: " << lakeScale << ", lakeDense: " << lakeSize << "\n";
+			//std::cout << "lake size: " << lakeScale << ", lakeDense: " << lakeSize << "\n";
 
 			start = std::clock();
 			//diagram = vdg.relax();
 			//diagram = vdg.relax();
 			sites = new std::vector<Point2>();
-			genRandomSites(seed, *sites, bbox, dimension, nPoints);
+			genRandomSites(vdg.GetSetting().GetSeed(), *sites, bbox, dimension, nPoints);
 			delete diagram;
 			diagram = vdg.compute(*sites, bbox);
 			diagram = vdg.relaxLoop(loop_cnt, diagram);
-			vdg.createWorld(seed, radius, lakeScale, lakeSize, diagram);
+			vdg.CreateWorld(diagram);
 			duration = 1000 * (std::clock() - start) / (double)CLOCKS_PER_SEC;
 
 			delete sites;
