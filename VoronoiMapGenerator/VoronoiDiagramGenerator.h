@@ -96,14 +96,17 @@ public:
 class VoronoiDiagramGenerator {
 
 private:
+
+	bool has_created_ocean;
 	//Diagram* diagram;
 	CircleEventQueue* circleEventQueue;
 	//std::vector<Point2*>* siteEventQueue;
 	BoundingBox	boundingBox;
 	GenerateSetting setting;
+	unsigned int max_elevation;
 
 public:
-	VoronoiDiagramGenerator() : circleEventQueue(nullptr), beachLine(nullptr) {};
+	VoronoiDiagramGenerator() : max_elevation(0), has_created_ocean(false), circleEventQueue(nullptr), beachLine(nullptr) {};
 	~VoronoiDiagramGenerator() {};
 
 	Diagram* compute(std::vector<Point2>& sites, BoundingBox bbox);
@@ -131,8 +134,13 @@ public:
 
 	void SetupOcean(Diagram* diagram);
 
-	void InitWorld(Diagram* diagram);
+	void CreateLand(Diagram* diagram);
+	void RemoveLake(Diagram* diagram);
+	void CreateLake(Diagram* diagram);
 	void CreateRiver(Diagram* diagram);
+	void SetupElevation(Diagram* diagram);
+	void SetupLandUnion(Diagram* diagram);
+	void SetupIsland(Diagram* diagram);
 	std::pair<double, double> GetMinDist(std::vector<std::pair<Point2, double>>& points, Point2& center, double radius);
 	
 };

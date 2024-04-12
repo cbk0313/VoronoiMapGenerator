@@ -72,11 +72,14 @@ private:
 public:
 	T* UnionFindCell(Terrain t);
 	void SetUnionCell(Terrain t, T* target);
-
-	UnionFind(T* c) {
-		for (int i = 0; i < N; i++) {
+	void Reset(T* c) {
+		for (unsigned int i = 0; i < N; i++) {
 			cell[i] = c;
 		}
+	}
+
+	UnionFind(T* c) {
+		Reset(c);
 	}
 
 	T*& operator[](std::size_t index) {
@@ -116,7 +119,7 @@ void UnionFind<T, N>::SetUnionCell(Terrain t, T* target) {
 
 struct CellDetail {
 
-	friend class VoronoiDiagramGenerator;
+	//friend class VoronoiDiagramGenerator;
 	friend struct UnionFind<Cell, TERRAIN_CNT>;
 private:
 
@@ -138,10 +141,22 @@ private:
 
 public:
 	Terrain GetTerrain();
-	Color GetColor();
+	Color& GetColor();
 	bool IsEdge();
 	bool IsFlat();
 	bool IsPeak();
+
+
+	void SetFlat(bool b);
+
+	void SetPeak(bool b);
+	bool GetPeak();
+
+	unsigned int GetElevation();
+	void SetElevation(unsigned int num);
+	void AddElevation(unsigned int num);
+
+	UnionFind<Cell, TERRAIN_CNT>& GetUnionFind();
 	/*Cell* getUnionCell() {
 		return unionCell;
 	}*/
@@ -158,11 +173,18 @@ public:
 		case Terrain::LAND:
 			color = Color(0.6, 0.4, 0, 1);
 			break;
+		case Terrain::LAKE:
+			color = Color(0.2, 0.4, 0.6);
+			break;
+		case Terrain::COAST:
+			color *= 2;
+			break;
 		default:
 			break;
 		}
 	}
-private:
+
+
 	void SetEdge(bool b) {
 		if (terrain == Terrain::OCEAN) {
 			if (b) {
@@ -172,18 +194,11 @@ private:
 				color = Color(0.2, 0, 0.6, 1);
 			}
 		}
-		
+
 		b_edge = b;
+
 	}
 
-public: 
-	CellDetail() : b_edge(false), b_flat(false), b_peak(true), cell(nullptr), unionfind(UnionFind<Cell, TERRAIN_CNT>(nullptr)), elevation(0) { SetTerrain(Terrain::OCEAN); };
-	CellDetail(Cell* c) : CellDetail() {
-		cell = c;
-		unionfind = UnionFind<Cell, TERRAIN_CNT>(c);
-	};
-
-private:
 	void Reset(bool reset_edge = true, bool reset_terrain = true) {
 		if (reset_edge) {
 			b_edge = false;
@@ -194,13 +209,13 @@ private:
 		if (reset_terrain) {
 			SetTerrain(Terrain::OCEAN);
 		}
-
-		for (unsigned int i = 0, cnt = (unsigned int)Terrain::COUNT; i < cnt; i++) {
-			unionfind[i] = cell;
-		}
-		
-
+		unionfind.Reset(cell);
 	}
+	CellDetail() : b_edge(false), b_flat(false), b_peak(true), cell(nullptr), unionfind(UnionFind<Cell, TERRAIN_CNT>(nullptr)), elevation(0) { SetTerrain(Terrain::OCEAN); };
+	CellDetail(Cell* c) : CellDetail() {
+		cell = c;
+		unionfind = UnionFind<Cell, TERRAIN_CNT>(c);
+	};
 	//Cell* UnionFindCell();
 	//void SetUnionCell(Cell* target);
 };

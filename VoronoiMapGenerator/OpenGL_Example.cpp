@@ -133,7 +133,7 @@ int main() {
 	GLfloat whitePointSize = 1;
 
 	VoronoiDiagramGenerator vdg = VoronoiDiagramGenerator();
-	vdg.SetSetting(GenerateSetting(MapType::CONTINENT, seed, radius, 0.5, 0.5, 10, radius / 3, radius / 5, 50, radius / 10, radius / 15));
+	vdg.SetSetting(GenerateSetting(MapType::CONTINENT, seed, radius, 0.5, 0.5, 10, radius / 3, radius / 5, 50, radius / 15, radius / 20));
 	Diagram* diagram = nullptr;
 	
 	std::vector<Point2>* sites = nullptr;
@@ -191,6 +191,12 @@ int main() {
 
 			duration = 1000 * (std::clock() - start) / (double)CLOCKS_PER_SEC;
 			std::cout << "Computing a diagram of " << nPoints << " points took " << duration << "ms.\n";
+
+			unsigned int lake_cnt = 0;
+			for (auto item : diagram->islandUnion.unions) {
+				lake_cnt += item.second.lakeUnion.unions.size();
+			}
+			std::cout << "lake_cnt: " << diagram->islandUnion.unions.size() << "\n";
 			delete sites;
 		}
 
@@ -290,22 +296,17 @@ int main() {
 		}
 		
 
-		double color = 0;
 		glPointSize(pointSize);
 		glBegin(GL_POINTS);
 		for (auto item : diagram->islandUnion.unions) {
 			auto island = item.second;
-			
-			color = 0;
-			//std::cout << island.lakeUnion.unions.size() << "\n";
 			for (auto lake_union : island.lakeUnion.unions) {
 
-				glColor4f((GLfloat)(1 - color), (GLfloat)0, (GLfloat)color, (GLfloat)1);
+				glColor4f((GLfloat)0, (GLfloat)0, (GLfloat)1, (GLfloat)1);
 				for (auto lake : lake_union.second) {
 					Point2& p = lake->site.p;
 					glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
 				}
-				color += 0.2;
 			}
 			
 			/*
@@ -332,6 +333,7 @@ int main() {
 		
 		}
 		glEnd();
+		
 
 		if (relax || relaxForever || startOneSec) {
 			vdg.GetSetting().SetSeed(vdg.GetSetting().GetSeed() + 1);
@@ -354,7 +356,14 @@ int main() {
 
 			delete sites;
 
+			unsigned int lake_cnt = 0;
+			for (auto item : diagram->islandUnion.unions) {
+				lake_cnt += item.second.lakeUnion.unions.size();
+			}
+
 			std::cout << "Computing a diagram of " << nPoints << " points took " << duration << "ms.\n";
+			std::cout << "lake_cnt: " << lake_cnt << "\n";
+			std::cout << "seed: " << vdg.GetSetting().GetSeed() << "\n";
 			if (diagram->cells.size() != 4) {
 				int x = 0;
 			}
