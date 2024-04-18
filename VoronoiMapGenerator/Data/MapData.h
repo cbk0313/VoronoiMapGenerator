@@ -54,6 +54,7 @@ enum class Terrain : std::size_t {
 	LAND,
 	COAST,
 	LAKE,
+	HIGHEST_PEAK,
 	PEAK,
 
 	COUNT // it's mean enum count
@@ -61,7 +62,7 @@ enum class Terrain : std::size_t {
 
 #define TERRAIN_CNT static_cast<int>(Terrain::COUNT)
 
-#define IS_LAND(x) (x == Terrain::LAND || x == Terrain::PEAK)
+#define IS_LAND(x) (x == Terrain::LAND || x == Terrain::HIGHEST_PEAK)
 #define IS_OCEAN(x) (x == Terrain::LAKE || x == Terrain::COAST)
 
 template<typename T, std::size_t N>
@@ -124,8 +125,8 @@ struct CellDetail {
 private:
 
 	bool b_edge;
-	bool b_flat;
 	bool b_peak;
+	bool b_highest_peak;
 
 	//Cell* unionCell;
 
@@ -143,14 +144,14 @@ public:
 	Terrain GetTerrain();
 	Color& GetColor();
 	bool IsEdge();
-	bool IsFlat();
 	bool IsPeak();
+	bool IsHighestPeak();
 
-
-	void SetFlat(bool b);
 
 	void SetPeak(bool b);
-	bool GetPeak();
+
+	void SetHighestPeak(bool b);
+	bool GetHighestPeak();
 
 	unsigned int GetElevation();
 	void SetElevation(unsigned int num);
@@ -203,15 +204,15 @@ public:
 		if (reset_edge) {
 			b_edge = false;
 		}
-		b_flat = false;
-		b_peak = true;
+		b_peak = false;
+		b_highest_peak = true;
 		elevation = 0;
 		if (reset_terrain) {
 			SetTerrain(Terrain::OCEAN);
 		}
 		unionfind.Reset(cell);
 	}
-	CellDetail() : b_edge(false), b_flat(false), b_peak(true), cell(nullptr), unionfind(UnionFind<Cell, TERRAIN_CNT>(nullptr)), elevation(0) { SetTerrain(Terrain::OCEAN); };
+	CellDetail() : b_edge(false), b_peak(false), b_highest_peak(true), cell(nullptr), unionfind(UnionFind<Cell, TERRAIN_CNT>(nullptr)), elevation(0) { SetTerrain(Terrain::OCEAN); };
 	CellDetail(Cell* c) : CellDetail() {
 		cell = c;
 		unionfind = UnionFind<Cell, TERRAIN_CNT>(c);
@@ -246,6 +247,7 @@ struct UnionArray {
 
 struct IslandUnion {
 	std::vector<Cell*> land;
+	UnionArray<std::vector<Cell*>> highestPeakUnion;
 	UnionArray<std::vector<Cell*>> peakUnion;
 	UnionArray<std::vector<Cell*>> lakeUnion;
 };

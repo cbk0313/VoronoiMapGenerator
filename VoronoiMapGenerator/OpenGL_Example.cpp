@@ -274,12 +274,12 @@ int main() {
 		
 		for (Cell* c : diagram->cells) {
 			Point2& p = c->site.p;
-			if (c->detail.IsPeak()) {
+			if (c->detail.IsHighestPeak()) {
 				glPointSize(pointSize);
 				glBegin(GL_POINTS);
 				glColor4f(0, 0, 0, 1);
 			}
-			else if (c->detail.IsFlat()) {
+			else if (c->detail.IsPeak()) {
 				glPointSize(pointSize);
 				glBegin(GL_POINTS);
 				glColor4f((GLfloat)0.7, (GLfloat)0.7, (GLfloat)0, (GLfloat)1);
@@ -311,7 +311,7 @@ int main() {
 			
 			/*
 			color = 0;
-			for (auto peak_union : island.peakUnion.unions) {
+			for (auto peak_union : island.highestPeakUnion.unions) {
 				for (auto peak : peak_union.second) {
 					Point2& p = peak->site.p;
 					glColor4f(0, color, 1 - color, 1);

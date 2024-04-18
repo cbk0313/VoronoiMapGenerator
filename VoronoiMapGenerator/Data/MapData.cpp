@@ -6,23 +6,23 @@
 bool CellDetail::IsEdge() {
 	return b_edge;
 }
-bool CellDetail::IsFlat() {
-	return b_flat;
-}
 bool CellDetail::IsPeak() {
-	return unionfind.UnionFindCell(Terrain::PEAK)->detail.b_peak;
+	return b_peak;
 }
-
-void CellDetail::SetFlat(bool b) {
-	b_flat = b;
+bool CellDetail::IsHighestPeak() {
+	return unionfind.UnionFindCell(Terrain::HIGHEST_PEAK)->detail.b_highest_peak;
 }
 
 void CellDetail::SetPeak(bool b) {
 	b_peak = b;
 }
 
-bool CellDetail::GetPeak() {
-	return b_peak;
+void CellDetail::SetHighestPeak(bool b) {
+	b_highest_peak = b;
+}
+
+bool CellDetail::GetHighestPeak() {
+	return b_highest_peak;
 }
 
 Terrain CellDetail::GetTerrain() {

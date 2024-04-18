@@ -141,6 +141,7 @@ public:
 	void SetupElevation(Diagram* diagram);
 	void SetupLandUnion(Diagram* diagram);
 	void SetupIsland(Diagram* diagram);
+	void SetupBiome(Diagram* diagram);
 	std::pair<double, double> GetMinDist(std::vector<std::pair<Point2, double>>& points, Point2& center, double radius);
 	
 };
