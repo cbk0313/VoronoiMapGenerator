@@ -135,6 +135,7 @@ public:
 	void SetupOcean(Diagram* diagram);
 
 	void CreateLand(Diagram* diagram);
+	void CreateTestLand(Diagram* diagram);
 	void RemoveLake(Diagram* diagram);
 	void CreateLake(Diagram* diagram);
 	void CreateRiver(Diagram* diagram);

@@ -178,6 +178,7 @@ void VoronoiDiagramGenerator::CreateWorld(Diagram* diagram) {
 	if (diagram) {
 		srand(setting.seed);
 		CreateLand(diagram);
+		//CreateTestLand(diagram);
 		SetupOcean(diagram);
 		RemoveLake(diagram);
 		CreateLake(diagram);
@@ -257,6 +258,18 @@ void VoronoiDiagramGenerator::CreateLand(Diagram* diagram) {
 	island_noise.SetSeed(setting.seed);
 	island_noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
 
+	/*
+	
+		double scale = 600;
+
+		double x = round(c->site.p.x / scale), y = round(c->site.p.y / scale);
+
+		noise.DomainWarp(x, y);
+		double value = noise.GetNoise(x, y);
+		*/
+
+	//noise.SetFractalType(FastNoiseLite::FractalType_FBm);
+
 	double continent_range = setting.radius * 0.5;
 	double island_range = setting.radius * 0.2;
 	
@@ -303,6 +316,7 @@ void VoronoiDiagramGenerator::CreateLand(Diagram* diagram) {
 			break;
 		}
 
+
 		//std::cout << lake_value << "\n";
 		if (is_land || (pow(island_value, 2) > 1 && island_dist_scale > 1)) { // Set Land
 		//if (pow(lake_value, 2) > 0.4 - lakeScale) { // Set Land
@@ -318,14 +332,47 @@ void VoronoiDiagramGenerator::CreateLand(Diagram* diagram) {
 			}
 		}
 
-
-	// Set Land ///lake min 0.26
 	}
-
-
-
-	
 }
+
+
+void VoronoiDiagramGenerator::CreateTestLand(Diagram* diagram) {
+
+	FastNoiseLite noise;
+	noise.SetSeed(setting.seed);
+	noise.SetNoiseType(FastNoiseLite::NoiseType_Cellular);
+	noise.SetCellularReturnType(FastNoiseLite::CellularReturnType_CellValue);
+	noise.SetDomainWarpType(FastNoiseLite::DomainWarpType_OpenSimplex2);
+	noise.SetDomainWarpAmp(100);
+	
+	//noise.SetFractalType(FastNoiseLite::FractalType_FBm);
+
+	for (Cell* c : diagram->cells) {
+
+		double scale = 600;
+
+		double x = round(c->site.p.x / scale), y = round(c->site.p.y / scale);
+
+		noise.DomainWarp(x, y);
+		double value = noise.GetNoise(x, y);
+	
+		//std::cout << lake_value << "\n";
+		if (value > 0.7) { // Set Land
+			//if (pow(lake_value, 2) > 0.4 - lakeScale) { // Set Land
+			c->detail.SetTerrain(Terrain::LAND);
+		}
+		else {
+			c->detail.SetHighestPeak(false);
+			for (HalfEdge* he : c->halfEdges) {
+				if (!he->edge->rSite) { // Check whether it is the outermost border.
+					c->detail.SetEdge(true);
+					break;
+				}
+			}
+		}
+	}
+}
+
 
 
 void VoronoiDiagramGenerator::RemoveLake(Diagram* diagram) {
@@ -432,6 +479,13 @@ void VoronoiDiagramGenerator::CreateLake(Diagram* diagram) {
 }
 
 void VoronoiDiagramGenerator::SetupElevation(Diagram* diagram) {
+	FastNoiseLite flat_noise;
+	flat_noise.SetSeed(setting.seed);
+	flat_noise.SetNoiseType(FastNoiseLite::NoiseType_Cellular);
+	flat_noise.SetCellularReturnType(FastNoiseLite::CellularReturnType_CellValue);
+	flat_noise.SetDomainWarpType(FastNoiseLite::DomainWarpType_OpenSimplex2);
+	flat_noise.SetDomainWarpAmp(100);
+
 	std::queue<Cell*> landQueue;
 	std::queue<Cell*> lakeQueue;
 
@@ -496,9 +550,22 @@ void VoronoiDiagramGenerator::SetupElevation(Diagram* diagram) {
 			}
 			else if (tcd.GetTerrain() == Terrain::LAND) {
 				land_cnt++;
+				//if (tcd.GetElevation() == 0) {
 				if (tcd.GetElevation() == 0) {
 					//tcd.GetElevation() = cd.GetElevation() + 1;
-					tcd.SetElevation(cd.GetElevation() + 1);
+
+					double flat_scale = 600;
+					double flat_x = round(targetCell->site.p.x / flat_scale), flat_y = round(targetCell->site.p.y / flat_scale);
+
+					flat_noise.DomainWarp(flat_x, flat_y);
+					double flat_value = flat_noise.GetNoise(flat_x, flat_y);
+					if (flat_value <= 0.7) {
+						tcd.SetElevation(cd.GetElevation() + 1);
+					}
+					else {
+						tcd.SetElevation(cd.GetElevation());
+					}
+					
 					max_elevation = std::max(max_elevation, tcd.GetElevation());
 					if (is_lq) {
 						lakeQueue.push(targetCell);
@@ -608,7 +675,20 @@ void VoronoiDiagramGenerator::SetupIsland(Diagram* diagram) {
 
 void VoronoiDiagramGenerator::SetupBiome(Diagram* diagram) {
 
-
+	for (auto& item : diagram->islandUnion.unions) {
+		auto island = item.second;
+		for (auto& lake_union : island.lakeUnion.unions) {
+			for (auto lake : lake_union.second) {
+				Point2& p = lake->site.p;
+				for (auto he : lake->halfEdges) {
+					if (he->edge->lSite && he->edge->rSite) {
+						Cell* l_cell = he->edge->lSite->cell;
+						Cell* r_cell = he->edge->rSite->cell;
+					}
+				}
+			}
+		}
+	}
 }
 
 void VoronoiDiagramGenerator::CreateRiver(Diagram* diagram) {
