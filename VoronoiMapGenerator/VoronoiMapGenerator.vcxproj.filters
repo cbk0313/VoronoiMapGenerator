@@ -24,7 +24,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Data\MapData.h">
+    <ClInclude Include="Data\CellDetail.h">
       <Filter>Header Files\Data</Filter>
     </ClInclude>
     <ClInclude Include="BeachLine.h">
@@ -60,6 +60,18 @@
     <ClInclude Include="FastNoise\FastNoiseLite.h">
       <Filter>Header Files\FastNoise</Filter>
     </ClInclude>
+    <ClInclude Include="Data\UnionFind.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Data\Color.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Data\Buffer.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Data\Triangle.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BeachLine.cpp">
@@ -89,7 +101,16 @@
     <ClCompile Include="OpenGL_Example.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Data\MapData.cpp">
+    <ClCompile Include="Data\CellDetail.cpp">
+      <Filter>Source Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="Data\Buffer.cpp">
+      <Filter>Source Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="Data\Color.cpp">
+      <Filter>Source Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="Data\Triangle.cpp">
       <Filter>Source Files\Data</Filter>
     </ClCompile>
   </ItemGroup>

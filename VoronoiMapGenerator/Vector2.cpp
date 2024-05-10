@@ -1,4 +1,5 @@
 #include "Vector2.h"
+#include "Point2.h"
 
 Vector2::Vector2() : x(0), y(0) {}
 
@@ -7,6 +8,12 @@ Vector2::Vector2(const Vector2& v) : x(v[0]), y(v[1]) {}
 Vector2::Vector2(double _x, double _y) : x(_x), y(_y) {}
 
 Vector2& Vector2::operator=(const Vector2& a) {
+    x = a[0];
+    y = a[1];
+    return *this;
+}
+
+Vector2& Vector2::operator=(const Point2& a) {
     x = a[0];
     y = a[1];
     return *this;

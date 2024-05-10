@@ -22,7 +22,11 @@
     <ClInclude Include="BeachLine.h" />
     <ClInclude Include="Cell.h" />
     <ClInclude Include="CircleEventQueue.h" />
-    <ClInclude Include="Data\MapData.h" />
+    <ClInclude Include="Data\Buffer.h" />
+    <ClInclude Include="Data\CellDetail.h" />
+    <ClInclude Include="Data\Color.h" />
+    <ClInclude Include="Data\Triangle.h" />
+    <ClInclude Include="Data\UnionFind.h" />
     <ClInclude Include="Diagram.h" />
     <ClInclude Include="Edge.h" />
     <ClInclude Include="Epsilon.h" />
@@ -36,7 +40,10 @@
     <ClCompile Include="BeachLine.cpp" />
     <ClCompile Include="Cell.cpp" />
     <ClCompile Include="CircleEventQueue.cpp" />
-    <ClCompile Include="Data\MapData.cpp" />
+    <ClCompile Include="Data\Buffer.cpp" />
+    <ClCompile Include="Data\CellDetail.cpp" />
+    <ClCompile Include="Data\Color.cpp" />
+    <ClCompile Include="Data\Triangle.cpp" />
     <ClCompile Include="Diagram.cpp" />
     <ClCompile Include="Edge.cpp" />
     <ClCompile Include="OpenGL_Example.cpp" />

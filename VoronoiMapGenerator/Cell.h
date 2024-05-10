@@ -3,7 +3,7 @@
 #define _CELL_H_
 
 #include "Point2.h"
-#include "Data/MapData.h"
+#include "Data/CellDetail.h"
 #include <vector>
 
 struct cellBoundingBox {
@@ -31,17 +31,20 @@ struct Cell {
 private:
 	static unsigned int s_unique;
 	unsigned int unique;
+	CellDetail detail;
 public:
 	Site site;
 	std::vector<HalfEdge*> halfEdges;
 	bool closeMe;
 
-	CellDetail detail;
+
 
 	Cell() : closeMe(false), detail(CellDetail(this)) { unique = s_unique++; };
 	Cell(Point2 _site) : site(_site, this), closeMe(false), detail(CellDetail(this)) { unique = s_unique++; };
 
-	unsigned int getUnique() { return unique; };
+	unsigned int GetUnique() { return unique; };
+	CellDetail& GetDetail() { return detail; };
+	//bool IsInQueue
 
 	std::vector<Cell*> getNeighbors();
 	cellBoundingBox getBoundingBox();
@@ -53,6 +56,9 @@ public:
 	int pointIntersection(double x, double y);
 
 	static bool edgesCCW(HalfEdge* a, HalfEdge* b);
+	static void ResetUnique() { s_unique = 0; };
+	static unsigned int GetMaxUnique() { return s_unique; };
+	static unsigned int GetCellCnt() { return s_unique + 1; };
 };
 
 

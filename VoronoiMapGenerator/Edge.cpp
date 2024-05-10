@@ -1,6 +1,22 @@
 #include "Edge.h"
 #include "Cell.h"
 #include <cmath>
+#include "Cell.h"
+
+bool Vertex::Find(Cell* c) {
+	for (Cell* cell : cells) {
+		if (cell == c) {
+			return true;
+		}
+	}
+	return false;
+}
+
+
+void Vertex::Insert(Cell* c) {
+	cells.push_back(c);
+}
+
 
 HalfEdge::HalfEdge(Edge* e, Site* lSite, Site* rSite) {
 	site = lSite;
@@ -16,14 +32,14 @@ HalfEdge::HalfEdge(Edge* e, Site* lSite, Site* rSite) {
 		angle = atan2(rSite->p.y - lSite->p.y, rSite->p.x - lSite->p.x);
 	}
 	else {
-		Point2& va = *(e->vertA);
-		Point2& vb = *(e->vertB);
+		Vertex* va = (e->vertA);
+		Vertex* vb = (e->vertB);
 
-		angle = (e->lSite == lSite) ? atan2(vb.x - va.x, va.y - vb.y) : atan2(va.x - vb.x, vb.y - va.y);
+		angle = (e->lSite == lSite) ? atan2(vb->point.x - va->point.x, va->point.y - vb->point.y) : atan2(va->point.x - vb->point.x, vb->point.y - va->point.y);
 	}
 }
 
-void Edge::setStartPoint(Site* _lSite, Site* _rSite, Point2* vertex) {
+void Edge::setStartPoint(Site* _lSite, Site* _rSite, Vertex* vertex) {
 	if (!vertA && !vertB) {
 		vertA = vertex;
 		lSite = _lSite;
@@ -37,6 +53,6 @@ void Edge::setStartPoint(Site* _lSite, Site* _rSite, Point2* vertex) {
 	}
 }
 
-void Edge::setEndPoint(Site* _lSite, Site* _rSite, Point2* vertex) {
+void Edge::setEndPoint(Site* _lSite, Site* _rSite, Vertex* vertex) {
 	setStartPoint(_rSite, _lSite, vertex);
 }

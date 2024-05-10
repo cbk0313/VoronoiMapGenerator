@@ -30,12 +30,12 @@ cellBoundingBox Cell::getBoundingBox() {
 	double xmax = -xmin;
 	double ymax = xmax;
 
-	Point2* vert;
+	Vertex* vert;
 	while (edgeCount--) {
 		vert = halfEdges[edgeCount]->startPoint();
 
-		double vx = vert->x;
-		double vy = vert->y;
+		double vx = vert->point.x;
+		double vy = vert->point.y;
 
 		if (vx < xmin) xmin = vx;
 		if (vy < ymin) ymin = vy;
@@ -66,15 +66,15 @@ int Cell::pointIntersection(double x, double y) {
 	//   "on the line segment"
 	HalfEdge* he;
 	size_t edgeCount = halfEdges.size();
-	Point2 p0;
-	Point2 p1;
+	Vertex* p0;
+	Vertex* p1;
 	double r;
 
 	while (edgeCount--) {
 		he = halfEdges[edgeCount];
-		p0 = *he->startPoint();
-		p1 = *he->endPoint();
-		r = (y - p0.y)*(p1.x - p0.x) - (x - p0.x)*(p1.y - p0.y);
+		p0 = he->startPoint();
+		p1 = he->endPoint();
+		r = (y - p0->point.y)*(p1->point.x - p0->point.x) - (x - p0->point.x)*(p1->point.y - p0->point.y);
 
 		if (r == 0) {
 			return 0;

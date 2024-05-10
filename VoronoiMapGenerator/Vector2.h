@@ -6,6 +6,8 @@
 #include <math.h>
 #include <sstream>
 
+class Point2;
+
 class Vector2 {
 public:
     Vector2();
@@ -13,6 +15,7 @@ public:
     Vector2(double _x, double _y);
   
     Vector2& operator=(const Vector2& a);
+    Vector2& operator=(const Point2& a);
 
     const double &operator[](int n) const;
     double &operator[](int n);

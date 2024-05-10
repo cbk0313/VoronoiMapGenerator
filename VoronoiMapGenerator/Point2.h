@@ -5,7 +5,7 @@
 #include <iostream>
 #include <sstream>
 
-class Point2{
+class Point2 {
 public:
 	double x, y;
 
@@ -21,15 +21,23 @@ public:
     Point2& operator+=(const Vector2& v);
     Point2& operator-=(const Vector2& v);
     Point2& operator*=(double s);
+    Point2& operator/=(double s);
 
-    Vector2 operator-(const Point2 & p) const;
+    Point2 operator-(const Point2 & p) const;
     Point2 operator+(const Vector2 & v) const;
     Point2 operator-(const Vector2 & v) const;
+    Point2 operator+(const Point2 & v) const;
+    //Point2 operator-(const Point2 & v) const;
+    //Vector2 operator=(const Vector2D& other) {
+    Point2 operator*(const double s) const;
+    Point2 operator/(const double s) const;
 
     double distanceTo(const Point2& p) const;
     double distanceToSquared(const Point2& p) const;
     double distanceFromOrigin() const;
     double distanceFromOriginSquared() const;
+
+    Point2 Normailize() const;
 
     bool operator==( const Point2 &p ) const;
     bool operator!=( const Point2 &p ) const;

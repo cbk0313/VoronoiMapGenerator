@@ -7,7 +7,7 @@
 #include <forward_list>
 #include <limits>
 
-treeNode<BeachSection>* VoronoiDiagramGenerator::addBeachSection(Site* site, Diagram* diagram) {
+treeNode<BeachSection>* VoronoiDiagramGenerator::addBeachSection(Site* site) {
 	double x = site->p.x;
 	double directrix = site->p.y;
 
@@ -121,7 +121,7 @@ treeNode<BeachSection>* VoronoiDiagramGenerator::addBeachSection(Site* site, Dia
 		double d = 2 * (bx*cy - by*cx);
 		double hb = bx*bx + by*by;
 		double hc = cx*cx + cy*cy;
-		Point2* vertex = diagram->createVertex((cy*hb - by*hc) / d + ax, (bx*hc - cx*hb) / d + ay);
+		Vertex* vertex = diagram->createVertex((cy*hb - by*hc) / d + ax, (bx*hc - cx*hb) / d + ay);
 
 		// one transition disappears
 		rSection->data.edge->setStartPoint(lSite, rSite, vertex);
@@ -166,11 +166,11 @@ treeNode<BeachSection>* VoronoiDiagramGenerator::addBeachSection(Site* site, Dia
 	return nullptr;
 }
 
-void VoronoiDiagramGenerator::removeBeachSection(treeNode<BeachSection>* section, Diagram* diagram) {
+void VoronoiDiagramGenerator::removeBeachSection(treeNode<BeachSection>* section) {
 	CircleEvent circle = section->data.circleEvent->data;
 	double x = circle.x;
 	double y = circle.yCenter;
-	Point2* vertex = diagram->createVertex(x, y);
+	Vertex* vertex = diagram->createVertex(x, y);
 	treeNode<BeachSection>* prev = section->prev;
 	treeNode<BeachSection>* next = section->next;
 	std::vector<treeNode<BeachSection>*> disappearingTransitions;

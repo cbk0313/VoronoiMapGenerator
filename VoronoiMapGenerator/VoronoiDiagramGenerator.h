@@ -92,29 +92,31 @@ public:
 	inline double GetLakeRadiusMin() { return lake_radius_min; };
 
 };
-
+struct CellVector;
 class VoronoiDiagramGenerator {
 
 private:
 
 	bool has_created_ocean;
-	//Diagram* diagram;
+	//;
 	CircleEventQueue* circleEventQueue;
 	//std::vector<Point2*>* siteEventQueue;
 	BoundingBox	boundingBox;
 	GenerateSetting setting;
-	unsigned int max_elevation;
-
+	int max_elevation;
+	Diagram* diagram;
 public:
-	VoronoiDiagramGenerator() : max_elevation(0), has_created_ocean(false), circleEventQueue(nullptr), beachLine(nullptr) {};
+	VoronoiDiagramGenerator() : diagram(nullptr), max_elevation(0), has_created_ocean(false), circleEventQueue(nullptr), beachLine(nullptr) {};
 	~VoronoiDiagramGenerator() {};
 
-	Diagram* compute(std::vector<Point2>& sites, BoundingBox bbox);
-	Diagram* relax(Diagram* diagram);
+	Diagram* GetDiagram();
 
-	Diagram* relaxLoop(int num, Diagram* diagram);
+	void compute(std::vector<Point2>& sites, BoundingBox bbox);
+	void relax();
 
-	void CreateWorld(Diagram* diagram);
+	void relaxLoop(int num);
+
+	void CreateWorld();
 
 	inline void SetSetting(GenerateSetting newSetting) { setting = newSetting; };
 	inline GenerateSetting& GetSetting() { return setting; };
@@ -123,26 +125,34 @@ public:
 
 	//BeachLine
 	RBTree<BeachSection>* beachLine;
-	treeNode<BeachSection>* addBeachSection(Site* site, Diagram* diagram);
+	treeNode<BeachSection>* addBeachSection(Site* site);
 	inline void detachBeachSection(treeNode<BeachSection>* section);
-	void removeBeachSection(treeNode<BeachSection>* section, Diagram* diagram);
+	void removeBeachSection(treeNode<BeachSection>* section);
 	double leftBreakpoint(treeNode<BeachSection>* section, double directrix);
 	double rightBreakpoint(treeNode<BeachSection>* section, double directrix);
 
 	inline double CalcDistance(const Point2& a, const Point2& b);
 	inline double GetRandom();
 
-	void SetupOcean(Diagram* diagram);
+	void SetupOcean();
 
-	void CreateLand(Diagram* diagram);
-	void CreateTestLand(Diagram* diagram);
-	void RemoveLake(Diagram* diagram);
-	void CreateLake(Diagram* diagram);
-	void CreateRiver(Diagram* diagram);
-	void SetupElevation(Diagram* diagram);
-	void SetupLandUnion(Diagram* diagram);
-	void SetupIsland(Diagram* diagram);
-	void SetupBiome(Diagram* diagram);
+	void CreateLand();
+	void CreateTestLand();
+	void RemoveLake();
+	void CreateLake();
+	void CreateRiver();
+	void SetupElevation(CellVector& coastBuffer);
+	void SetupPeak(CellVector& coastBuffer);
+	void SetupCoast(CellVector& coastBuffer);
+	void SetupLandUnion();
+	void SetupIsland();
+	void SetupBiome();
+	void SetupColor();
+
+	void SaveImage() {
+
+	}
+
 	std::pair<double, double> GetMinDist(std::vector<std::pair<Point2, double>>& points, Point2& center, double radius);
 	
 };

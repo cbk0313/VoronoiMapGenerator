@@ -40,8 +40,14 @@ Point2& Point2::operator*=(double s) {
     return *this;
 }
 
-Vector2 Point2::operator-(const Point2 & p) const {
-    return Vector2(x - p.x, y - p.y);
+Point2& Point2::operator/=(double s) {
+    x /= s;
+    y /= s;
+    return *this;
+}
+
+Point2 Point2::operator-(const Point2 & p) const {
+    return Point2(x - p.x, y - p.y);
 }
 
 Point2 Point2::operator+(const Vector2 & v) const {
@@ -51,6 +57,24 @@ Point2 Point2::operator+(const Vector2 & v) const {
 Point2 Point2::operator-(const Vector2 & v) const {
     return Point2(x - v[0], y - v[1]);
 }
+
+Point2 Point2::operator+(const Point2& v) const {
+    return Point2(x + v[0], y + v[1]);
+}
+
+//Point2 Point2::operator -(const Point2& v) {
+//    return Point2(x - v[0], y - v[1]);
+//}
+
+
+Point2 Point2::operator*(const double s) const {
+    return Point2(x * s, y * s);
+}
+
+Point2 Point2::operator/(const double s) const {
+    return Point2(x / s, y / s);
+}
+
 
 double Point2::distanceTo(const Point2& p) const {
     return sqrt((p[0] - x) * (p[0] - x) + 
@@ -68,6 +92,11 @@ double Point2::distanceFromOrigin() const {
 
 double Point2::distanceFromOriginSquared() const {
     return x * x + y * y;
+}
+
+Point2 Point2::Normailize() const {
+    double dist = distanceFromOrigin();
+    return Point2(x / dist, y / dist);
 }
 
 bool Point2::operator==( const Point2 &p ) const {

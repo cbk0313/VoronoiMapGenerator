@@ -1,4 +1,4 @@
-#include "Point2.h"
+﻿#include "Point2.h"
 #include "Vector2.h"
 #include "VoronoiDiagramGenerator.h"
 #include <vector>
@@ -6,6 +6,7 @@
 #include <iostream>
 #include <algorithm>
 #include <limits>
+#include <Windows.h>
 
 #include "FastNoise/FastNoiseLite.h"
 
@@ -28,7 +29,9 @@
 // Function prototypes
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 // Window dimensions
-const GLuint WINDOW_WIDTH = 1080, WINDOW_HEIGHT = 1080;
+const GLuint WINDOW_WIDTH = 1080 * 1, WINDOW_HEIGHT = 1080 * 1;
+const int IMAGE_SCALE = 4;
+const GLuint IMAGE_WIDTH = WINDOW_WIDTH * IMAGE_SCALE, IMAGE_HEIGHT = WINDOW_HEIGHT * IMAGE_SCALE;
 // Shaders
 const GLchar* vertexShaderSource =
 	"#version 330 core\n"
@@ -52,8 +55,30 @@ int relax = 0;
 bool startOver = true;
 bool relaxForever = false;
 bool oneSec = false;
+
+bool draw_line = true;
+bool draw_white_dot = true;
+bool draw_special_dot = true;
+bool save_image = false;
+Point2 cur_pos = Point2(0, 0);
+double cur_scale = 0;
+
 std::clock_t startOneSec = NULL;
 unsigned int oneSecCnt = 0;
+
+bool mouse_left_down = false;
+
+
+GLuint fbo;
+GLuint texture;
+
+
+
+
+void move_screen(double x, double y, double z) {
+	cur_pos = cur_pos + Point2(x, y);
+	glTranslatef(x, y, z);
+}
 
 // Is called whenever a key is pressed/released via GLFW
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode) {
@@ -69,11 +94,130 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		if (relaxForever) relaxForever = false;
 		else relaxForever = true;
 	}
-	if (key == GLFW_KEY_S && action == GLFW_PRESS) {
+	if (key == GLFW_KEY_O && action == GLFW_PRESS) {
 		startOneSec = std::clock();
 		oneSec = true;
 		oneSecCnt = 0;
 	}
+	if (key == GLFW_KEY_L && action == GLFW_PRESS) {
+		draw_line = !draw_line;
+	}
+
+	if (key == GLFW_KEY_D && action == GLFW_PRESS && !(mode & GLFW_MOD_SHIFT)) {
+		draw_white_dot = !draw_white_dot;
+	}
+	
+	if (key == GLFW_KEY_D && action == GLFW_PRESS && (mode & GLFW_MOD_SHIFT) ) {
+		draw_special_dot = !draw_special_dot;
+	}
+	
+	if (key == GLFW_KEY_S && action == GLFW_PRESS) {
+		save_image = true;
+	}
+
+	if (key == GLFW_KEY_LEFT) {
+		move_screen(-0.01f, 0.0f, 0);
+	}
+	if (key == GLFW_KEY_RIGHT) {
+		move_screen(0.01f, 0.0f, 0);
+	}
+	if (key == GLFW_KEY_UP) {
+		move_screen(0.0f, 0.01f, 0);
+	}
+	if (key == GLFW_KEY_DOWN) {
+		move_screen(0.0f, -0.01f, 0);
+	}
+
+	
+}
+
+void screen_dump()
+{
+	//W: window with H: window height
+	glReadBuffer(GL_FRONT);
+	char* pixel_data = new char[IMAGE_WIDTH * IMAGE_HEIGHT * 300];
+	//char pixel_data[IMAGE_WIDTH * IMAGE_HEIGHT * 300];
+	//glReadPixels(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT, GL_BGR_EXT, GL_UNSIGNED_BYTE, pixel_data);
+
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glGetTexImage(GL_TEXTURE_2D, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, pixel_data);
+
+	BITMAPFILEHEADER bf;
+	BITMAPINFOHEADER bi;
+	FILE* out = nullptr;
+	char buff[256];
+	const char* filename = "voronoi_map.bmp";
+	fopen_s(&out, filename, "wb");
+	char* data = pixel_data;
+	memset(&bf, 0, sizeof(bf));
+	memset(&bi, 0, sizeof(bi));
+	bf.bfType = 'MB';
+	bf.bfSize = sizeof(bf) + sizeof(bi) + IMAGE_WIDTH * IMAGE_HEIGHT * 3;
+	bf.bfOffBits = sizeof(bf) + sizeof(bi);
+	bi.biSize = sizeof(bi);
+	bi.biWidth = IMAGE_WIDTH;
+	bi.biHeight = IMAGE_HEIGHT;
+	bi.biPlanes = 1;
+	bi.biBitCount = 24;
+	bi.biSizeImage = IMAGE_WIDTH * IMAGE_HEIGHT * 3;
+	fwrite(&bf, sizeof(bf), 1, out);
+	fwrite(&bi, sizeof(bi), 1, out);
+	fwrite(data, sizeof(unsigned char), IMAGE_HEIGHT * IMAGE_WIDTH * 3, out);
+	fclose(out);
+	delete[] pixel_data;
+
+	std::cout << "file saved: " << filename << "\n";
+}
+
+void mouse_button_callback(GLFWwindow* window, int key, int action, int mods)
+{
+	if (key == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+		mouse_left_down = true;
+	}
+	if (key == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
+		mouse_left_down = false;
+	}
+}
+
+double pre_xpos = 0, pre_ypos = 0;
+void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	double x = xpos - pre_xpos, y = ypos - pre_ypos;
+	double scale = (1 + pow(cur_scale, 2));
+	x *= 0.001 / scale;
+	y *= 0.001 / scale;
+	//std::cout << xpos << std::endl;
+	if (mouse_left_down) {
+		move_screen(x, -y, 0);
+	}
+	pre_xpos = xpos;
+	pre_ypos = ypos;
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	double temp_offset = yoffset * 0.01;
+	yoffset *= 0.03;
+	cur_scale += yoffset;
+	
+	if (cur_scale <= 0) {
+		cur_scale = 0;
+	}
+	else {
+		//std::cout << cur_scale << "\n";
+
+		double value = sqrt(cur_scale);
+
+		glScalef(1 + yoffset, 1 + yoffset, 1);
+		move_screen(cur_pos.x * temp_offset / value, cur_pos.y * temp_offset / value, 0);
+		//if (yoffset > 0) {
+		//	glScalef(xoffset, xoffset, 1);
+		//}
+		//else if (yoffset < 0) {
+		//	// 휠을 아래로 스크롤한 경우의 처리
+		//}
+	}
+	
 }
 
 bool sitesOrdered(const Point2& s1, const Point2& s2) {
@@ -121,6 +265,207 @@ void genRandomSites(int seed, std::vector<Point2>& sites, BoundingBox& bbox, uns
 	}
 }
 
+
+void draw_image(Diagram* diagram, unsigned int dimension) {
+
+	GLfloat pointSize = 4;
+	GLfloat whitePointSize = 1;
+
+	glBegin(GL_TRIANGLES);
+	for (Cell* c : diagram->cells) {
+		//for (Edge* e : diagram->edges) {
+		for (HalfEdge* hf : c->halfEdges) {
+			Edge* e = hf->edge;
+
+			Site* s = e->lSite->cell == c ? e->lSite : e->rSite;
+			Site* opposite_s = e->rSite && e->lSite->cell == c ? e->rSite : e->lSite;
+
+			Point2& center = c->site.p;
+			Point2& pA = e->vertA->point;
+			Point2& pB = e->vertB->point;
+
+			Point2 edge_mp = (pA + pB) / 2;
+			Color colorA = e->vertA->color;;
+			Color colorB = e->vertB->color;;
+			Color middle_c = e->color;
+			CellDetail& cd = c->GetDetail();
+			CellDetail& tcd = opposite_s->cell->GetDetail();
+		
+			Color center_c = s->cell->GetDetail().GetColor();
+
+			//middle_c = (colorA + colorB) / 2;
+
+			glColor4f((GLfloat)center_c.r, (GLfloat)center_c.g, (GLfloat)center_c.b, (GLfloat)center_c.a);
+			glVertex3d(normalize(center.x, dimension), -normalize(center.y, dimension), 0.0);
+
+
+			glColor4f((GLfloat)middle_c.r, (GLfloat)middle_c.g, (GLfloat)middle_c.b, (GLfloat)middle_c.a);
+			glVertex3d(normalize(edge_mp.x, dimension), -normalize(edge_mp.y, dimension), 0.0);
+
+
+			glColor4f((GLfloat)colorA.r, (GLfloat)colorA.g, (GLfloat)colorA.b, (GLfloat)colorA.a);
+			glVertex3d(normalize(pA.x, dimension), -normalize(pA.y, dimension), 0.0);
+
+
+
+
+			glColor4f((GLfloat)center_c.r, (GLfloat)center_c.g, (GLfloat)center_c.b, (GLfloat)center_c.a);
+			glVertex3d(normalize(center.x, dimension), -normalize(center.y, dimension), 0.0);
+
+			glColor4f((GLfloat)colorB.r, (GLfloat)colorB.g, (GLfloat)colorB.b, (GLfloat)colorB.a);
+			glVertex3d(normalize(pB.x, dimension), -normalize(pB.y, dimension), 0.0);
+
+			glColor4f((GLfloat)middle_c.r, (GLfloat)middle_c.g, (GLfloat)middle_c.b, (GLfloat)middle_c.a);
+			glVertex3d(normalize(edge_mp.x, dimension), -normalize(edge_mp.y, dimension), 0.0);
+
+
+		}
+	}
+	glEnd();
+
+
+	if (draw_line) {
+		for (Edge* e : diagram->edges) {
+			Point2& p1 = e->vertA->point;
+			Point2& p2 = e->vertB->point;
+
+			glBegin(GL_LINES);
+			glColor4f(0, 0, 0, 1);
+			glVertex3d(normalize(p1[0], dimension), -normalize(p1[1], dimension), 0.0);
+			glVertex3d(normalize(p2[0], dimension), -normalize(p2[1], dimension), 0.0);
+			glEnd();
+		}
+	}
+
+	if (false) {
+
+
+		for (Cell* c : diagram->cells) {
+			size_t edgeCount = c->halfEdges.size();
+			for (HalfEdge* hf : c->halfEdges) {
+				/*if (!hf->edge->check) {
+					hf->edge->check = true;
+					std::cout << "checked!\n";
+				}*/
+				//glBegin(GL_LINES);
+				//glBegin(GL_TRIANGLES);
+				Point2& p1 = hf->startPoint()->point;
+				Point2& p2 = hf->endPoint()->point;
+				//glColor4d((rand() / (double)RAND_MAX) * 255, (rand() / (double)RAND_MAX) * 255, (rand() / (double)RAND_MAX) * 255, 255);
+				//double color1 = (rand() / (double)RAND_MAX);
+				//double color2 = (rand() / (double)RAND_MAX);
+				//double color3 = (rand() / (double)RAND_MAX);
+
+				//glColor4d(c->color1, c->color2, c->color3, 0.2f);
+
+				//glVertex3d(normalize(c->site.p[0], dimension), -normalize(c->site.p[1], dimension), 0.0);
+				//glVertex3d(normalize(p1[0], dimension), -normalize(p1[1], dimension), 0.0);
+				//glVertex3d(normalize(p2[0], dimension), -normalize(p2[1], dimension), 0.0);
+				//glEnd();
+
+
+			}
+		}
+	}
+
+	if (draw_white_dot || draw_special_dot) {
+
+
+		for (Cell* c : diagram->cells) {
+			Point2& p = c->site.p;
+
+
+			Point2& p2 = c->GetDetail().GetUnionFind().UnionFindCell(Terrain::PEAK)->site.p;
+
+
+			if (draw_special_dot && c->GetDetail().IsHighestPeak()) {
+				glPointSize(pointSize);
+				glBegin(GL_POINTS);
+				glColor4f(0, 0, 0, 1);
+				glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
+				glEnd();
+			}
+			else if (draw_special_dot && c->GetDetail().IsPeak()) {
+
+				/*	glPointSize(8);
+					glBegin(GL_POINTS);
+					glColor4f((GLfloat)1, (GLfloat)0, (GLfloat)0, (GLfloat)0.5);
+					glVertex3d(normalize(p2.x, dimension), -normalize(p2.y, dimension), 0.0);
+					glEnd();*/
+
+
+				glPointSize(pointSize);
+				glBegin(GL_POINTS);
+				glColor4f((GLfloat)0.7, (GLfloat)0.7, (GLfloat)0, (GLfloat)1);
+				glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
+				glEnd();
+			}
+			else if (draw_special_dot && c->GetDetail().GetTerrain() == Terrain::COAST) {
+				glPointSize(pointSize);
+				glBegin(GL_POINTS);
+				glColor4f((GLfloat)0.4, (GLfloat)0.7, (GLfloat)1, (GLfloat)1);
+				glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
+				glEnd();
+			}
+			else if (draw_white_dot) {
+				glPointSize(whitePointSize);
+				glBegin(GL_POINTS);
+				glColor4f(1, 1, 1, 1);
+				glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
+				glEnd();
+			}
+
+
+
+		}
+
+		if (draw_special_dot) {
+
+
+			glPointSize(pointSize);
+			glBegin(GL_POINTS);
+			for (auto item : diagram->islandUnion.unions) {
+				auto island = item.second;
+				for (auto lake_union : island.lakeUnion.unions) {
+
+					glColor4f((GLfloat)0, (GLfloat)0, (GLfloat)1, (GLfloat)1);
+					for (auto lake : lake_union.second) {
+						Point2& p = lake->site.p;
+						glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
+					}
+				}
+
+				/*
+				color = 0;
+				for (auto peak_union : island.highestPeakUnion.unions) {
+					for (auto peak : peak_union.second) {
+						Point2& p = peak->site.p;
+						glColor4f(0, color, 1 - color, 1);
+						glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
+					}
+					color += 0.4;
+				}*/
+
+
+				//auto island = item.second;
+				//for (auto cell : island.land) {
+
+				//	Point2& p = cell->site.p;
+				//	glColor4f(1 - color, color, 0, 1);
+				//	glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
+				//}
+				//color += 0.5;
+
+
+			}
+			glEnd();
+		}
+
+	}
+
+}
+
+
 int main() {
 	unsigned int nPoints = 10000;
 	unsigned int dimension = 1000000;
@@ -129,17 +474,13 @@ int main() {
 	double radius = dimension / 2.1;
 
 	unsigned int loop_cnt = 3;
-	GLfloat pointSize = 4;
-	GLfloat whitePointSize = 1;
 
 	VoronoiDiagramGenerator vdg = VoronoiDiagramGenerator();
 	vdg.SetSetting(GenerateSetting(MapType::CONTINENT, seed, radius, 0.5, 0.5, 10, radius / 3, radius / 5, 50, radius / 15, radius / 20));
-	Diagram* diagram = nullptr;
 	
 	std::vector<Point2>* sites = nullptr;
 	BoundingBox bbox;
 
-	bool draw_line = true;
 
 	// Init GLFW
 	glfwInit();
@@ -147,20 +488,28 @@ int main() {
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 	// Create a GLFWwindow object that we can use for GLFW's functions
 	GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Voronoi Diagram Generator", nullptr, nullptr);
+	//GLFWwindow* window2 = glfwCreateWindow(IMAGE_WIDTH, IMAGE_HEIGHT, "Voronoi Diagram Generator", nullptr, nullptr);
 	glfwMakeContextCurrent(window);
 	// Set the required callback functions
 	glfwSetKeyCallback(window, key_callback);
+	glfwSetCursorPosCallback(window, cursor_position_callback);
+	glfwSetScrollCallback(window, scroll_callback);
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	// Set this to true so GLEW knows to use a modern approach to retrieving function pointers and extensions
 	glewExperimental = GL_TRUE;
 	// Initialize GLEW to setup the OpenGL Function pointers
 	glewInit();
 	// Define the viewport dimensions
-	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+
 	// Uncommenting this call will result in wireframe polygons.
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
+	
+	
 	while (!glfwWindowShouldClose(window)) {
+		
+
 		// Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
 		glfwPollEvents();
 
@@ -183,16 +532,15 @@ int main() {
 			//std::cin >> nPoints;
 			genRandomSites(seed, *sites, bbox, dimension, nPoints);
 			start = std::clock();
-			if (diagram) delete diagram;
-			diagram = vdg.compute(*sites, bbox);
+			vdg.compute(*sites, bbox);
 
-			diagram = vdg.relaxLoop(loop_cnt, diagram);
-			vdg.CreateWorld(diagram);
+			vdg.relaxLoop(loop_cnt);
+			vdg.CreateWorld();
 
 			duration = 1000 * (std::clock() - start) / (double)CLOCKS_PER_SEC;
 			std::cout << "Computing a diagram of " << nPoints << " points took " << duration << "ms.\n";
-
-			unsigned int lake_cnt = 0;
+			Diagram* diagram = vdg.GetDiagram();
+			size_t lake_cnt = 0;
 			for (auto item : diagram->islandUnion.unions) {
 				lake_cnt += item.second.lakeUnion.unions.size();
 			}
@@ -204,136 +552,6 @@ int main() {
 
 
 	
-
-		for (Edge* e : diagram->edges) {
-			if (e->vertA && e->vertB) {
-				Point2& p1 = *e->vertA;
-				Point2& p2 = *e->vertB;
-				Color l_c = e->lSite->cell->detail.GetColor();
-				glBegin(GL_TRIANGLES);
-				glColor4f((GLfloat)l_c.r, (GLfloat)l_c.g, (GLfloat)l_c.b, (GLfloat)l_c.a);
-				glVertex3d(normalize(e->lSite->cell->site.p[0], dimension), -normalize(e->lSite->cell->site.p[1], dimension), 0.0);
-				glVertex3d(normalize(p1[0], dimension), -normalize(p1[1], dimension), 0.0);
-				glVertex3d(normalize(p2[0], dimension), -normalize(p2[1], dimension), 0.0);
-				glEnd();
-
-
-				if (e->rSite) {
-					Color r_c = e->rSite->cell->detail.GetColor();
-					glBegin(GL_TRIANGLES);
-					glColor4f((GLfloat)r_c.r, (GLfloat)r_c.g, (GLfloat)r_c.b, (GLfloat)r_c.a);
-					glVertex3d(normalize(e->rSite->cell->site.p[0], dimension), -normalize(e->rSite->cell->site.p[1], dimension), 0.0);
-					glVertex3d(normalize(p1[0], dimension), -normalize(p1[1], dimension), 0.0);
-					glVertex3d(normalize(p2[0], dimension), -normalize(p2[1], dimension), 0.0);
-					glEnd();
-				}
-			}
-		}
-
-
-
-		if (draw_line) {
-			for (Edge* e : diagram->edges) {
-				Point2& p1 = *e->vertA;
-				Point2& p2 = *e->vertB;
-
-				glBegin(GL_LINES);
-				glColor4f(0, 0, 0, 1);
-				glVertex3d(normalize(p1[0], dimension), -normalize(p1[1], dimension), 0.0);
-				glVertex3d(normalize(p2[0], dimension), -normalize(p2[1], dimension), 0.0);
-				glEnd();
-			}
-		}
-
-		for (Cell* c : diagram->cells) {
-			size_t edgeCount = c->halfEdges.size();
-			for (HalfEdge* hf : c->halfEdges) {
-				/*if (!hf->edge->check) {
-					hf->edge->check = true;
-					std::cout << "checked!\n";
-				}*/
-				//glBegin(GL_LINES);
-				//glBegin(GL_TRIANGLES);
-				Point2& p1 = *hf->startPoint();
-				Point2& p2 = *hf->endPoint();
-				//glColor4d((rand() / (double)RAND_MAX) * 255, (rand() / (double)RAND_MAX) * 255, (rand() / (double)RAND_MAX) * 255, 255);
-				//double color1 = (rand() / (double)RAND_MAX);
-				//double color2 = (rand() / (double)RAND_MAX);
-				//double color3 = (rand() / (double)RAND_MAX);
-				
-				//glColor4d(c->color1, c->color2, c->color3, 0.2f);
-
-				//glVertex3d(normalize(c->site.p[0], dimension), -normalize(c->site.p[1], dimension), 0.0);
-				//glVertex3d(normalize(p1[0], dimension), -normalize(p1[1], dimension), 0.0);
-				//glVertex3d(normalize(p2[0], dimension), -normalize(p2[1], dimension), 0.0);
-				//glEnd();
-
-				
-			}
-		}
-		
-		for (Cell* c : diagram->cells) {
-			Point2& p = c->site.p;
-			if (c->detail.IsHighestPeak()) {
-				glPointSize(pointSize);
-				glBegin(GL_POINTS);
-				glColor4f(0, 0, 0, 1);
-			}
-			else if (c->detail.IsPeak()) {
-				glPointSize(pointSize);
-				glBegin(GL_POINTS);
-				glColor4f((GLfloat)0.7, (GLfloat)0.7, (GLfloat)0, (GLfloat)1);
-				
-			}
-			else {
-				glPointSize(whitePointSize);
-				glBegin(GL_POINTS);
-				glColor4f(1, 1, 1, 1);
-			}
-			
-			glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
-			glEnd();
-		}
-		
-
-		glPointSize(pointSize);
-		glBegin(GL_POINTS);
-		for (auto item : diagram->islandUnion.unions) {
-			auto island = item.second;
-			for (auto lake_union : island.lakeUnion.unions) {
-
-				glColor4f((GLfloat)0, (GLfloat)0, (GLfloat)1, (GLfloat)1);
-				for (auto lake : lake_union.second) {
-					Point2& p = lake->site.p;
-					glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
-				}
-			}
-			
-			/*
-			color = 0;
-			for (auto peak_union : island.highestPeakUnion.unions) {
-				for (auto peak : peak_union.second) {
-					Point2& p = peak->site.p;
-					glColor4f(0, color, 1 - color, 1);
-					glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
-				}
-				color += 0.4;
-			}*/
-
-
-			//auto island = item.second;
-			//for (auto cell : island.land) {
-
-			//	Point2& p = cell->site.p;
-			//	glColor4f(1 - color, color, 0, 1);
-			//	glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
-			//}
-			//color += 0.5;
-
-		
-		}
-		glEnd();
-		
 
 		if (relax || relaxForever || startOneSec) {
 			vdg.GetSetting().SetSeed(vdg.GetSetting().GetSeed() + 1);
@@ -348,15 +566,15 @@ int main() {
 			//diagram = vdg.relax();
 			sites = new std::vector<Point2>();
 			genRandomSites(vdg.GetSetting().GetSeed(), *sites, bbox, dimension, nPoints);
-			delete diagram;
-			diagram = vdg.compute(*sites, bbox);
-			diagram = vdg.relaxLoop(loop_cnt, diagram);
-			vdg.CreateWorld(diagram);
+
+			vdg.compute(*sites, bbox);
+			vdg.relaxLoop(loop_cnt);
+			vdg.CreateWorld();
 			duration = 1000 * (std::clock() - start) / (double)CLOCKS_PER_SEC;
 
 			delete sites;
-
-			unsigned int lake_cnt = 0;
+			Diagram* diagram = vdg.GetDiagram();
+			size_t lake_cnt = 0;
 			for (auto item : diagram->islandUnion.unions) {
 				lake_cnt += item.second.lakeUnion.unions.size();
 			}
@@ -380,12 +598,44 @@ int main() {
 		}
 		
 		// Swap the screen buffers
+		
+		if (save_image) {
+			save_image = false;
+			glViewport(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
+
+			glGenFramebuffers(1, &fbo);
+			glGenTextures(1, &texture);
+
+			// 텍스처 바인딩
+			glBindTexture(GL_TEXTURE_2D, texture);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, IMAGE_WIDTH, IMAGE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
+			// FBO 바인딩
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+
+
+			draw_image(vdg.GetDiagram(), dimension);
+
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+			screen_dump();
+		}
+		else {
+			
+			//glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+			glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+			draw_image(vdg.GetDiagram(), dimension);
+		}
+		
 		glfwSwapBuffers(window);
+
+		
+		glfwPollEvents();
 	}
 
 	// Terminate GLFW, clearing any resources allocated by it.
 	glfwTerminate();
 
-	delete diagram;
 	return 0;
 }

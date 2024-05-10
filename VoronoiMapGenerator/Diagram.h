@@ -15,7 +15,7 @@ class Diagram {
 public:
 	std::vector<Cell*> cells;
 	std::vector<Edge*> edges;
-	std::vector<Point2*> vertices;
+	std::vector<Vertex*> vertices;
 	UnionArray<std::vector<Cell*>> oceanUnion;
 	UnionArray<IslandUnion> islandUnion;
 
@@ -32,12 +32,12 @@ private:
 	MemoryPool<Cell> cellPool;
 	MemoryPool<Edge> edgePool;
 	MemoryPool<HalfEdge> halfEdgePool;
-	MemoryPool<Point2> vertexPool;
+	MemoryPool<Vertex> vertexPool;
 
-	Point2* createVertex(double x, double y);
+	Vertex* createVertex(double x, double y);
 	Cell* createCell(Point2 site);
-	Edge* createEdge(Site* lSite, Site* rSite, Point2* vertA, Point2* vertB);
-	Edge* createBorderEdge(Site* lSite, Point2* vertA, Point2* vertB);
+	Edge* createEdge(Site* lSite, Site* rSite, Vertex* vertA, Vertex* vertB);
+	Edge* createBorderEdge(Site* lSite, Vertex* vertA, Vertex* vertB);
 
 	bool connectEdge(Edge* edge, BoundingBox bbox);
 	bool clipEdge(Edge* edge, BoundingBox bbox);
