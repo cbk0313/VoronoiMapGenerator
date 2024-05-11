@@ -146,7 +146,7 @@ void screen_dump()
 	BITMAPINFOHEADER bi;
 	FILE* out = nullptr;
 	char buff[256];
-	const char* filename = "voronoi_map.bmp";
+	const char* filename = "voronoi_map_opengl.bmp";
 	fopen_s(&out, filename, "wb");
 	char* data = pixel_data;
 	memset(&bf, 0, sizeof(bf));
@@ -284,7 +284,7 @@ void draw_image(Diagram* diagram, unsigned int dimension) {
 			Point2& pA = e->vertA->point;
 			Point2& pB = e->vertB->point;
 
-			Point2 edge_mp = (pA + pB) / 2;
+			Point2 edge_mp = e->p;
 			Color colorA = e->vertA->color;;
 			Color colorB = e->vertB->color;;
 			Color middle_c = e->color;
@@ -294,28 +294,28 @@ void draw_image(Diagram* diagram, unsigned int dimension) {
 			Color center_c = s->cell->GetDetail().GetColor();
 
 			//middle_c = (colorA + colorB) / 2;
-
-			glColor4f((GLfloat)center_c.r, (GLfloat)center_c.g, (GLfloat)center_c.b, (GLfloat)center_c.a);
+			
+			glColor4f((GLfloat)std::clamp(center_c.r, 0.0, 1.0), (GLfloat)std::clamp(center_c.g, 0.0, 1.0), (GLfloat)std::clamp(center_c.b, 0.0, 1.0), (GLfloat)center_c.a);
 			glVertex3d(normalize(center.x, dimension), -normalize(center.y, dimension), 0.0);
 
 
-			glColor4f((GLfloat)middle_c.r, (GLfloat)middle_c.g, (GLfloat)middle_c.b, (GLfloat)middle_c.a);
+			glColor4f((GLfloat)std::clamp(middle_c.r, 0.0, 1.0), (GLfloat)std::clamp(middle_c.g, 0.0, 1.0), (GLfloat)std::clamp(middle_c.b, 0.0, 1.0), (GLfloat)middle_c.a);
 			glVertex3d(normalize(edge_mp.x, dimension), -normalize(edge_mp.y, dimension), 0.0);
 
 
-			glColor4f((GLfloat)colorA.r, (GLfloat)colorA.g, (GLfloat)colorA.b, (GLfloat)colorA.a);
+			glColor4f((GLfloat)std::clamp(colorA.r, 0.0, 1.0), (GLfloat)std::clamp(colorA.g, 0.0, 1.0), (GLfloat)std::clamp(colorA.b, 0.0, 1.0), (GLfloat)colorA.a);
 			glVertex3d(normalize(pA.x, dimension), -normalize(pA.y, dimension), 0.0);
 
 
 
 
-			glColor4f((GLfloat)center_c.r, (GLfloat)center_c.g, (GLfloat)center_c.b, (GLfloat)center_c.a);
+			glColor4f((GLfloat)std::clamp(center_c.r, 0.0, 1.0), (GLfloat)std::clamp(center_c.g, 0.0, 1.0), (GLfloat)std::clamp(center_c.b, 0.0, 1.0), (GLfloat)center_c.a);
 			glVertex3d(normalize(center.x, dimension), -normalize(center.y, dimension), 0.0);
 
-			glColor4f((GLfloat)colorB.r, (GLfloat)colorB.g, (GLfloat)colorB.b, (GLfloat)colorB.a);
+			glColor4f((GLfloat)std::clamp(colorB.r, 0.0, 1.0), (GLfloat)std::clamp(colorB.g, 0.0, 1.0), (GLfloat)std::clamp(colorB.b, 0.0, 1.0), (GLfloat)colorB.a);
 			glVertex3d(normalize(pB.x, dimension), -normalize(pB.y, dimension), 0.0);
 
-			glColor4f((GLfloat)middle_c.r, (GLfloat)middle_c.g, (GLfloat)middle_c.b, (GLfloat)middle_c.a);
+			glColor4f((GLfloat)std::clamp(middle_c.r, 0.0, 1.0), (GLfloat)std::clamp(middle_c.g, 0.0, 1.0), (GLfloat)std::clamp(middle_c.b, 0.0, 1.0), (GLfloat)middle_c.a);
 			glVertex3d(normalize(edge_mp.x, dimension), -normalize(edge_mp.y, dimension), 0.0);
 
 
@@ -328,11 +328,16 @@ void draw_image(Diagram* diagram, unsigned int dimension) {
 		for (Edge* e : diagram->edges) {
 			Point2& p1 = e->vertA->point;
 			Point2& p2 = e->vertB->point;
+			Point2& mp = e->p;
 
 			glBegin(GL_LINES);
 			glColor4f(0, 0, 0, 1);
 			glVertex3d(normalize(p1[0], dimension), -normalize(p1[1], dimension), 0.0);
+			glVertex3d(normalize(mp[0], dimension), -normalize(mp[1], dimension), 0.0);
+
+			glVertex3d(normalize(mp[0], dimension), -normalize(mp[1], dimension), 0.0);
 			glVertex3d(normalize(p2[0], dimension), -normalize(p2[1], dimension), 0.0);
+			
 			glEnd();
 		}
 	}
@@ -620,6 +625,7 @@ int main() {
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 			screen_dump();
+			vdg.SaveImage(dimension, IMAGE_WIDTH, IMAGE_HEIGHT);
 		}
 		else {
 			

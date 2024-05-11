@@ -21,8 +21,10 @@ struct Vertex {
 
 struct Edge {
 	Color color;
+	Point2 p;
 	Site* lSite;
 	Site* rSite;
+
 	Vertex* vertA;
 	Vertex* vertB;
 
@@ -39,7 +41,7 @@ struct HalfEdge {
 	Edge* edge;
 	double angle;
 
-	HalfEdge() : site(nullptr), edge(nullptr) {};
+	HalfEdge() : site(nullptr), edge(nullptr), angle(0) {};
 	HalfEdge(Edge* e, Site* lSite, Site* rSite);
 
 	inline Vertex* startPoint();

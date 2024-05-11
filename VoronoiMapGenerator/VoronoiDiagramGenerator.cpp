@@ -6,6 +6,8 @@
 #include <iostream>
 #include <queue>
 #include "Data/Buffer.h"
+#include "Data/Triangle.h"
+#include <Windows.h>
 
 using std::cout;
 using std::cin;
@@ -26,7 +28,7 @@ void VoronoiDiagramGenerator::printBeachLine() {
 		cout << section->data.site->p << endl;
 		section = section->next;
 	}
-	if(section) cout << section->data.site->p << endl;
+	if (section) cout << section->data.site->p << endl;
 	cout << endl << endl;
 }
 
@@ -40,8 +42,11 @@ bool pointComparator(Point2* a, Point2* b) {
 	else return false;
 }
 
-void VoronoiDiagramGenerator::compute(std::vector<Point2>& sites, BoundingBox bbox) {
-
+void VoronoiDiagramGenerator::compute(std::vector<Point2>& sites, BoundingBox bbox, bool reset) {
+	if (reset && diagram) {
+		delete diagram;
+		diagram = nullptr;
+	}
 	//siteEventQueue = new std::vector<Point2*>();
 	std::vector<Point2*> siteEventQueue = std::vector<Point2*>();
 	siteEventQueue.reserve(sites.size());
@@ -49,25 +54,25 @@ void VoronoiDiagramGenerator::compute(std::vector<Point2>& sites, BoundingBox bb
 
 	for (size_t i = 0; i < sites.size(); ++i) {
 		//sanitize sites by quantizing to integer multiple of epsilon
-		sites[i].x = round(sites[i].x / EPSILON)*EPSILON;
-		sites[i].y = round(sites[i].y / EPSILON)*EPSILON;
+		sites[i].x = round(sites[i].x / EPSILON) * EPSILON;
+		sites[i].y = round(sites[i].y / EPSILON) * EPSILON;
 
 		siteEventQueue.push_back(&(sites[i]));
 	}
-	if (diagram) delete diagram;
+
 	diagram = new Diagram();
 	circleEventQueue = new CircleEventQueue();
 	beachLine = new RBTree<BeachSection>();
-	
+
 	std::sort(siteEventQueue.begin(), siteEventQueue.end(), pointComparator);
 	// Initialize site event queue
-	
+
 
 	// process queue
 	Point2* site = siteEventQueue.empty() ? nullptr : siteEventQueue.back();
 	if (!siteEventQueue.empty()) siteEventQueue.pop_back();
 	treeNode<CircleEvent>* circle;
-	
+
 	// main loop
 	for (;;) {
 		// figure out whether to handle a site or circle event
@@ -77,8 +82,8 @@ void VoronoiDiagramGenerator::compute(std::vector<Point2>& sites, BoundingBox bb
 
 		// add beach section
 		if (site && (!circle || site->y < circle->data.y || (site->y == circle->data.y && site->x < circle->data.x))) {
-			
-			
+
+
 			// first create cell for new site
 			Cell* cell = diagram->createCell(*site);
 			// then create a beachsection for that site
@@ -95,18 +100,18 @@ void VoronoiDiagramGenerator::compute(std::vector<Point2>& sites, BoundingBox bb
 		else
 			break;
 	}
-	
+
 	// wrapping-up:
 	//   connect dangling edges to bounding box
 	//   cut edges as per bounding box
 	//   discard edges completely outside bounding box
 	//   discard edges which are point-like
-	
+
 	diagram->clipEdges(boundingBox);
 
 	//   add missing edges in order to close open cells
 	diagram->closeCells(boundingBox);
-	
+
 	//diagram->finalize();
 
 	delete circleEventQueue;
@@ -145,11 +150,11 @@ void  VoronoiDiagramGenerator::relax() {
 
 		Point2 centroid(0.0, 0.0);
 		double totalArea = 0.0;
-		for (size_t i = 1; i < edgeCount-1; ++i) {
-			double area = (vectors[i+1].x*vectors[i].y - vectors[i+1].y*vectors[i].x)/2;
+		for (size_t i = 1; i < edgeCount - 1; ++i) {
+			double area = (vectors[i + 1].x * vectors[i].y - vectors[i + 1].y * vectors[i].x) / 2;
 			totalArea += area;
-			centroid.x += area*(verts[0].x + verts[i].x + verts[i + 1].x) / 3;
-			centroid.y += area*(verts[0].y + verts[i].y + verts[i + 1].y) / 3;
+			centroid.x += area * (verts[0].x + verts[i].x + verts[i + 1].x) / 3;
+			centroid.y += area * (verts[0].y + verts[i].y + verts[i + 1].y) / 3;
 		}
 		centroid.x /= totalArea;
 		centroid.y /= totalArea;
@@ -159,7 +164,8 @@ void  VoronoiDiagramGenerator::relax() {
 	//then recompute the diagram using the cells' centroids
 	delete diagram;
 	diagram = nullptr;
-	compute(sites, boundingBox);
+
+	compute(sites, boundingBox, false);
 
 }
 
@@ -188,8 +194,8 @@ void VoronoiDiagramGenerator::CreateWorld() {
 		SetupIsland();
 		CreateRiver();
 		SetupColor();
+		SetupEdgePos();
 
-		
 	}
 }
 
@@ -257,7 +263,7 @@ void VoronoiDiagramGenerator::CreateLand() {
 	flat_noise.SetDomainWarpAmp(100);
 
 	/*
-	
+
 		double scale = 600;
 
 		double x = round(c->site.p.x / scale), y = round(c->site.p.y / scale);
@@ -266,17 +272,17 @@ void VoronoiDiagramGenerator::CreateLand() {
 		double value = noise.GetNoise(x, y);
 		*/
 
-	//noise.SetFractalType(FastNoiseLite::FractalType_FBm);
+		//noise.SetFractalType(FastNoiseLite::FractalType_FBm);
 
 	double continent_range = setting.radius * 0.5;
 	double island_range = setting.radius * 0.2;
-	
+
 	double island_step = setting.island_radius_max - setting.island_radius_min;
-	
+
 
 
 	std::vector<PointDist> islands;
-	
+
 	for (unsigned int i = 0; i < setting.island_cnt; i++) {
 		Point2 p = Point2((GetRandom() - 0.5) * 2 * island_range, (GetRandom() - 0.5) * 2 * island_range);
 		double length = CalcDistance(Point2(0, 0), p);
@@ -299,12 +305,12 @@ void VoronoiDiagramGenerator::CreateLand() {
 
 		double value = noise.GetNoise(round(c->site.p.x / scale), round(c->site.p.y / scale));
 		double island_value = (1 + (island_noise.GetNoise(round(c->site.p.x / island_scale), round(c->site.p.y / island_scale))));
-		
+
 		bool IS_GROUND;
 		switch (setting.type)
 		{
 		case MapType::CONTINENT:
-			IS_GROUND = (pow(1+value, 2) * dist_scale * 3 > 1);
+			IS_GROUND = (pow(1 + value, 2) * dist_scale * 3 > 1);
 			break;
 		case MapType::ISLAND:
 			IS_GROUND = (pow(value, 1) * dist_scale * 50) > 1 && (dist_scale > 0);
@@ -317,7 +323,7 @@ void VoronoiDiagramGenerator::CreateLand() {
 
 		//std::cout << lake_value << "\n";
 		if (IS_GROUND || (pow(island_value, 2) > 1 && island_dist_scale > 1)) { // Set Land
-		//if (pow(lake_value, 2) > 0.4 - lakeScale) { // Set Land
+			//if (pow(lake_value, 2) > 0.4 - lakeScale) { // Set Land
 			c->GetDetail().SetTerrain(Terrain::LAND);
 			//c->GetDetail().SetElevation(0);
 
@@ -354,7 +360,7 @@ void VoronoiDiagramGenerator::CreateTestLand() {
 	noise.SetCellularReturnType(FastNoiseLite::CellularReturnType_CellValue);
 	noise.SetDomainWarpType(FastNoiseLite::DomainWarpType_OpenSimplex2);
 	noise.SetDomainWarpAmp(100);
-	
+
 	//noise.SetFractalType(FastNoiseLite::FractalType_FBm);
 
 	for (Cell* c : diagram->cells) {
@@ -365,7 +371,7 @@ void VoronoiDiagramGenerator::CreateTestLand() {
 
 		noise.DomainWarp(x, y);
 		double value = noise.GetNoise(x, y);
-	
+
 		//std::cout << lake_value << "\n";
 		if (value > 0.7) { // Set Land
 			//if (pow(lake_value, 2) > 0.4 - lakeScale) { // Set Land
@@ -562,7 +568,7 @@ void VoronoiDiagramGenerator::SetupElevation(CellVector& coastBuffer) {
 				land_cnt++;
 				//if (tcd.GetElevation() == 0) {
 				if (cur_elev + 1 < tcd.GetElevation()) {
-					
+
 					tcd.SetElevation(0);
 				}
 				if (tcd.GetElevation() == 0) {
@@ -574,8 +580,8 @@ void VoronoiDiagramGenerator::SetupElevation(CellVector& coastBuffer) {
 						//cd.SetHighestPeak(false);
 						//cd.GetUnionFind().UnionFindCell(Terrain::HIGHEST_PEAK)->GetDetail().SetHighestPeak(false);
 					}
-					
-					
+
+
 					if (is_lq) {
 						lakeQueue.push(targetCell);
 					}
@@ -583,7 +589,7 @@ void VoronoiDiagramGenerator::SetupElevation(CellVector& coastBuffer) {
 						landQueue.push(targetCell);
 					}
 
-					
+
 				}
 			}
 			else if (tcd.GetTerrain() == Terrain::LAKE) {
@@ -605,7 +611,7 @@ void VoronoiDiagramGenerator::SetupPeak(CellVector& coastBuffer) {
 	//std::queue<Cell*> landQueue; // BFS
 	//std::queue<Cell*> lakeQueue;
 	std::queue<int> test;
-	
+
 	CellBuffer landQueue(Cell::GetCellCnt(), false); // BFS
 	CellBuffer UnionQueue(Cell::GetCellCnt(), false); // BFS
 	for (Cell* c : coastBuffer.GetBuffer()) {
@@ -623,7 +629,7 @@ void VoronoiDiagramGenerator::SetupPeak(CellVector& coastBuffer) {
 
 		CellDetail& cd = c->GetDetail();
 		int under_cell_cnt = 0;
-		max_elevation = std::max(max_elevation, cd.GetElevation());
+		max_elevation = std::max<int>(max_elevation, cd.GetElevation());
 
 		for (HalfEdge* he : c->halfEdges) {
 			Edge* e = he->edge;
@@ -654,7 +660,7 @@ void VoronoiDiagramGenerator::SetupPeak(CellVector& coastBuffer) {
 			}
 
 		}
-		
+
 		if (under_cell_cnt == c->halfEdges.size()) {
 			cd.SetHighestPeak(true);
 		}
@@ -668,20 +674,20 @@ void VoronoiDiagramGenerator::SetupPeak(CellVector& coastBuffer) {
 
 		Cell* c = landQueue.front();
 		landQueue.pop();
-	
+
 		CellDetail& cd = c->GetDetail();
 		unsigned int land_cnt = 0, low_cnt = 0;
 		size_t cell_cnt = c->halfEdges.size();
 		int under_cell_cnt = 0;
 
 		for (HalfEdge* he : c->halfEdges) {
-			
+
 			Edge* e = he->edge;
 			Cell* targetCell = (e->lSite->cell == c && e->rSite) ? e->rSite->cell : e->lSite->cell;
 			//if (targetCell->GetDetail().GetElevation() < c->GetDetail().GetElevation()) {
 			CellDetail& tcd = targetCell->GetDetail();
-			
-			
+
+
 			if (cd.GetTerrain() == Terrain::LAND) {
 				if (tcd.GetTerrain() == Terrain::LAND) {
 					if (tcd.GetElevation() < cd.GetElevation()) {
@@ -699,7 +705,7 @@ void VoronoiDiagramGenerator::SetupPeak(CellVector& coastBuffer) {
 			if (tcd.GetTerrain() == Terrain::LAND) {
 				landQueue.push(targetCell);
 			}
-			
+
 		}
 
 		if (cell_cnt != under_cell_cnt) {
@@ -746,7 +752,7 @@ void VoronoiDiagramGenerator::SetupLandUnion() {
 	}
 }
 
-void VoronoiDiagramGenerator::SetupIsland() { 
+void VoronoiDiagramGenerator::SetupIsland() {
 
 	Cell* lastPeak = nullptr;
 	for (Cell* c : diagram->cells) {
@@ -769,7 +775,7 @@ void VoronoiDiagramGenerator::SetupIsland() {
 				//cd.GetColor() = Color(0.3, 0.3, 0.3);
 				//cd.GetUnionFind().UnionFindCell(Terrain::HIGHEST_PEAK)->GetDetail().GetColor() = Color(0, 0, 0);
 			}
-			
+
 			if (cd.IsPeak() || is_highest_peak) {
 				if (lastPeak == nullptr) lastPeak = c;
 				auto unique = c->GetDetail().GetUnionFind().UnionFindCell(Terrain::PEAK)->GetUnique();
@@ -819,6 +825,60 @@ void VoronoiDiagramGenerator::CreateRiver() {
 	}*/
 }
 
+
+void VoronoiDiagramGenerator::SetupVertexColor(Vertex* v, Cell* c, Cell* opposite_c, Color& elev_rate_c) {
+	
+	CellDetail& cd = c->GetDetail();
+	CellDetail& tcd = opposite_c->GetDetail();
+	if (IS_LAND(cd.GetTerrain())) {
+		if ((tcd.GetTerrain() == Terrain::OCEAN || tcd.GetTerrain() == Terrain::COAST)) {
+			if (v->elev == 0) {
+				v->color = cd.GetColor();
+			}
+		}
+		else {
+			if (v->elev < cd.GetElevation()) {
+				v->elev = cd.GetElevation();
+				v->cells.clear();
+				v->color = cd.GetColor() - elev_rate_c;
+			}
+			else if (v->elev == cd.GetElevation()) {
+				if (!v->Find(opposite_c)) {
+					v->cells.push_back(opposite_c);
+				}
+			}
+
+			if (v->cells.size() >= 3) {
+				v->color = cd.GetColor();
+			}
+
+		}
+	}
+	else {
+		if (IS_LAND(tcd.GetTerrain())) {
+			v->color = tcd.GetColor();
+			v->elev = tcd.GetElevation();
+		}
+		else {
+
+			if (v->elev <= 0) {
+
+				if (v->elev >= cd.GetElevation()) {
+
+					v->color = cd.GetColor();
+					v->elev = cd.GetElevation();
+				}
+				else {
+					//std::cout << cd.GetElevation() << "\n";
+					//v->color = Color(1, 0, 0);
+				}
+				//v->color = Color(1, 0, 0);
+			}
+		}
+	}
+
+
+}
 
 void VoronoiDiagramGenerator::SetupColor() {
 	double elev_rate = 1.0 / (double)max_elevation;
@@ -879,60 +939,10 @@ void VoronoiDiagramGenerator::SetupColor() {
 			Vertex* vB = e->vertB;
 
 
-			auto tempFunc = [&e, &cd, &tcd, &elev_rate_c, opposite_c](Vertex* v) -> void
-				{
-					if (IS_LAND(cd.GetTerrain())) {
-						if ((tcd.GetTerrain() == Terrain::OCEAN || tcd.GetTerrain() == Terrain::COAST)) {
-							if (v->elev == 0) {
-								v->color = cd.GetColor();
-							}
-						}
-						else {
-							if (v->elev < cd.GetElevation()) {
-								v->elev = cd.GetElevation();
-								v->cells.clear();
-								v->color = cd.GetColor() - elev_rate_c;
-							}
-							else if (v->elev == cd.GetElevation()) {
-								if (!v->Find(opposite_c)) {
-									v->cells.push_back(opposite_c);
-								}
-							}
+		
 
-							if (v->cells.size() >= 3) {
-								v->color = cd.GetColor();
-							}
-
-						}
-					}
-					else {
-						if (IS_LAND(tcd.GetTerrain())) {
-							v->color = tcd.GetColor();
-							v->elev = tcd.GetElevation();
-						}
-						else {
-
-							if (v->elev <= 0) {
-
-								if (v->elev >= cd.GetElevation()) {
-
-									v->color = cd.GetColor();
-									v->elev = cd.GetElevation();
-								}
-								else {
-									//std::cout << cd.GetElevation() << "\n";
-									//v->color = Color(1, 0, 0);
-								}
-								//v->color = Color(1, 0, 0);
-							}
-						}
-					}
-
-				};
-
-
-			tempFunc(vA);
-			tempFunc(vB);
+			SetupVertexColor(vA, c, opposite_c, elev_rate_c);
+			SetupVertexColor(vB, c, opposite_c, elev_rate_c);
 
 		}
 	}
@@ -1082,4 +1092,98 @@ void VoronoiDiagramGenerator::SetupColor() {
 			}
 		}
 	}
+}
+
+
+void VoronoiDiagramGenerator::SetupEdgePos() {
+	for (Edge* e : diagram->edges) { 
+		//if(e->vertA && e->vertB)
+		double dist = e->vertA->point.distanceTo(e->vertB->point);
+		
+		//Point2 norm = (e->vertA->point - e->vertB->point).Normailize();
+		Point2 norm = (e->vertA->point - e->vertB->point) / dist;
+		norm = Point2(-norm.y, norm.x);
+		double step = 3;
+		double perp_step = 3;
+		double scale1 = (0.5 - ((1/step) / 2)) + GetRandom() / step;
+		double perp_len = (dist / perp_step);
+		double scale2 = (perp_len / 2) - GetRandom() * perp_len;
+
+		e->p = e->vertA->point * scale1 + e->vertB->point * (1 - scale1) + norm * scale2;
+		//e->p = (e->vertA->point + e->vertB->point) / 2;
+	}
+}
+
+void VoronoiDiagramGenerator::SaveImage(double dimension, double w, double h) {
+	char* pixel_data = new char[w * h * 3];
+
+	for (Cell* c : diagram->cells) {
+		//for (Edge* e : diagram->edges) {
+		for (HalfEdge* hf : c->halfEdges) {
+			Edge* e = hf->edge;
+
+			Site* s = e->lSite->cell == c ? e->lSite : e->rSite;
+			Site* opposite_s = e->rSite && e->lSite->cell == c ? e->rSite : e->lSite;
+
+			Point2 center = c->site.p / dimension;
+			center.x *= w;
+			center.y *= h;
+
+			Point2 pA = e->vertA->point / dimension;
+			pA.x *= w;
+			pA.y *= h;
+
+			Point2 pB = e->vertB->point / dimension;
+			pB.x *= w;
+			pB.y *= h;
+
+			Point2 edge_mp = e->p / dimension;
+			edge_mp.x *= w;
+			edge_mp.y *= h;
+
+			Color colorA = e->vertA->color;
+			Color colorB = e->vertB->color;
+			Color edge_c = e->color;
+
+			Color center_c = s->cell->GetDetail().GetColor();
+
+			//middle_c = (colorA + colorB) / 2;
+			Triangle triA = Triangle({ &pA, &center, &edge_mp, &colorA, &center_c, &edge_c });
+			Triangle triB = Triangle({ &pB, &center, &edge_mp, &colorB, &center_c, &edge_c });
+
+			triA.draw(pixel_data, w, h);
+			triB.draw(pixel_data, w, h);
+		}
+	}
+
+	//char pixel_data[IMAGE_WIDTH * IMAGE_HEIGHT * 300];
+	//glReadPixels(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT, GL_BGR_EXT, GL_UNSIGNED_BYTE, pixel_data);
+
+
+	BITMAPFILEHEADER bf;
+	BITMAPINFOHEADER bi;
+	FILE* out = nullptr;
+	char buff[256];
+	const char* filename = "voronoi_map.bmp";
+	fopen_s(&out, filename, "wb");
+	char* data = pixel_data;
+	memset(&bf, 0, sizeof(bf));
+	memset(&bi, 0, sizeof(bi));
+	bf.bfType = 'MB';
+	bf.bfSize = sizeof(bf) + sizeof(bi) + w * h * 3;
+	bf.bfOffBits = sizeof(bf) + sizeof(bi);
+	bi.biSize = sizeof(bi);
+	bi.biWidth = w;
+	bi.biHeight = h;
+	bi.biPlanes = 1;
+	bi.biBitCount = 24;
+	bi.biSizeImage = w * h * 3;
+	fwrite(&bf, sizeof(bf), 1, out);
+	fwrite(&bi, sizeof(bi), 1, out);
+	fwrite(data, sizeof(unsigned char), w * h * 3, out);
+	fclose(out);
+	delete[] pixel_data;
+
+	std::cout << "file saved: " << filename << "\n";
+
 }

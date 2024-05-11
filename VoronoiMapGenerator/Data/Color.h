@@ -1,5 +1,8 @@
 #pragma once
 #include <vector>
+
+class CharColor;
+
 class Color
 {
 public:
@@ -29,8 +32,19 @@ public:
 
 	bool operator ==(Color& c);
 	static Color MixColor(Color& c1, Color& c2);
-	static Color lerp(const Color& a, const Color& b, float t);
+	static Color lerp(const Color& a, const Color& b, double t);
+	operator CharColor() const;
+};
 
+
+class CharColor {
+public:
+	char r;
+	char g;
+	char b;
+	CharColor(char c_r, char c_g, char c_b) : r(c_r), g(c_g), b(c_b) {};
+	CharColor& operator=(const Color& a);
+	CharColor& operator=(const Color* a);
 };
 
 struct AvgColor {

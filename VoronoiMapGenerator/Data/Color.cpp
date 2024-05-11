@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Color.h"
+#include <algorithm>
 
 
 Color Color::operator *(const int num) {
@@ -68,11 +69,32 @@ Color Color::MixColor(Color& c1, Color& c2) {
 	return Color((c1.r + c2.r) / 2, (c1.g + c2.g) / 2, (c1.b + c2.b) / 2, (c1.a + c2.a) / 2);
 }
 
-Color Color::lerp(const Color& a, const Color& b, float t) {
+Color Color::lerp(const Color& a, const Color& b, double t) {
 	return Color(
 		(1 - t) * a.r + t * b.r,
 		(1 - t) * a.g + t * b.g,
 		(1 - t) * a.b + t * b.b
 	);
 }
+#include <iostream>
+Color ::operator CharColor() const {
+	return CharColor(
+		(char)(std::clamp(r, 0.0, 1.0) * 255),
+		(char)(std::clamp(g, 0.0, 1.0) * 255),
+		(char)(std::clamp(b, 0.0, 1.0) * 255));
+}
 
+
+
+CharColor& CharColor::operator =(const Color& a) {
+	r = (char)(a.r > 1.0 ? 255.0 : a.r * 255.0);
+	g = (char)(a.g > 1.0 ? 255.0 : a.g * 255.0);
+	b = (char)(a.g > 1.0 ? 255.0 : a.b * 255.0);
+	return *this;
+}
+CharColor& CharColor::operator =(const Color* a) {
+	r = (char)(a->r > 1.0 ? 255.0 : a->r * 255.0);
+	g = (char)(a->g > 1.0 ? 255.0 : a->g * 255.0);
+	b = (char)(a->g > 1.0 ? 255.0 : a->b * 255.0);
+	return *this;
+}

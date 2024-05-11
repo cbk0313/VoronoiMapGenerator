@@ -105,13 +105,16 @@ private:
 	GenerateSetting setting;
 	int max_elevation;
 	Diagram* diagram;
+
+	void SetupVertexColor(Vertex* v, Cell* c, Cell* opposite_c, Color& elev_rate_c);
+
 public:
 	VoronoiDiagramGenerator() : diagram(nullptr), max_elevation(0), has_created_ocean(false), circleEventQueue(nullptr), beachLine(nullptr) {};
 	~VoronoiDiagramGenerator() {};
 
 	Diagram* GetDiagram();
 
-	void compute(std::vector<Point2>& sites, BoundingBox bbox);
+	void compute(std::vector<Point2>& sites, BoundingBox bbox, bool reset = true);
 	void relax();
 
 	void relaxLoop(int num);
@@ -147,11 +150,10 @@ public:
 	void SetupLandUnion();
 	void SetupIsland();
 	void SetupBiome();
+	void SetupEdgePos();
 	void SetupColor();
 
-	void SaveImage() {
-
-	}
+	void SaveImage(double dimension, double w, double h);
 
 	std::pair<double, double> GetMinDist(std::vector<std::pair<Point2, double>>& points, Point2& center, double radius);
 	
