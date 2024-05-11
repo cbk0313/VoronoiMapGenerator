@@ -361,3 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Created image file
+VoronoiMapGenerator/voronoi_map.bmp
+VoronoiMapGenerator/voronoi_map_opengl.bmp
