@@ -62,6 +62,7 @@ public:
 	Terrain GetTerrain();
 	Color& GetColor();
 	bool IsEdge();
+	bool GetEdge();
 
 	bool IsFlat();
 	void SetFlat(bool b);

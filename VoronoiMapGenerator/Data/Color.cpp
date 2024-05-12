@@ -76,7 +76,14 @@ Color Color::lerp(const Color& a, const Color& b, double t) {
 		(1 - t) * a.b + t * b.b
 	);
 }
-#include <iostream>
+
+Color const Color::black = Color(0, 0, 0);
+Color const Color::lake = Color(0.2, 0.4, 0.6);
+Color const Color::edgeOcean = Color(0.1, 0, 0.3, 1);
+Color const Color::ocean = Color(0.2, 0, 0.6, 1);
+Color const Color::coast = Color(0.4, 0, 1, 1);
+
+
 Color ::operator CharColor() const {
 	return CharColor(
 		(char)(std::clamp(r, 0.0, 1.0) * 255),
@@ -98,3 +105,5 @@ CharColor& CharColor::operator =(const Color* a) {
 	b = (char)(a->g > 1.0 ? 255.0 : a->b * 255.0);
 	return *this;
 }
+
+

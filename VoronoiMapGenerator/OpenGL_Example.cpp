@@ -625,7 +625,7 @@ int main() {
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 			screen_dump();
-			vdg.SaveImage(dimension, IMAGE_WIDTH, IMAGE_HEIGHT);
+			vdg.SaveAllImage(dimension, IMAGE_WIDTH, IMAGE_HEIGHT);
 		}
 		else {
 			

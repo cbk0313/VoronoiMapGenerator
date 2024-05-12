@@ -5,6 +5,9 @@
 
 
 bool CellDetail::IsEdge() {
+	return GetUnionFind().UnionFindCell(Terrain::OCEAN)->GetDetail().GetEdge();
+}
+bool CellDetail::GetEdge() {
 	return b_edge;
 }
 
@@ -70,38 +73,9 @@ UnionFind<Cell, TERRAIN_CNT>& CellDetail::GetUnionFind() {
 
 void CellDetail::SetTerrain(Terrain t) {
 	terrain = t;
-	switch (t)
-	{
-	case Terrain::OCEAN:
-		if (b_edge)
-			color = Color(0.1, 0, 0.3, 1);
-		else
-			color = Color(0.2, 0, 0.6, 1);
-		break;
-	case Terrain::LAND:
-		//color = Color(0.6, 0.4, 0, 1);
-		color = Color(0, 0, 0);
-		break;
-	case Terrain::LAKE:
-		color = Color(0.2, 0.4, 0.6);
-		break;
-	case Terrain::COAST:
-		color *= 2;
-		break;
-	default:
-		break;
-	}
 }
 
 void CellDetail::SetEdge(bool b) {
-	if (terrain == Terrain::OCEAN) {
-		if (b) {
-			color = Color(0.1, 0, 0.3, 1);
-		}
-		else {
-			color = Color(0.2, 0, 0.6, 1);
-		}
-	}
 	b_edge = b;
 }
 

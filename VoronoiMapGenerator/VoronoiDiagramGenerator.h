@@ -23,7 +23,7 @@ struct BoundingBox {
 		xL(xmin), xR(xmax), yB(ymin), yT(ymax) {};
 };
 
-struct GenerateSetting {
+class GenerateSetting {
 	friend class VoronoiDiagramGenerator;
 private:
 	MapType type;
@@ -92,12 +92,23 @@ public:
 	inline double GetLakeRadiusMin() { return lake_radius_min; };
 
 };
+
+#define ALL_IMAGE ((VoronoiDiagramGenerator::ISLAND | VoronoiDiagramGenerator::OCEAN | VoronoiDiagramGenerator::LAKE | VoronoiDiagramGenerator::COAST))
+
 struct CellVector;
 class VoronoiDiagramGenerator {
+public:
+	enum ImageFlag {
+		ISLAND		= 0b00001,
+		OCEAN		= 0b00010,
+		LAKE		= 0b00100,
+		COAST		= 0b01000,
+	};
 
 private:
 
 	bool has_created_ocean;
+	bool has_set_color;
 	//;
 	CircleEventQueue* circleEventQueue;
 	//std::vector<Point2*>* siteEventQueue;
@@ -109,7 +120,7 @@ private:
 	void SetupVertexColor(Vertex* v, Cell* c, Cell* opposite_c, Color& elev_rate_c);
 
 public:
-	VoronoiDiagramGenerator() : diagram(nullptr), max_elevation(0), has_created_ocean(false), circleEventQueue(nullptr), beachLine(nullptr) {};
+	VoronoiDiagramGenerator() : diagram(nullptr), max_elevation(0), has_created_ocean(false), has_set_color(false), circleEventQueue(nullptr), beachLine(nullptr) {};
 	~VoronoiDiagramGenerator() {};
 
 	Diagram* GetDiagram();
@@ -151,9 +162,10 @@ public:
 	void SetupIsland();
 	void SetupBiome();
 	void SetupEdgePos();
-	void SetupColor();
+	void SetupColor(int flag = ALL_IMAGE);
 
-	void SaveImage(double dimension, double w, double h);
+	void SaveAllImage(double dimension, double w, double h);
+	void SaveImage(const char* filename, double dimension, double w, double h);
 
 	std::pair<double, double> GetMinDist(std::vector<std::pair<Point2, double>>& points, Point2& center, double radius);
 	

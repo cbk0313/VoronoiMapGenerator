@@ -17,6 +17,12 @@ struct Vertex {
 
 	bool Find(Cell* c);
 	void Insert(Cell* c);
+	void Reset() {
+		cells.clear();
+		is_short = false;
+		elev = 0;
+		color = Color();
+	}
 };
 
 struct Edge {

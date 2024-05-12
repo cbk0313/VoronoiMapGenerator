@@ -363,8 +363,8 @@ MigrationBackup/
 FodyWeavers.xsd
 
 # Created image file
-VoronoiMapGenerator/voronoi_map.bmp
-VoronoiMapGenerator/voronoi_map_opengl.bmp
+/VoronoiMapGenerator/voronoi_map.bmp
+/VoronoiMapGenerator/voronoi_map_opengl.bmp
 /VoronoiMapGenerator/voronoi_map_all.bmp
 /VoronoiMapGenerator/voronoi_map_islnad.bmp
 /VoronoiMapGenerator/voronoi_map_lake.bmp

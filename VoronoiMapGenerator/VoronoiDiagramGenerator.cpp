@@ -223,7 +223,7 @@ void VoronoiDiagramGenerator::SetupOcean() {
 			//if ((l_cell->GetDetail().GetTerrain() == Terrain::OCEAN || l_cell->GetDetail().GetTerrain() == Terrain::LAKE) &&
 			//	(r_cell->GetDetail().GetTerrain() == Terrain::OCEAN || r_cell->GetDetail().GetTerrain() == Terrain::LAKE )) { // Set 'union' between connected seas
 			if (IS_WATER(l_cell->GetDetail().GetTerrain()) && IS_WATER(r_cell->GetDetail().GetTerrain())) { // Set 'union' between connected seas
-				if (l_cell->GetDetail().GetUnionFind().UnionFindCell(Terrain::OCEAN)->GetDetail().IsEdge()) {
+				if (l_cell->GetDetail().IsEdge()) {
 					r_cell->GetDetail().GetUnionFind().SetUnionCell(Terrain::OCEAN, l_cell);
 				}
 				else {
@@ -397,7 +397,7 @@ void VoronoiDiagramGenerator::RemoveLake() {
 		Terrain ct = cd.GetTerrain();
 		if (ct == Terrain::OCEAN) {
 			auto unique = cd.GetUnionFind().UnionFindCell(Terrain::OCEAN)->GetUnique();
-			if (!cd.GetUnionFind().UnionFindCell(Terrain::OCEAN)->GetDetail().IsEdge()) {
+			if (!cd.IsEdge()) {
 				cd.SetTerrain(Terrain::LAND);
 				c->GetDetail().SetElevation(0);
 				cd.GetUnionFind().Reset(c);
@@ -454,6 +454,7 @@ void VoronoiDiagramGenerator::CreateLake() {
 	}
 
 
+
 	for (Cell* c : lakeCells) {
 		for (HalfEdge* he : c->halfEdges) {
 			if (!he->edge->lSite || !he->edge->rSite || he->edge->lSite->cell->GetDetail().GetTerrain() == Terrain::OCEAN || he->edge->rSite->cell->GetDetail().GetTerrain() == Terrain::OCEAN) {
@@ -463,6 +464,9 @@ void VoronoiDiagramGenerator::CreateLake() {
 		c->GetDetail().SetTerrain(Terrain::LAKE);
 	LAKE_LOOP_POINT:;
 	}
+
+
+
 
 	if (has_created_ocean) {
 		for (Cell* c : diagram->cells) { // reset cell unionfind and other
@@ -474,7 +478,6 @@ void VoronoiDiagramGenerator::CreateLake() {
 	}
 
 
-
 	for (Cell* c : diagram->cells) { // Set Lake
 		CellDetail& cd = c->GetDetail();
 		Terrain ct = cd.GetTerrain();
@@ -482,8 +485,9 @@ void VoronoiDiagramGenerator::CreateLake() {
 		if (IS_WATER(ct)) {
 
 			auto unique = cd.GetUnionFind().UnionFindCell(Terrain::OCEAN)->GetUnique();
-			if (!cd.GetUnionFind().UnionFindCell(Terrain::OCEAN)->GetDetail().IsEdge()) {
-				cd.SetTerrain(Terrain::LAKE);
+			if (!cd.IsEdge()) {
+				//std::cout << "isEdge(): " << cd.IsEdge() << "\n";
+				//cd.SetTerrain(Terrain::LAKE);
 			}
 			else {
 				auto unique = cd.GetUnionFind().UnionFindCell(Terrain::OCEAN)->GetUnique();
@@ -518,7 +522,7 @@ void VoronoiDiagramGenerator::SetupElevation(CellVector& coastBuffer) {
 
 			if (landCell->GetDetail().GetTerrain() == Terrain::LAND && oceanCell->GetDetail().GetTerrain() == Terrain::OCEAN) {
 				CellDetail& cd = oceanCell->GetDetail();
-				if (cd.GetUnionFind().UnionFindCell(Terrain::OCEAN)->GetDetail().IsEdge()) { // check if it's lake or not
+				if (cd.IsEdge()) { // check if it's lake or not
 					coastBuffer.push_back(oceanCell);
 					landQueue.push(oceanCell);
 				}
@@ -831,6 +835,14 @@ void VoronoiDiagramGenerator::SetupVertexColor(Vertex* v, Cell* c, Cell* opposit
 	CellDetail& cd = c->GetDetail();
 	CellDetail& tcd = opposite_c->GetDetail();
 	if (IS_LAND(cd.GetTerrain())) {
+		if (cd.GetTerrain() == Terrain::LAKE) {
+			if (tcd.GetTerrain() == Terrain::LAKE) {
+				v->color = cd.GetColor();
+				v->elev = cd.GetElevation();
+			}
+			return;
+		}
+
 		if ((tcd.GetTerrain() == Terrain::OCEAN || tcd.GetTerrain() == Terrain::COAST)) {
 			if (v->elev == 0) {
 				v->color = cd.GetColor();
@@ -880,7 +892,17 @@ void VoronoiDiagramGenerator::SetupVertexColor(Vertex* v, Cell* c, Cell* opposit
 
 }
 
-void VoronoiDiagramGenerator::SetupColor() {
+void VoronoiDiagramGenerator::SetupColor(int flag) {
+	if (has_set_color) {
+		for (Vertex* v : diagram->vertices) {
+			v->Reset();
+		}
+		for (Edge* e : diagram->edges) {
+			e->color = Color();
+		}
+	}
+	has_set_color = true;
+
 	double elev_rate = 1.0 / (double)max_elevation;
 	std::cout << "elev_rate: " << elev_rate << "\n";
 
@@ -892,29 +914,87 @@ void VoronoiDiagramGenerator::SetupColor() {
 			std::cout << "land elev: " << cd.GetElevation() << "\n";
 		}*/
 		//if ((cd.GetTerrain() == Terrain::LAND || cd.GetTerrain() == Terrain::HIGHEST_PEAK) && cd.GetElevation() != 0) {
-		if (IS_GROUND(cd.GetTerrain()) && cd.GetElevation() != 0) {
-			double elev_scale = (double)(cd.GetElevation()) * elev_rate;
-			elev_scale = pow(elev_scale, 1);
-			double scale = 1;
-			if (cd.IsHighestPeak() && false) {
-				cd.GetColor() = Color(0.3, 0.3, 0.3);
-				cd.GetUnionFind().UnionFindCell(Terrain::HIGHEST_PEAK)->GetDetail().GetColor() = Color(0, 0, 0);
+		
+		if (IS_GROUND(cd.GetTerrain()) /*&& cd.GetElevation() != 0*/) {
+			if (flag & ISLAND) {
+				
+				if (cd.IsHighestPeak() && false) {
+					cd.GetColor() = Color(0.3, 0.3, 0.3);
+					cd.GetUnionFind().UnionFindCell(Terrain::HIGHEST_PEAK)->GetDetail().GetColor() = Color(0, 0, 0);
+				}
+				else {
+					
+					double elev_scale = (double)(cd.GetElevation()) * elev_rate;
+					double scale = 1;
+					double color = elev_scale * scale;
+					Color island_elev = Color(color, color, color);
+					cd.GetColor() = island_elev;
+				}
 			}
 			else {
-				cd.GetColor().r += elev_scale * scale;
-				cd.GetColor().g += elev_scale * scale;
-				cd.GetColor().b += elev_scale * scale;
-				//cd.GetColor().b += elev_scale * 0.7 * scale;
+				cd.GetColor() = Color::black;
 			}
+			
 		}
 		else if (cd.GetTerrain() == Terrain::LAKE) {
-			double elev_scale = (double)cd.GetUnionFind().UnionFindCell(Terrain::OCEAN)->GetDetail().GetElevation() / (max_elevation * 2);
-			elev_scale = pow(elev_scale, 1);
-			double scale = 1.2;
-			cd.GetColor().r += elev_scale * scale;
+			//double elev_scale = (double)cd.GetUnionFind().UnionFindCell(Terrain::OCEAN)->GetDetail().GetElevation() / (max_elevation * 2);
+			//elev_scale = pow(elev_scale, 1);
+			//double scale = 1.2;
+		/*	cd.GetColor().r += elev_scale * scale;
 			cd.GetColor().g += elev_scale * scale;
-			cd.GetColor().b += elev_scale * scale;
+			cd.GetColor().b += elev_scale * scale;*/
+			if (flag & LAKE) {
+				cd.GetColor() = Color::lake;
+			}
+			else {
+				if (flag & ISLAND) {
+					auto t_union = cd.GetUnionFind().UnionFindCell(Terrain::OCEAN);
+					
+					double elev_scale = (double)(t_union->GetDetail().GetElevation()) * elev_rate;
+					double scale = 1;
+					double color = elev_scale * scale;
+					Color island_elev = Color(color, color, color);
+
+					cd.GetColor() = island_elev;
+				}
+				else {
+					cd.GetColor() = Color::black;
+				}
+			}
+			
 			//cd.GetColor().b += elev_scale * 0.7 * scale;
+		}
+		else if (cd.GetTerrain() == Terrain::COAST) {
+			if (flag & COAST) {
+				cd.GetColor() = Color::coast;
+			}
+			else {
+				if (flag & OCEAN) {
+					if (cd.IsEdge()) {
+						cd.GetColor() = Color::edgeOcean;
+					}
+					else {
+						cd.GetColor() = Color::ocean;
+					}
+					
+				}
+				else {
+					cd.GetColor() = Color::black;
+				}
+			}
+		}
+		else if (cd.GetTerrain() == Terrain::OCEAN) {
+			if (flag & OCEAN) {
+				if (cd.GetEdge()) {
+					cd.GetColor() = Color::edgeOcean;
+				}
+				else {
+					cd.GetColor() = Color::ocean;
+				}
+			}
+			else {
+				cd.GetColor() = Color::black;
+			}
 		}
 	}
 
@@ -993,21 +1073,26 @@ void VoronoiDiagramGenerator::SetupColor() {
 
 					}
 					else {
-						if (cd.GetElevation() == tcd.GetElevation()) {
-							if (vA->elev == vB->elev) {
-								e->color = cd.GetColor();
-							}
-							else {
-								e->color = Color::MixColor(vA->color, vB->color);
-
-							}
-							//e->color = Color(1, 0, 0);
+						if (cd.GetTerrain() == Terrain::LAKE && tcd.GetTerrain() == Terrain::LAKE) {
+							e->color = cd.GetColor();
 						}
-						//else if(e->elev < cd.GetElevation()){
 						else {
-							//e->elev = cd.GetElevation();
-							e->color = Color::MixColor(vA->color, vB->color);
-							//e->color = Color(1, 0, 0);
+							if (cd.GetElevation() == tcd.GetElevation()) {
+								if (vA->elev == vB->elev) {
+									e->color = cd.GetColor();
+								}
+								else {
+									e->color = Color::MixColor(vA->color, vB->color);
+
+								}
+								//e->color = Color(1, 0, 0);
+							}
+							//else if(e->elev < cd.GetElevation()){
+							else {
+								//e->elev = cd.GetElevation();
+								e->color = Color::MixColor(vA->color, vB->color);
+								//e->color = Color(1, 0, 0);
+							}
 						}
 					}
 				}
@@ -1097,24 +1182,42 @@ void VoronoiDiagramGenerator::SetupColor() {
 
 void VoronoiDiagramGenerator::SetupEdgePos() {
 	for (Edge* e : diagram->edges) { 
-		//if(e->vertA && e->vertB)
-		double dist = e->vertA->point.distanceTo(e->vertB->point);
-		
-		//Point2 norm = (e->vertA->point - e->vertB->point).Normailize();
-		Point2 norm = (e->vertA->point - e->vertB->point) / dist;
-		norm = Point2(-norm.y, norm.x);
-		double step = 3;
-		double perp_step = 3;
-		double scale1 = (0.5 - ((1/step) / 2)) + GetRandom() / step;
-		double perp_len = (dist / perp_step);
-		double scale2 = (perp_len / 2) - GetRandom() * perp_len;
+		if (e->rSite) {
+			double dist = e->vertA->point.distanceTo(e->vertB->point);
 
-		e->p = e->vertA->point * scale1 + e->vertB->point * (1 - scale1) + norm * scale2;
+			//Point2 norm = (e->vertA->point - e->vertB->point).Normailize();
+			Point2 norm = (e->vertA->point - e->vertB->point) / dist;
+			norm = Point2(-norm.y, norm.x);
+			double step = 3;
+			double perp_step = 3;
+			double scale1 = (0.5 - ((1 / step) / 2)) + GetRandom() / step;
+			double perp_len = (dist / perp_step);
+			double scale2 = (perp_len / 2) - GetRandom() * perp_len;
+
+			e->p = e->vertA->point * scale1 + e->vertB->point * (1 - scale1) + norm * scale2;
+		}
+		else {
+			e->p = (e->vertA->point + e->vertB->point) / 2;
+		}
+		
 		//e->p = (e->vertA->point + e->vertB->point) / 2;
 	}
 }
 
-void VoronoiDiagramGenerator::SaveImage(double dimension, double w, double h) {
+void VoronoiDiagramGenerator::SaveAllImage(double dimension, double w, double h) {
+	SetupColor(ALL_IMAGE);
+	SaveImage("voronoi_map_all.bmp", dimension, w, h);
+
+	SetupColor(ISLAND);
+	SaveImage("voronoi_map_islnad.bmp", dimension, w, h);
+
+	SetupColor(LAKE);
+	SaveImage("voronoi_map_lake.bmp", dimension, w, h);
+
+	SetupColor(ALL_IMAGE);
+}
+
+void VoronoiDiagramGenerator::SaveImage(const char* filename, double dimension, double w, double h) {
 	char* pixel_data = new char[w * h * 3];
 
 	for (Cell* c : diagram->cells) {
@@ -1148,6 +1251,7 @@ void VoronoiDiagramGenerator::SaveImage(double dimension, double w, double h) {
 			Color center_c = s->cell->GetDetail().GetColor();
 
 			//middle_c = (colorA + colorB) / 2;
+
 			Triangle triA = Triangle({ &pA, &center, &edge_mp, &colorA, &center_c, &edge_c });
 			Triangle triB = Triangle({ &pB, &center, &edge_mp, &colorB, &center_c, &edge_c });
 
@@ -1164,7 +1268,7 @@ void VoronoiDiagramGenerator::SaveImage(double dimension, double w, double h) {
 	BITMAPINFOHEADER bi;
 	FILE* out = nullptr;
 	char buff[256];
-	const char* filename = "voronoi_map.bmp";
+	//const char* filename = "voronoi_map.bmp";
 	fopen_s(&out, filename, "wb");
 	char* data = pixel_data;
 	memset(&bf, 0, sizeof(bf));

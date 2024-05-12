@@ -34,6 +34,12 @@ public:
 	static Color MixColor(Color& c1, Color& c2);
 	static Color lerp(const Color& a, const Color& b, double t);
 	operator CharColor() const;
+
+	static const Color black;
+	static const Color lake;
+	static const Color edgeOcean;
+	static const Color ocean;
+	static const Color coast;
 };
 
 
