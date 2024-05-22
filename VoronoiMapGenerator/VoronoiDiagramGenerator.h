@@ -115,15 +115,20 @@ private:
 	BoundingBox	boundingBox;
 	GenerateSetting setting;
 	int max_elevation;
+	unsigned int max_moisture;
 	Diagram* diagram;
 
 	void SetupVertexColor(Vertex* v, Cell* c, Cell* opposite_c, Color& elev_rate_c);
 
+
 public:
-	VoronoiDiagramGenerator() : diagram(nullptr), max_elevation(0), has_created_ocean(false), has_set_color(false), circleEventQueue(nullptr), beachLine(nullptr) {};
+	VoronoiDiagramGenerator() : diagram(nullptr), max_elevation(0), max_moisture(0), has_created_ocean(false), has_set_color(false), circleEventQueue(nullptr), beachLine(nullptr) {};
 	~VoronoiDiagramGenerator() {};
 
 	Diagram* GetDiagram();
+
+	unsigned int GetMaxElevation() { return max_elevation; }
+	unsigned int GetMaxMoisture() { return max_moisture; }
 
 	void compute(std::vector<Point2>& sites, BoundingBox bbox, bool reset = true);
 	void relax();
@@ -154,13 +159,14 @@ public:
 	void CreateTestLand();
 	void RemoveLake();
 	void CreateLake();
-	void CreateRiver();
 	void SetupElevation(CellVector& coastBuffer);
 	void SetupPeak(CellVector& coastBuffer);
 	void SetupCoast(CellVector& coastBuffer);
 	void SetupLandUnion();
 	void SetupIsland();
 	void SetupBiome();
+	void CreateRiver();
+	void SetupMoisture();
 	void SetupEdgePos();
 	void SetupColor(int flag = ALL_IMAGE);
 

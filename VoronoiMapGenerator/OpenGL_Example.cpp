@@ -266,10 +266,12 @@ void genRandomSites(int seed, std::vector<Point2>& sites, BoundingBox& bbox, uns
 }
 
 
-void draw_image(Diagram* diagram, unsigned int dimension) {
+void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 
 	GLfloat pointSize = 4;
 	GLfloat whitePointSize = 1;
+
+	Diagram* diagram = vdg->GetDiagram();
 
 	glBegin(GL_TRIANGLES);
 	for (Cell* c : diagram->cells) {
@@ -378,10 +380,15 @@ void draw_image(Diagram* diagram, unsigned int dimension) {
 
 		for (Cell* c : diagram->cells) {
 			Point2& p = c->site.p;
-
-
 			Point2& p2 = c->GetDetail().GetUnionFind().UnionFindCell(Terrain::PEAK)->site.p;
 
+			//if (c->GetDetail().IsFlat()) {
+			//	glPointSize(5);
+			//	glBegin(GL_POINTS);
+			//	glColor4f(1, 0, 0, 1);
+			//	glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
+			//	glEnd();
+			//}
 
 			if (draw_special_dot && c->GetDetail().IsHighestPeak()) {
 				glPointSize(pointSize);
@@ -413,14 +420,16 @@ void draw_image(Diagram* diagram, unsigned int dimension) {
 				glEnd();
 			}
 			else if (draw_white_dot) {
-				glPointSize(whitePointSize);
+				glPointSize(whitePointSize + 1);
 				glBegin(GL_POINTS);
-				glColor4f(1, 1, 1, 1);
+				double temp = (double)c->GetDetail().GetMoisture() / vdg->GetMaxMoisture();
+				//std::cout << "GetMoisture: " << c->GetDetail().GetMoisture() << ", LocalMoisture: " << c->GetDetail().GetLocalMoisture() << ", AreaMoisture: " << c->GetDetail().GetAreaMoisture() << ", GetMaxMoisture: " << vdg->GetMaxMoisture() << "\n";
+				glColor4f(1.0 - temp, 1.0 - temp, 1, 1);
 				glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
 				glEnd();
 			}
 
-
+			
 
 		}
 
@@ -513,7 +522,7 @@ int main() {
 	
 	
 	while (!glfwWindowShouldClose(window)) {
-		
+		auto fame_start = std::clock();
 
 		// Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
 		glfwPollEvents();
@@ -532,7 +541,7 @@ int main() {
 			relaxForever = false;
 			relax = 0;
 			sites = new std::vector<Point2>();
-			std::cout << "How many points? ";
+			//std::cout << "How many points? ";
 			//nPoints = 1000;
 			//std::cin >> nPoints;
 			genRandomSites(seed, *sites, bbox, dimension, nPoints);
@@ -620,7 +629,7 @@ int main() {
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
 
 
-			draw_image(vdg.GetDiagram(), dimension);
+			draw_image(&vdg, dimension);
 
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -631,13 +640,18 @@ int main() {
 			
 			//glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 			glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-			draw_image(vdg.GetDiagram(), dimension);
+			
+			draw_image(&vdg, dimension);
+			
 		}
 		
 		glfwSwapBuffers(window);
 
 		
 		glfwPollEvents();
+
+		double fame_duration = 1000 * (std::clock() - fame_start) / (double)CLOCKS_PER_SEC;
+		if (fame_duration < 33) Sleep(33 - fame_duration);
 	}
 
 	// Terminate GLFW, clearing any resources allocated by it.

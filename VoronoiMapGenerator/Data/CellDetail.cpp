@@ -67,8 +67,55 @@ void CellDetail::AddElevation(int num) {
 	elevation += num;
 }
 
+unsigned int CellDetail::GetMoisture() {
+	return GetAreaMoisture() / 36 + GetLocalMoisture();
+}
+unsigned int CellDetail::GetAreaMoisture() {
+	return  UnionFindCellDetail(Terrain::PEAK).areaMoisture;
+}
+unsigned int CellDetail::GetLocalMoisture() {
+	return localMoisture;
+}
+
+
+void CellDetail::SetAreaMoisture(unsigned int num) {
+	UnionFindCellDetail(Terrain::PEAK).areaMoisture = num;
+}
+void CellDetail::AddAreaMoisture(unsigned int num) {
+	UnionFindCellDetail(Terrain::PEAK).areaMoisture += num;
+}
+
+void CellDetail::SetLocalMoisture(unsigned int num) {
+	localMoisture = num;
+}
+void CellDetail::AddLocalMoisture(unsigned int num) {
+	localMoisture += num;
+}
+
+unsigned int CellDetail::GetBiome() {
+	return biome;
+}
+void CellDetail::SetBiome(unsigned int num) {
+	biome = num;
+}
+void CellDetail::AddBiome(unsigned int num) {
+	biome += num;
+}
+
 UnionFind<Cell, TERRAIN_CNT>& CellDetail::GetUnionFind() {
 	return unionfind;
+}
+
+Cell* CellDetail::UnionFindCell(Terrain t) {
+	return unionfind.UnionFindCell(t);
+}
+
+CellDetail& CellDetail::UnionFindCellDetail(Terrain t) {
+	return unionfind.UnionFindCell(t)->GetDetail();
+}
+
+void CellDetail::SetUnionCell(Terrain t, Cell* c) {
+	unionfind.SetUnionCell(t, c);
 }
 
 void CellDetail::SetTerrain(Terrain t) {

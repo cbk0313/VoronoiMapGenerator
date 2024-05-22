@@ -17,6 +17,7 @@ enum class Terrain : std::size_t {
 	LAKE,
 	PEAK,
 	HIGHEST_PEAK,
+	FLAT,
 
 	COUNT // it's mean enum count
 };
@@ -32,6 +33,7 @@ enum class Terrain : std::size_t {
 
 #define COAST_ELEVATION -1
 #define OCEAN_ELEVATION -2
+#define LAND_MIN_ELEVATION 1
 
 //typedef UnionFind<Cell, TERRAIN_CNT> UF;
 
@@ -49,7 +51,8 @@ private:
 	//Cell* unionCell;
 
 	int elevation;
-	unsigned int moisture;
+	unsigned int localMoisture;
+	unsigned int areaMoisture;
 	unsigned int biome;
 
 	Cell* cell;
@@ -79,7 +82,22 @@ public:
 	void SetElevation(int num);
 	void AddElevation(int num);
 
+	unsigned int GetMoisture();
+	unsigned int GetAreaMoisture();
+	unsigned int GetLocalMoisture();
+	void SetAreaMoisture(unsigned int num);
+	void AddAreaMoisture(unsigned int num);
+	void SetLocalMoisture(unsigned int num);
+	void AddLocalMoisture(unsigned int num);
+
+	unsigned int GetBiome();
+	void SetBiome(unsigned int num);
+	void AddBiome(unsigned int num);
+
 	UnionFind<Cell, TERRAIN_CNT>& GetUnionFind();
+	Cell* UnionFindCell(Terrain t);
+	CellDetail& UnionFindCellDetail(Terrain t);
+	void SetUnionCell(Terrain t, Cell* c);
 	/*Cell* getUnionCell() {
 		return unionCell;
 	}*/
@@ -87,7 +105,7 @@ public:
 	void SetEdge(bool b);
 	void Reset(bool reset_edge = true, bool reset_terrain = true, bool reset_elev = true);
 
-	CellDetail() : b_edge(false), b_flat(false), b_peak(false), b_highest_peak(false), cell(nullptr), unionfind(UnionFind<Cell, TERRAIN_CNT>(nullptr)), elevation(0) { SetTerrain(Terrain::OCEAN); };
+	CellDetail() : b_edge(false), b_flat(false), b_peak(false), b_highest_peak(false), cell(nullptr), unionfind(UnionFind<Cell, TERRAIN_CNT>(nullptr)), elevation(0), localMoisture(0), areaMoisture(0), biome(0) { SetTerrain(Terrain::OCEAN); };
 	CellDetail(Cell* c) : CellDetail() {
 		cell = c;
 		unionfind = UnionFind<Cell, TERRAIN_CNT>(c);

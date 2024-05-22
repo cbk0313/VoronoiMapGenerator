@@ -2,25 +2,37 @@
 #include "..\Cell.h"
 #include <algorithm>
 
-CellBuffer::CellBuffer(size_t size, bool dedupl) : cell_cnt(size) {
-	isCalculating = std::vector<bool>(cell_cnt, false);
-	SetPopDeduplication(dedupl);
+
+CellQueue::CellQueue(size_t cnt, bool dedup) : UniqueBuffer(cnt, dedup) {
 }
 
-void CellBuffer::SetPopDeduplication(bool b){
-	deduplication = b;
+unsigned int CellQueue::GetUnique(Cell* c) {
+	return c->GetUnique();
 }
 
-void CellBuffer::push(Cell* c){
-	if (!isCalculating[c->GetUnique()]) {
-		isCalculating[c->GetUnique()] = true;
-		QueueBuffer::push(c);
+Cell* CellQueue::GetValue() {
+	return buffer.front();
+}
+
+
+bool PriorityCellComp::operator() (Cell* A, Cell* B) {
+	if (A->GetDetail().GetElevation() < B->GetDetail().GetElevation()) {
+		return true;
+	}
+	else {
+		return false;
 	}
 }
 
-void CellBuffer::pop(){
-	if (deduplication) isCalculating[buffer.front()->GetUnique()] = false;
-	QueueBuffer::pop();
+CellPriorityQueue::CellPriorityQueue(size_t cnt, bool dedup) : UniqueBuffer(cnt, dedup) {
+}
+
+unsigned int CellPriorityQueue::GetUnique(Cell* c) {
+	return c->GetUnique();
+}
+
+Cell* CellPriorityQueue::GetValue() {
+	return buffer.top();
 }
 
 CellVector::CellVector(size_t size) : cell_cnt(size) {
