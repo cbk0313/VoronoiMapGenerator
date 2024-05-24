@@ -397,7 +397,7 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 				glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
 				glEnd();
 			}
-			else if (draw_special_dot && c->GetDetail().IsPeak()) {
+			else if (draw_special_dot && c->GetDetail().GetPeak()) {
 
 				/*	glPointSize(8);
 					glBegin(GL_POINTS);
@@ -420,7 +420,7 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 				glEnd();
 			}
 			else if (draw_white_dot) {
-				glPointSize(whitePointSize + 1);
+				glPointSize(whitePointSize);
 				glBegin(GL_POINTS);
 				double temp = (double)c->GetDetail().GetMoisture() / vdg->GetMaxMoisture();
 				//std::cout << "GetMoisture: " << c->GetDetail().GetMoisture() << ", LocalMoisture: " << c->GetDetail().GetLocalMoisture() << ", AreaMoisture: " << c->GetDetail().GetAreaMoisture() << ", GetMaxMoisture: " << vdg->GetMaxMoisture() << "\n";
@@ -481,7 +481,7 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 
 
 int main() {
-	unsigned int nPoints = 10000;
+	unsigned int nPoints = 100000;
 	unsigned int dimension = 1000000;
 
 	int seed = 0;//18;

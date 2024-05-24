@@ -18,6 +18,7 @@ public:
 	std::vector<Vertex*> vertices;
 	UnionArray<std::vector<Cell*>> oceanUnion;
 	UnionArray<IslandUnion> islandUnion;
+	std::vector<Edge*> river_edges;
 
 
 	~Diagram();
