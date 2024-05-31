@@ -4,6 +4,14 @@
 #include<vector>
 #include<stack>
 
+
+template <typename T>
+using ReturnType = typename std::conditional<
+	std::is_pointer<T>::value, // 조건: T가 포인터 타입인지 확인
+	T,                         // T가 포인터 타입이면 그대로 T
+	T&                         // T가 포인터 타입이 아니면 레퍼런스 타입
+>::type;
+
 template<template<typename> class Q, typename T, typename ...args>
 class UniqueBuffer {
 protected:
@@ -12,7 +20,7 @@ protected:
 	std::vector<bool> isCalculating;
 	bool deduplication;
 
-	inline virtual unsigned int GetUnique(T t) = 0;
+	inline virtual unsigned int GetUnique(ReturnType<T> t) = 0;
 
 	inline virtual void push_to_buffer(T t) {
 		buffer.push(t);
@@ -30,7 +38,7 @@ public:
 		SetPopDeduplication(dedupl);
 	}
 
-	inline virtual T GetValue() = 0;
+	inline virtual ReturnType<T> GetValue() = 0;
 
 	void SetPopDeduplication(bool b) {
 		deduplication = b;
@@ -40,6 +48,24 @@ public:
 	inline virtual Q<args...>& GetBuffer() {
 		return buffer;
 	}
+
+	inline virtual bool IsCalculating(ReturnType<T> t) {
+		return isCalculating[GetUnique(t)];
+	}
+
+	inline virtual bool IsCalculating(unsigned int num) {
+		return isCalculating[num];
+	}
+
+	inline virtual void SetCalculating(unsigned int num, bool b) {
+		isCalculating[num] = b;
+	}
+
+	inline virtual std::vector<bool>& GetCalculating() {
+		return isCalculating;
+	}
+
+	//inline virtual bool push(ReturnType<T> t) {
 	inline virtual bool push(T t) {
 		if (!isCalculating[GetUnique(t)]){
 			isCalculating[GetUnique(t)] = true;
@@ -76,7 +102,7 @@ public:
 		return buffer;
 	}
 
-	inline virtual void push_back(T t) {
+	inline virtual void push_back(ReturnType<T> t) {
 		buffer.push_back(t);
 	}
 
@@ -87,7 +113,7 @@ public:
 	inline virtual bool empty() {
 		return buffer.empty();
 	}
-	inline virtual T front() {
+	inline virtual ReturnType<T> front() {
 		return buffer.front();
 	}
 };
@@ -101,7 +127,7 @@ public:
 	inline virtual std::stack<T>& GetBuffer() {
 		return buffer;
 	}
-	inline virtual void push(T t) {
+	inline virtual void push(ReturnType<T> t) {
 		buffer.push(t);
 	}
 
@@ -112,17 +138,17 @@ public:
 	inline virtual bool empty() {
 		return buffer.empty();
 	}
-	inline virtual T top() {
+	inline virtual ReturnType<T> top() {
 		return buffer.top();
 	}
 };
 
-template<template<typename> class ARR_TYPE, typename MAIN_T, typename UNIQUE_F, typename VALUE_F, typename ...SUB_T_ARGS>
+template<template<typename> class ARR_TYPE, typename MAIN_T, typename UNIQUE_F, typename VALUE_F, typename... SUB_T_ARGS>
 class UniBuf : public UniqueBuffer<ARR_TYPE, MAIN_T, SUB_T_ARGS...> {
 private:
 	UNIQUE_F unique_f;
 	VALUE_F value_f;
-	inline virtual unsigned int GetUnique(MAIN_T c) override {
+	inline virtual unsigned int GetUnique(ReturnType<MAIN_T> c) override {
 		return unique_f(c);
 	}
 public:
@@ -134,7 +160,7 @@ public:
 		, value_f(v_f)
 	{};
 
-	inline virtual MAIN_T GetValue() override {
+	inline virtual ReturnType<MAIN_T> GetValue() override {
 		return value_f(&this->buffer);
 	}
 };

@@ -5,6 +5,13 @@
 
 unsigned int Cell::s_unique = 0;
 
+//Cell* Cell::GetHasRiver() {
+//	return has_river;
+//}
+//
+//void Cell::SetHasRiver(Cell* b) {
+//	has_river = b;
+//}
 std::vector<Cell*> Cell::getNeighbors() {
 	std::vector<Cell*> neighbors;
 	Edge* e;

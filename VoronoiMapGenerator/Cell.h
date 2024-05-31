@@ -30,6 +30,8 @@ struct Cell {
 
 private:
 	static unsigned int s_unique;
+private:
+	//Cell* has_river;
 	unsigned int unique;
 	CellDetail detail;
 public:
@@ -44,6 +46,10 @@ public:
 
 	unsigned int GetUnique() { return unique; };
 	CellDetail& GetDetail() { return detail; };
+
+	//Cell* GetHasRiver();
+	//void SetHasRiver(Cell* c);
+
 	//bool IsInQueue
 
 	std::vector<Cell*> getNeighbors();

@@ -355,6 +355,7 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 					std::cout << "checked!\n";
 				}*/
 				//glBegin(GL_LINES);
+				//glBegin(GL_LINES);
 				//glBegin(GL_TRIANGLES);
 				Point2& p1 = hf->startPoint()->point;
 				Point2& p2 = hf->endPoint()->point;
@@ -376,7 +377,34 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 	}
 
 	if (draw_white_dot || draw_special_dot) {
+		
+		for (std::vector<Cell*>& c_vec : diagram->river_edges) {
+			Cell* pre_c = nullptr;
+			for (Cell* c : c_vec) {
+				if (pre_c == nullptr) {
+					pre_c = c;
+					continue;
+				}
 
+
+				Point2& p1 = pre_c->site.p;
+				Point2& p2 = c->site.p;
+
+				glBegin(GL_LINES);
+				if (pre_c->GetDetail().GetElevation() == c->GetDetail().GetElevation()) {
+					glColor4f(0, 1, 0, 1);
+				}
+				else {
+					glColor4f(1, 0, 0, 1);
+				}
+				glVertex3d(normalize(p1[0], dimension), -normalize(p1[1], dimension), 0.0);
+				glVertex3d(normalize(p2[0], dimension), -normalize(p2[1], dimension), 0.0);
+				glEnd();
+
+				pre_c = c;
+			}
+		}
+	
 
 		for (Cell* c : diagram->cells) {
 			Point2& p = c->site.p;
@@ -420,9 +448,10 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 				glEnd();
 			}
 			else if (draw_white_dot) {
-				glPointSize(whitePointSize);
+				glPointSize(whitePointSize * 2);
 				glBegin(GL_POINTS);
 				double temp = (double)c->GetDetail().GetMoisture() / vdg->GetMaxMoisture();
+				//temp *= 2;
 				//std::cout << "GetMoisture: " << c->GetDetail().GetMoisture() << ", LocalMoisture: " << c->GetDetail().GetLocalMoisture() << ", AreaMoisture: " << c->GetDetail().GetAreaMoisture() << ", GetMaxMoisture: " << vdg->GetMaxMoisture() << "\n";
 				glColor4f(1.0 - temp, 1.0 - temp, 1, 1);
 				glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
@@ -481,7 +510,7 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 
 
 int main() {
-	unsigned int nPoints = 100000;
+	unsigned int nPoints = 10000;
 	unsigned int dimension = 1000000;
 
 	int seed = 0;//18;

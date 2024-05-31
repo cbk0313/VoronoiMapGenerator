@@ -5,8 +5,11 @@
 #include <algorithm>
 #include <iostream>
 #include <queue>
+#include <tuple>
+#include <unordered_map>
 #include "Data/Buffer.h"
 #include "Data/Triangle.h"
+#include "Data/River.h"
 #include <Windows.h>
 
 using std::cout;
@@ -892,7 +895,7 @@ void VoronoiDiagramGenerator::SetupIsland() {
 			auto unique = cd.UnionFindCell(Terrain::OCEAN)->GetUnique();
 			arr->lakeUnion.insert(unique)->push_back(c);
 			cd.SetElevation(cd.UnionFindCellDetail(Terrain::OCEAN).GetElevation());
-			std::cout << cd.GetElevation() << "\n";
+			//std::cout << cd.GetElevation() << "\n";
 		}
 		/*if (cd.b_peak) {
 			c->GetDetail().GetColor() = Color(0, 1, 0);
@@ -902,8 +905,18 @@ void VoronoiDiagramGenerator::SetupIsland() {
 
 
 void VoronoiDiagramGenerator::SetupMoisture() {
-	CellPriorityQueue p_q(Cell::GetCellCnt(), false);
+	
+	using Container = std::pair<Cell*, int>;
+	auto u_f = [](ReturnType<Container> c) { return c.first->GetUnique(); };
+	auto v_f = [](auto buffer) -> decltype(auto) { return buffer->front(); };
+	auto p_u_f = [](ReturnType<Cell*> c) { return c->GetUnique(); };
+	auto p_v_f = [](auto buffer) -> decltype(auto) { return buffer->top(); };
+
+	
 	for (auto item : diagram->islandUnion.unions) {
+		//CellPriorityQueue p_q(Cell::GetCellCnt(), false);
+		UniBuf<std::priority_queue, Cell*, decltype(p_u_f), decltype(p_v_f), Cell*, std::vector<Cell*>, River::RiverPriorityComp> p_q(p_u_f, p_v_f, Cell::GetCellCnt(), false);
+
 		auto island = item.second;
 		for (auto highestPeak_union : island.highestPeakUnion.unions) {
 
@@ -911,65 +924,91 @@ void VoronoiDiagramGenerator::SetupMoisture() {
 				p_q.push(highestPeak);
 			}
 		}
-	}
-	auto u_f = [](std::pair<Cell*, int> c) { return c.first->GetUnique(); };
-	auto v_f = [](auto buffer) { return buffer->front(); };
 
-	UniBuf<std::queue, std::pair<Cell*, int>, decltype(u_f), decltype(v_f), std::pair<Cell*, int>> lake_q(u_f, v_f, Cell::GetCellCnt(), false);
+
+		while (!p_q.empty()) {
+			Cell* c = p_q.GetValue();
+			p_q.pop();
+
+			CellDetail& cd = c->GetDetail();
+			//std::cout << " Elevation: " << cd.GetElevation() << ", Moisture: " << cd.GetMoisture() << ", AreaMoisture: " << cd.GetAreaMoisture() << ", LocalMoisture: " << cd.GetLocalMoisture() << "\n";
+			max_moisture = std::max<unsigned int>(max_moisture, cd.GetMoisture());
+			for (HalfEdge* he : c->halfEdges) {
+				Edge* e = he->edge;
+				Cell* targetCell = (e->lSite->cell == c && e->rSite) ? e->rSite->cell : e->lSite->cell;
+				//if (targetCell->GetDetail().GetElevation() < c->GetDetail().GetElevation()) {
+				CellDetail& tcd = targetCell->GetDetail();
+				if (IS_LAND(tcd.GetTerrain()) && cd.GetElevation() >= tcd.GetElevation()) {
+					//if (p_q.push(targetCell)) {
+
+					//}
+					if (!p_q.IsCalculating(targetCell->GetUnique())) {
+
+						//bool nonPeakBonus = !tcd.IsPeak();
+						bool nonPeakBonus = false;
+						if (cd.GetElevation() > tcd.GetElevation()) {
+
+							/*	if (tcd.IsFlat()) {
+									tcd.UnionFindCellDetail(Terrain::FLAT).AddAreaMoisture(1);
+								}*/
+
+							if (tcd.GetMoisture() == 0) {
+								tcd.SetLocalMoisture(cd.GetMoisture());
+							}
+							else {
+								if (tcd.GetMoisture() < cd.GetMoisture()) {
+									tcd.SetLocalMoisture(cd.GetMoisture());
+									p_q.SetCalculating(targetCell->GetUnique(), false);
+								}
+								
+							}
+							tcd.AddLocalMoisture(1 + nonPeakBonus);
+							
+							
+						}
+						else if (cd.GetElevation() == tcd.GetElevation()) {
+							if (tcd.GetMoisture() == 0) {
+								tcd.SetLocalMoisture(cd.GetMoisture() + 1 + nonPeakBonus);
+							}
+							else if (tcd.GetMoisture() < cd.GetMoisture()){
+								tcd.SetLocalMoisture(cd.GetMoisture() + 1 + nonPeakBonus);
+								p_q.SetCalculating(targetCell->GetUnique(), false);
+							}
+							else {
+								tcd.AddLocalMoisture(1 + nonPeakBonus);
+							}
+
+
+						}
+					}
+					
+					bool is_first = p_q.push(targetCell);
+				}
+
+			}
+		}
+
+	}
+
+	//using Container = std::pair<Cell*, int>;
+	//auto u_f = [](ReturnType<Container> c) { return c.first->GetUnique(); };
+	//auto v_f = [](auto buffer) -> decltype(auto) { return buffer->front(); };
+
+	UniBuf<std::queue, Container, decltype(u_f), decltype(v_f), Container> lake_q(u_f, v_f, Cell::GetCellCnt(), false);
 	for (auto item : diagram->islandUnion.unions) {
 		auto island = item.second;
 		for (auto highestPeak_union : island.lakeUnion.unions) {
 			int power = highestPeak_union.second.size() * 2;
 			for (auto highestPeak : highestPeak_union.second) {
-				lake_q.push(std::make_pair(highestPeak, power));
+				auto new_v = std::make_pair(highestPeak, power);
+				lake_q.push(new_v);
 			}
 		}
 	}
 
 
 
-
-	while (!p_q.empty()) {
-		Cell* c = p_q.GetValue();
-		p_q.pop();
-
-		CellDetail& cd = c->GetDetail();
-		//std::cout << " Elevation: " << cd.GetElevation() << ", Moisture: " << cd.GetMoisture() << ", AreaMoisture: " << cd.GetAreaMoisture() << ", LocalMoisture: " << cd.GetLocalMoisture() << "\n";
-		max_moisture = std::max<unsigned int>(max_moisture, cd.GetMoisture());
-		for (HalfEdge* he : c->halfEdges) {
-			Edge* e = he->edge;
-			Cell* targetCell = (e->lSite->cell == c && e->rSite) ? e->rSite->cell : e->lSite->cell;
-			//if (targetCell->GetDetail().GetElevation() < c->GetDetail().GetElevation()) {
-			CellDetail& tcd = targetCell->GetDetail();
-			if (IS_LAND(tcd.GetTerrain()) && cd.GetElevation() >= tcd.GetElevation()) {
-				//if (p_q.push(targetCell)) {
-					
-				//}
-
-				bool is_first = p_q.push(targetCell);
-				bool nonPeakBonus = !tcd.IsPeak();
-				if (cd.GetElevation() > tcd.GetElevation()) {
-					
-					if (tcd.IsFlat()) {
-						tcd.UnionFindCellDetail(Terrain::FLAT).AddAreaMoisture(1);
-					}
-					
-					if (is_first) {
-						tcd.SetLocalMoisture(max_elevation - tcd.GetElevation() + nonPeakBonus);
-					}
-					else {
-						tcd.AddLocalMoisture(1 + nonPeakBonus);
-					}
-					
-				}
-				else {
-					if(is_first) tcd.SetLocalMoisture(cd.GetLocalMoisture() + 1);
-				}
-			}
-
-		}
-	}
-
+	return;
 	while (!lake_q.empty()) {
 		auto value = lake_q.GetValue();
 		lake_q.pop();
@@ -986,8 +1025,9 @@ void VoronoiDiagramGenerator::SetupMoisture() {
 			CellDetail& tcd = targetCell->GetDetail();
 
 			if (IS_GROUND(tcd.GetTerrain()) && cd.GetElevation() >= tcd.GetElevation() ) {
-				if (lake_q.push(std::make_pair(targetCell, pow - 1))) {
-					tcd.AddLocalMoisture(pow - 1);
+				auto new_v = std::make_pair(targetCell, pow - 1);
+				if (lake_q.push(new_v)) {
+					//tcd.AddLocalMoisture(pow - 1);
 				}
 			}
 
@@ -997,50 +1037,237 @@ void VoronoiDiagramGenerator::SetupMoisture() {
 }
 
 
-
-void VoronoiDiagramGenerator::CreateRiver() {
-	//std::priority_queue<Cell*, std::vector<Cell*>, compare> p_q;
-	
-	///*for (auto item : diagram->islandUnion.unions) {
-	//	auto island = item.second;
-	//	for (auto lake_union : island.lakeUnion.unions) {
-
-	//		for (auto lake : lake_union.second) {
-	//			Point2& p = lake->site.p;
-	//			p_q.push(lake);
-	//		}
-	//	}
-	//}*/
-
-	std::vector<Cell*> buf;
-	for (auto item : diagram->islandUnion.unions) {
-		auto island = item.second;
-		for (auto highestPeak_union : island.highestPeakUnion.unions) {
-
-			for (auto highestPeak : highestPeak_union.second) {
-				buf.push_back(highestPeak);
-			}
-		}
-	}
-	std::stack<Edge*> e_buf;
-	Edge* last_e = nullptr;
-	for (Cell* c : buf) {
-		CellDetail& cd = c->GetDetail();
-		if (last_e == nullptr) {
-			for (HalfEdge* he : c->halfEdges) {
-				Edge* e = he->edge;
-				Cell* targetCell = (e->lSite->cell == c && e->rSite) ? e->rSite->cell : e->lSite->cell;
-				//CellDetail& tcd = targetCell->GetDetail();
-
-				//double e_mo = tcd.GetMoisture() + cd.GetMoisture();
-				e_buf.push(e);
-			}
+using Container = std::tuple<Cell*, std::vector<Cell*>>;
+struct LakeComp {
+	bool operator() (Container& A, Container& B) {
+		CellDetail& ad = get<0>(A)->GetDetail();
+		CellDetail& bd = get<0>(B)->GetDetail();
+		if (get<1>(A).size() < get<1>(B).size()) {
+			return true;
 		}
 		else {
-
+			if (get<1>(A).size() == get<1>(B).size()) {
+				if (ad.GetMoisture() < bd.GetMoisture()) {
+					return true;
+				}
+			}
+			return false;
 		}
 	}
-	diagram->river_edges;
+
+};
+
+//UniBuf<std::priority_queue, Container, decltype(u_f), decltype(v_f), Container, std::vector<Container>, LakeComp> lake_buf(u_f, v_f, Cell::GetCellCnt(), false);
+//std::unordered_map<RiverEdge, std::string, pair_hash, pair_equal> umap;
+
+
+void VoronoiDiagramGenerator::CreateRiver() {
+
+	RiverEdge::Clear();
+
+	for (auto item : diagram->islandUnion.unions) {
+		auto island = item.second;
+		using Container = std::pair<Cell*, Cell*>;
+		auto u_f = [](ReturnType<Container> c) { return c.first->GetUnique(); };
+		auto v_f = [](auto buffer) -> decltype(auto) { return buffer->front(); };
+
+		
+		for (auto lake_union : island.lakeUnion.unions) {
+			UniBuf<std::queue, Container, decltype(u_f), decltype(v_f), Container> buf(u_f, v_f, Cell::GetCellCnt(), false);
+
+			Cell* first_c = lake_union.second[0];
+
+			for (auto lake : lake_union.second) {
+				Container temp = std::make_pair(lake, lake);
+				buf.push(std::make_pair(lake, lake));
+				auto river_pos = std::make_pair(lake->GetUnique(), lake->GetUnique());
+				RiverEdge::GetRiverEdges()[river_pos] = RiverEdge::CreateStartPoint(lake);
+				
+			}
+
+			while (!buf.empty()) {
+				Container value = buf.GetValue();
+				buf.pop();
+				Cell* c = value.first;
+				Cell* pre_c = value.second;
+				
+				CellDetail& cd = c->GetDetail();
+
+				RiverEdge* pre_e = pre_c == nullptr ?
+					RiverEdge::GetRiverEdge(RiverEdge::GetPos(c, c)) :
+					RiverEdge::GetRiverEdge(RiverEdge::GetPos(pre_c, c));
+
+				int next_dist = pre_e->IsStart() ? 1 : pre_e->GetDistance() + 1;
+
+				Cell* owner = pre_e->GetOnwer();
+
+				//if (pre_e->GetOwnerEdge()->GetOceanConnect() > lake_union.second.size()) continue;
+				auto uni_e = RiverEdge::GetRiverEdge(RiverEdge::GetPos(first_c, first_c));
+				int cell_cnt = 0;
+				if (RiverEdge::GetOceanConnect(pre_e->GetOnwer()) < lake_union.second.size()) {
+					for (HalfEdge* he : c->halfEdges) {
+						Edge* e = he->edge;
+						Cell* targetCell = (e->lSite->cell == c && e->rSite) ? e->rSite->cell : e->lSite->cell;
+						CellDetail& tcd = targetCell->GetDetail();
+
+						if (IS_GROUND(tcd.GetTerrain()) && !buf.IsCalculating(targetCell->GetUnique())) {
+							if (tcd.GetElevation() < cd.GetElevation() ||
+								(IS_WATER(cd.GetTerrain()) ||
+									((tcd.IsFlat() || cd.IsFlat()) && tcd.GetElevation() == cd.GetElevation() && tcd.GetMoisture() >= cd.GetMoisture()))) {
+								auto river_pos = RiverEdge::GetPos(c, targetCell);
+								//umap[RiverEdge::GetPos(c, targetCell)]
+
+								auto iter = RiverEdge::GetRiverOutEdges().find(targetCell->GetUnique());
+								if (iter == RiverEdge::GetRiverOutEdges().end()) {
+									auto new_e = RiverEdge::Create(c, targetCell, owner, pre_e, nullptr, next_dist);
+									RiverEdge::GetRiverEdges()[river_pos] = new_e;
+									//new_e->prevs.push_back(pre_e);
+									//pre_e->GetNexts().push_back(new_e);
+
+									buf.push(std::make_pair(targetCell, c));
+									cell_cnt++;
+
+									//cell_cnt++;
+								}
+								else {
+
+
+									if (!RiverEdge::CheckRiverEdgeLinked(pre_e->GetOnwer(), iter->second[0]->GetOnwer()) &&
+										pre_e->GetOnwer() != iter->second[0]->GetOnwer()) {
+										auto new_e = RiverEdge::Create(c, targetCell, owner, pre_e, nullptr, next_dist);
+										RiverEdge::GetRiverEdges()[river_pos] = new_e;
+										auto find_v = iter->second;
+										for (auto find_e : find_v) {
+											find_e->SetDistAndNextAll(next_dist + 1, owner);
+										}
+										RiverEdge::AddLinkRiverEdge(pre_e->GetOnwer(), iter->second[0]->GetOnwer());
+										//std::cout << "°»½Å\n";
+									}
+
+									/*auto find_e = iter->second;
+									if (find_e->GetOnwer() == first_c) {
+										if (iter->second->GetDistance() > next_dist) {
+											find_e->SetDistAndNextAll(next_dist, first_c);
+											find_e->LinkPrev(pre_e);
+											cell_cnt++;
+											std::cout << "°»½Å\n";
+										}
+									}
+									else {
+										find_e->SetDistAndNextAll(next_dist, first_c);
+										cell_cnt++;
+									}*/
+
+
+								}
+
+							}
+						}
+						else if (IS_WATER(tcd.GetTerrain()) && tcd.UnionFindCell(Terrain::OCEAN) != owner->GetDetail().UnionFindCell(Terrain::OCEAN)) {
+							//std::cout << (int)tcd.GetTerrain() << " " << IS_OCEAN(tcd.GetTerrain()) << " Èå ¿¡?\n";
+							if (IS_OCEAN(tcd.GetTerrain())) {
+								//std::cout << (int)tcd.GetTerrain() << "Èå ¿¡?\n";
+								if (!buf.IsCalculating(targetCell->GetUnique())) {
+									//std::cout << "Áßº¹?\n";
+									buf.SetCalculating(targetCell->GetUnique(), true);
+								}
+								else {
+									continue;
+								}
+
+								RiverEdge::AddOceanConnect(pre_e->GetOnwer());
+							}
+							else {
+								if (tcd.GetTerrain() == Terrain::LAKE) {
+									if (buf.IsCalculating(targetCell->GetUnique()) || RiverEdge::CheckRiverLinked(pre_e->GetOnwer(), targetCell) ) {
+										continue;
+									}
+									
+									buf.SetCalculating(targetCell->GetUnique(), true);
+									RiverEdge::AddLinkRiverEdge(pre_e->GetOnwer(), targetCell);
+									RiverEdge::AddLinkRiver(pre_e->GetOnwer(), targetCell);
+									
+									
+								}
+							}
+							//auto owner_c = pre_e->GetOnwer();
+							//auto owner_pos = RiverEdge::GetPos(owner_c, owner_c);
+							//if (umap.find(owner_pos) != umap.end()) {
+							auto onwer_e = pre_e->GetOwnerEdge();
+							//if (onwer_e->GetDistance() == 0) {
+							auto new_e = RiverEdge::Create(c, targetCell, first_c, pre_e, nullptr, next_dist);
+							RiverEdge::GetRiverEdges()[RiverEdge::GetPos(c, targetCell)] = new_e;
+							pre_e->GetNexts().push_back(new_e);
+							//	onwer_e->SetDist(next_dist);
+							cell_cnt++;
+							//}
+						//}
+
+
+							break;
+						}
+
+					}
+				}
+				if (cell_cnt == 0) {
+					pre_e->DeleteLine(buf.GetCalculating());
+					
+				}
+
+
+			}
+		}
+
+	}
+
+	for (auto item : diagram->islandUnion.unions) {
+		auto island = item.second;
+
+		
+		for (auto lake_union : island.lakeUnion.unions) {
+			
+			
+			for (auto lake : lake_union.second) {
+				
+				
+				auto river_pos = RiverEdge::GetPos(lake, lake);
+				//std::pair< RiverEdge*, std::vector<Cell*>>;
+				using Temp = std::pair< RiverEdge*, std::vector<Cell*>>;
+				std::stack<Temp> buf;
+				if (RiverEdge::GetRiverEdges().find(river_pos) != RiverEdge::GetRiverEdges().end()) {
+					buf.push(std::make_pair(RiverEdge::GetRiverEdges()[river_pos], std::vector<Cell*>()));
+				}
+
+
+				while (!buf.empty()) {
+					auto value = buf.top();
+					buf.pop();
+					RiverEdge* e = value.first;
+					auto c_arr = value.second;
+					if (e == nullptr) continue;
+					if (e->IsStart()) c_arr.push_back(e->GetStart());
+					else c_arr.push_back(e->GetEnd());
+
+					if (e->GetNexts().size() == 0) {
+						diagram->river_edges.push_back(c_arr);
+					}
+					else {
+						for (auto next_e : e->GetNexts()) {
+							buf.push(make_pair(next_e, c_arr));
+						}
+					}
+					
+
+				}
+				
+			}
+			
+		}
+
+		//if (temp_cnt > 2) break;
+		
+	}
+	
 }
 
 void VoronoiDiagramGenerator::SetupBiome() {

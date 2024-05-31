@@ -25,6 +25,7 @@
     <ClInclude Include="Data\Buffer.h" />
     <ClInclude Include="Data\CellDetail.h" />
     <ClInclude Include="Data\Color.h" />
+    <ClInclude Include="Data\River.h" />
     <ClInclude Include="Data\Triangle.h" />
     <ClInclude Include="Data\UnionFind.h" />
     <ClInclude Include="Diagram.h" />
@@ -48,6 +49,7 @@
     <ClCompile Include="Edge.cpp" />
     <ClCompile Include="OpenGL_Example.cpp" />
     <ClCompile Include="Point2.cpp" />
+    <ClCompile Include="River.cpp" />
     <ClCompile Include="Vector2.cpp" />
     <ClCompile Include="VoronoiDiagramGenerator.cpp" />
   </ItemGroup>
