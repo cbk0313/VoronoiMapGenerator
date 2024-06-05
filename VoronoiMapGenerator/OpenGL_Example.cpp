@@ -8,6 +8,8 @@
 #include <limits>
 #include <Windows.h>
 
+#include "Data/River.h"
+
 #include "FastNoise/FastNoiseLite.h"
 
 // GLEW
@@ -72,7 +74,437 @@ bool mouse_left_down = false;
 GLuint fbo;
 GLuint texture;
 
+GLfloat matrix_2[3][3] = { {2.0f, -4.0f, 2.0f}, {-3.0f, 4.0f, -1.0f}, {1.0f, 0.0f, 0.0f} };
+GLfloat matrix_3[4][4] = { {-1.0f, 3.0f, -3.0f, 1.0f},
+						  {2.0f, -5.0f, 4.0f, -1.0f},
+						  {-1.0f, 0.0f, 1.0f, 0.0f},
+						  {0.0f, 2.0f, 0.0f, 0.0f} };
 
+const float radius = 500.f;
+const float river_sacle = 0.2;
+GLvoid drawCardinal(std::vector<RiverPoint>& point, unsigned int dimension) {
+	// init
+
+	GLfloat result[3][2];
+	memset(result, 0, sizeof(result));
+
+	// 행렬 (2) 와 (3) 의 곱
+	for (int i = 0; i < 3; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			result[i][0] += matrix_2[i][j] * point[j].cell->site.p.x;
+			result[i][1] += matrix_2[i][j] * point[j].cell->site.p.y;
+		}
+	}
+
+	const int num_segments = 100; // 원을 근사하기 위한 세그먼트 수
+  // 원의 반지름
+
+	GLfloat t = 0.0f;
+	GLfloat x, y;
+
+
+	//glColor4f(1.0f, 0.0f, 0.0f, 0.0f);
+	//glBegin(GL_TRIANGLES);
+	////glVertex2f(cx, cy); // 원의 중심
+	//for (int i = 0; i < num_segments; i++) {
+	//	float theta = 2.0f * 3.1415926f * float(i) / float(num_segments); // 현재 각도
+	//	float x_ = radius * (river_sacle * point[0].power + 1) * cosf(theta); // x 좌표
+	//	float y_ = radius * (river_sacle * point[0].power + 1) * sinf(theta); // y 좌표
+	//	glColor4f(1.0f, 0.0f, 0.0f, 0.0f);
+	//	glVertex2f(normalize(x_ + point[0].cell->site.p.x, dimension), -normalize(y_ + point[0].cell->site.p.y, dimension)); // 원의 점
+	//
+	//	theta = 2.0f * 3.1415926f * float(i - 1) / float(num_segments); // 현재 각도
+	//	x_ = radius * (river_sacle * point[0].power + 1) * cosf(theta); // x 좌표
+	//	y_ = radius * (river_sacle * point[0].power + 1) * sinf(theta); // y 좌표
+	//	glVertex2f(normalize(x_ + point[0].cell->site.p.x, dimension), -normalize(y_ + point[0].cell->site.p.y, dimension)); // 원의 점
+	//	glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
+	//	glVertex2f(normalize(point[0].cell->site.p.x, dimension), -normalize(point[0].cell->site.p.y, dimension)); // 원의 점
+	//	
+	//}
+	//glEnd();
+
+	/*glPointSize(3);
+	glBegin(GL_POINTS);
+	glColor4f(0, 1, 0, 1);
+	glVertex3d(normalize(point[0].cell->site.p.x, dimension), -normalize(point[0].cell->site.p.y, dimension), 0);
+	glEnd();*/
+
+	
+	glBegin(GL_LINE_STRIP);
+	
+	while (t < 1) {
+		if (t < 0.5) {
+
+			if (point[0].cell->GetDetail().GetElevation() == point[1].cell->GetDetail().GetElevation()) {
+				glColor4f(0, 1, 0, 1);
+			}
+			else {
+				glColor4f(1, 0, 0, 1);
+			}
+		}
+		else {
+			if (point[1].cell->GetDetail().GetElevation() == point[2].cell->GetDetail().GetElevation()) {
+				glColor4f(0, 1, 0, 1);
+			}
+			else {
+				glColor4f(1, 0, 0, 1);
+			}
+		}
+		x = result[2][0] + t * (result[1][0] + result[0][0] * t);
+		y = result[2][1] + t * (result[1][1] + result[0][1] * t);
+		glVertex2f(normalize(x, dimension), -normalize(y, dimension));
+		t += 0.01f;
+	}
+	glEnd();
+
+	t = 0.0f;
+	Point2 pre_p = point[0].cell->site.p;
+	Point2 pre_norm = point[0].cell->site.p;
+	
+	glBegin(GL_TRIANGLES);
+	while (t < 1) {
+		
+		x = result[2][0] + t * (result[1][0] + result[0][0] * t);
+		y = result[2][1] + t * (result[1][1] + result[0][1] * t);
+		
+		double x2 = result[2][0] + (t + 0.01) * (result[1][0] + result[0][0] * (t + 0.01));
+		double y2 = result[2][1] + (t + 0.01) * (result[1][1] + result[0][1] * (t + 0.01));
+		Color c;
+		if (point[0].cell->GetDetail().GetElevation() == point[1].cell->GetDetail().GetElevation()) {
+			c = Color(0, 1, 0);
+		}
+		else {
+			c = Color(1, 0, 0);
+		}
+		glColor4f(1.0f, 0.0f, 0.0f, 0.0f);
+	/*	std::cout << point[0].power << "\n";
+		std::cout << point[2].power << "\n";*/
+		Point2 new_p = Point2(x, y);
+		Point2 next_p = Point2(x2, y2);
+		Point2 norm = (new_p - pre_p);
+		Point2 norm2 = (next_p - new_p);
+		double sacle1 = (point[0].power * (1 - t) + point[2].power * t) * river_sacle + 1;
+		
+		if (t == 0) {
+			t += 0.01f;
+			continue;
+		}
+		t += 0.01f;
+		double sacle2 = (point[0].power * (1 - t) + point[2].power * t) * river_sacle + 1;
+		if (norm != Point2(0, 0)) {
+			norm = norm.Normailize();
+			norm2 = norm2.Normailize();
+			Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
+			Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
+			glColor4f(c.r, c.g, c.b, 1);
+			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
+			glVertex2f(normalize(pre_p.x, dimension), -normalize(pre_p.y, dimension));
+			glColor4f(c.r, c.g, c.b, 0);
+			glVertex2f(normalize(pre_p.x - PerpA.x, dimension), -normalize(pre_p.y - PerpA.y, dimension));
+
+			glColor4f(c.r, c.g, c.b, 1);
+			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
+			glVertex2f(normalize(pre_p.x, dimension), -normalize(pre_p.y, dimension));
+			glColor4f(c.r, c.g, c.b, 0);
+			glVertex2f(normalize(pre_p.x + PerpA.x, dimension), -normalize(pre_p.y + PerpA.y, dimension));
+			
+			glColor4f(c.r, c.g, c.b, 1);
+			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
+			glColor4f(c.r, c.g, c.b, 0);
+			glVertex2f(normalize(pre_p.x + PerpA.x, dimension), -normalize(pre_p.y + PerpA.y, dimension));
+			glVertex2f(normalize(new_p.x + PerpB.x, dimension), -normalize(new_p.y + PerpB.y, dimension));
+
+			glColor4f(c.r, c.g, c.b, 1);
+			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
+			glColor4f(c.r, c.g, c.b, 0);
+			glVertex2f(normalize(pre_p.x - PerpA.x, dimension), -normalize(pre_p.y - PerpA.y, dimension));
+			glVertex2f(normalize(new_p.x - PerpB.x, dimension), -normalize(new_p.y - PerpB.y, dimension));
+		}
+		pre_p = new_p;
+	}
+	glEnd();
+}
+
+void draw_spline(std::vector<RiverPoint>& point, unsigned int dimension) {
+	GLfloat result[4][2];
+	GLfloat t = 0.0f;
+	GLfloat x, y;
+	int SIZE = point.size();
+	// Section 1.
+	// quadratic function
+	memset(result, 0, sizeof(result));
+
+	for (int i = 0; i < 3; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			result[i][0] += matrix_2[i][j] * point[j].cell->site.p.x;
+			result[i][1] += matrix_2[i][j] * point[j].cell->site.p.y;
+		}
+	}
+
+
+	if (point[0].cell->GetDetail().GetElevation() == point[1].cell->GetDetail().GetElevation()) {
+		glColor4f(0, 1, 0, 1);
+	}
+	else {
+		glColor4f(1, 0, 0, 1);
+	}
+
+	glBegin(GL_LINE_STRIP);
+	while (t < 0.5f) {
+		x = result[2][0] + t * (result[1][0] + result[0][0] * t);
+		y = result[2][1] + t * (result[1][1] + result[0][1] * t);
+		glVertex2f(normalize(x, dimension), -normalize(y, dimension));
+		t += 0.01f;
+	}
+	glEnd();
+
+	t = 0.0f;
+	Point2 pre_p = point[0].cell->site.p;
+	Point2 pre_norm = point[0].cell->site.p;
+	glColor4f(1.0f, 0.0f, 0.0f, 0.0f);
+	glBegin(GL_TRIANGLES);
+	while (t < 0.5f) {
+
+		x = result[2][0] + t * (result[1][0] + result[0][0] * t);
+		y = result[2][1] + t * (result[1][1] + result[0][1] * t);
+
+		double x2 = result[2][0] + (t + 0.01) * (result[1][0] + result[0][0] * (t + 0.01));
+		double y2 = result[2][1] + (t + 0.01) * (result[1][1] + result[0][1] * (t + 0.01));
+
+
+		Point2 new_p = Point2(x, y);
+		Point2 next_p = Point2(x2, y2);
+		Point2 norm = (new_p - pre_p);
+		Point2 norm2 = (next_p - new_p);
+		double sacle1 = (point[0].power * ((0.5 - t) * 2) + point[1].power * (t * 2)) * river_sacle + 1;
+		if (t == 0) {
+			t += 0.01f;
+			continue;
+		}
+		t += 0.01f;
+		double sacle2 = (point[0].power * ((0.5 - t) * 2) + point[1].power * (t * 2)) * river_sacle + 1;
+		if (norm != Point2(0, 0)) {
+			norm = norm.Normailize();
+			norm2 = norm2.Normailize();
+			Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
+			Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
+			glColor4f(1, 0, 0, 1);
+			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
+			glVertex2f(normalize(pre_p.x, dimension), -normalize(pre_p.y, dimension));
+			glColor4f(1, 0, 0, 0);
+			glVertex2f(normalize(pre_p.x - PerpA.x, dimension), -normalize(pre_p.y - PerpA.y, dimension));
+
+			glColor4f(1, 0, 0, 1);
+			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
+			glVertex2f(normalize(pre_p.x, dimension), -normalize(pre_p.y, dimension));
+			glColor4f(1, 0, 0, 0);
+			glVertex2f(normalize(pre_p.x + PerpA.x, dimension), -normalize(pre_p.y + PerpA.y, dimension));
+
+			glColor4f(1, 0, 0, 1);
+			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
+			glColor4f(1, 0, 0, 0);
+			glVertex2f(normalize(pre_p.x + PerpA.x, dimension), -normalize(pre_p.y + PerpA.y, dimension));
+			glVertex2f(normalize(new_p.x + PerpB.x, dimension), -normalize(new_p.y + PerpB.y, dimension));
+
+			glColor4f(1, 0, 0, 1);
+			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
+			glColor4f(1, 0, 0, 0);
+			glVertex2f(normalize(pre_p.x - PerpA.x, dimension), -normalize(pre_p.y - PerpA.y, dimension));
+			glVertex2f(normalize(new_p.x - PerpB.x, dimension), -normalize(new_p.y - PerpB.y, dimension));
+		}
+		pre_p = new_p;
+	}
+	glEnd();
+
+	// Section 2.
+	// cubic spline
+	for (int cubic_case = 0; cubic_case < SIZE - 3; cubic_case++)
+	{
+		memset(result, 0, sizeof(result));
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				result[i][0] += matrix_3[i][j] * point[j + cubic_case].cell->site.p.x;
+				result[i][1] += matrix_3[i][j] * point[j + cubic_case].cell->site.p.y;
+			}
+		}
+		
+		if (point[cubic_case + 1].cell->GetDetail().GetElevation() == point[cubic_case + 2].cell->GetDetail().GetElevation()) {
+			glColor4f(0, 1, 0, 1);
+		}
+		else {
+			glColor4f(1, 0, 0, 1);
+		}
+
+		t = 0.0f;
+		glBegin(GL_LINE_STRIP);
+		while (t < 1.0f) {
+			x = (result[3][0] + t * (result[2][0] + t * (result[1][0] + result[0][0] * t))) * 0.5f;
+			y = (result[3][1] + t * (result[2][1] + t * (result[1][1] + result[0][1] * t))) * 0.5f;
+			glVertex2f(normalize(x, dimension), -normalize(y, dimension));
+			t += 0.01f;
+		}
+		glEnd();
+
+
+
+
+
+		t = 0.0f;
+		//Point2 pre_p = point[0]->site.p;
+		//Point2 pre_norm = point[0]->site.p;
+		
+		glBegin(GL_TRIANGLES);
+		while (t < 1.0f) {
+
+			x = (result[3][0] + t * (result[2][0] + t * (result[1][0] + result[0][0] * t))) * 0.5f;
+			y = (result[3][1] + t * (result[2][1] + t * (result[1][1] + result[0][1] * t))) * 0.5f;
+
+			double x2 = (result[3][0] + (t + 0.01f) * (result[2][0] + (t + 0.01f) * (result[1][0] + result[0][0] * (t + 0.01f)))) * 0.5f;
+			double y2 = (result[3][1] + (t + 0.01f) * (result[2][1] + (t + 0.01f) * (result[1][1] + result[0][1] * (t + 0.01f)))) * 0.5f;
+
+
+			Point2 new_p = Point2(x, y);
+			Point2 next_p = Point2(x2, y2);
+			Point2 norm = (new_p - pre_p);
+			Point2 norm2 = (next_p - new_p);
+			double sacle1 = (point[cubic_case + 1].power * (1 - t) + point[cubic_case + 2].power * t) * river_sacle + 1;
+			if (t == 0) {
+				t += 0.01f;
+				continue;
+			}
+			t += 0.01f;
+			double sacle2 = (point[cubic_case + 1].power * (1 - t) + point[cubic_case + 2].power * t) * river_sacle + 1;
+			if (norm != Point2(0, 0)) {
+				norm = norm.Normailize();
+				norm2 = norm2.Normailize();
+				Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
+				Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
+				glColor4f(1, 0, 0, 1);
+				glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
+				glVertex2f(normalize(pre_p.x, dimension), -normalize(pre_p.y, dimension));
+				glColor4f(1, 0, 0, 0);
+				glVertex2f(normalize(pre_p.x - PerpA.x, dimension), -normalize(pre_p.y - PerpA.y, dimension));
+
+				glColor4f(1, 0, 0, 1);
+				glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
+				glVertex2f(normalize(pre_p.x, dimension), -normalize(pre_p.y, dimension));
+				glColor4f(1, 0, 0, 0);
+				glVertex2f(normalize(pre_p.x + PerpA.x, dimension), -normalize(pre_p.y + PerpA.y, dimension));
+
+				glColor4f(1, 0, 0, 1);
+				glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
+				glColor4f(1, 0, 0, 0);
+				glVertex2f(normalize(pre_p.x + PerpA.x, dimension), -normalize(pre_p.y + PerpA.y, dimension));
+				glVertex2f(normalize(new_p.x + PerpB.x, dimension), -normalize(new_p.y + PerpB.y, dimension));
+
+				glColor4f(1, 0, 0, 1);
+				glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
+				glColor4f(1, 0, 0, 0);
+				glVertex2f(normalize(pre_p.x - PerpA.x, dimension), -normalize(pre_p.y - PerpA.y, dimension));
+				glVertex2f(normalize(new_p.x - PerpB.x, dimension), -normalize(new_p.y - PerpB.y, dimension));
+			}
+			pre_p = new_p;
+		}
+		glEnd();
+
+
+
+
+	}
+
+	// Section 3.
+	// quadratic function
+	memset(result, 0, sizeof(result));
+
+	for (int i = 0; i < 3; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			result[i][0] += matrix_2[i][j] * point[j + SIZE - 3].cell->site.p.x;
+			result[i][1] += matrix_2[i][j] * point[j + SIZE - 3].cell->site.p.y;
+		}
+	}
+
+	if (point[SIZE - 2].cell->GetDetail().GetElevation() == point[SIZE - 1].cell->GetDetail().GetElevation()) {
+		glColor4f(0, 1, 0, 1);
+	}
+	else {
+		glColor4f(1, 0, 0, 1);
+	}
+
+	t = 0.5f;
+	glBegin(GL_LINE_STRIP);
+	while (t < 1.0f) {
+		x = result[2][0] + t * (result[1][0] + result[0][0] * t);
+		y = result[2][1] + t * (result[1][1] + result[0][1] * t);
+		glVertex2f(normalize(x, dimension), -normalize(y, dimension));
+		t += 0.01f;
+	}
+	glEnd();
+
+
+
+	t = 0.51f;
+	glBegin(GL_TRIANGLES);
+	while (t < 1.0f) {
+
+		x = result[2][0] + t * (result[1][0] + result[0][0] * t);
+		y = result[2][1] + t * (result[1][1] + result[0][1] * t);
+
+		double x2 = result[2][0] + (t + 0.01) * (result[1][0] + result[0][0] * (t + 0.01));
+		double y2 = result[2][1] + (t + 0.01) * (result[1][1] + result[0][1] * (t + 0.01));
+
+
+		Point2 new_p = Point2(x, y);
+		Point2 next_p = Point2(x2, y2);
+		Point2 norm = (new_p - pre_p);
+		Point2 norm2 = (next_p - new_p);
+		double sacle1 = (point[SIZE - 2].power * (1 - t) + point[SIZE - 1].power * t) * river_sacle + 1;
+		if (t == 0) {
+			t += 0.01f;
+			continue;
+		}
+		t += 0.01f;
+		double sacle2 = (point[SIZE - 2].power * (1 - t) + point[SIZE - 1].power * t) * river_sacle + 1;
+		if (norm != Point2(0, 0)) {
+			norm = norm.Normailize();
+			norm2 = norm2.Normailize();
+			Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
+			Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
+			glColor4f(1, 0, 0, 1);
+			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
+			glVertex2f(normalize(pre_p.x, dimension), -normalize(pre_p.y, dimension));
+			glColor4f(1, 0, 0, 0);
+			glVertex2f(normalize(pre_p.x - PerpA.x, dimension), -normalize(pre_p.y - PerpA.y, dimension));
+
+			glColor4f(1, 0, 0, 1);
+			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
+			glVertex2f(normalize(pre_p.x, dimension), -normalize(pre_p.y, dimension));
+			glColor4f(1, 0, 0, 0);
+			glVertex2f(normalize(pre_p.x + PerpA.x, dimension), -normalize(pre_p.y + PerpA.y, dimension));
+
+			glColor4f(1, 0, 0, 1);
+			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
+			glColor4f(1, 0, 0, 0);
+			glVertex2f(normalize(pre_p.x + PerpA.x, dimension), -normalize(pre_p.y + PerpA.y, dimension));
+			glVertex2f(normalize(new_p.x + PerpB.x, dimension), -normalize(new_p.y + PerpB.y, dimension));
+
+			glColor4f(1, 0, 0, 1);
+			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
+			glColor4f(1, 0, 0, 0);
+			glVertex2f(normalize(pre_p.x - PerpA.x, dimension), -normalize(pre_p.y - PerpA.y, dimension));
+			glVertex2f(normalize(new_p.x - PerpB.x, dimension), -normalize(new_p.y - PerpB.y, dimension));
+		}
+		pre_p = new_p;
+	}
+	glEnd();
+}
 
 
 void move_screen(double x, double y, double z) {
@@ -133,6 +565,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 void screen_dump()
 {
+	auto start = std::clock();
 	//W: window with H: window height
 	glReadBuffer(GL_FRONT);
 	char* pixel_data = new char[IMAGE_WIDTH * IMAGE_HEIGHT * 300];
@@ -166,7 +599,8 @@ void screen_dump()
 	fclose(out);
 	delete[] pixel_data;
 
-	std::cout << "file saved: " << filename << "\n";
+	auto duration = 1000 * (std::clock() - start) / (double)CLOCKS_PER_SEC;
+	std::cout << "file saved: " << filename << " " << duration << "ms \n";
 }
 
 void mouse_button_callback(GLFWwindow* window, int key, int action, int mods)
@@ -378,34 +812,96 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 
 	if (draw_white_dot || draw_special_dot) {
 		
-		for (std::vector<Cell*>& c_vec : diagram->river_edges) {
-			Cell* pre_c = nullptr;
-			for (Cell* c : c_vec) {
-				if (pre_c == nullptr) {
+		//glEnable(GL_DEPTH_TEST);
+		for (std::vector<RiverPoint>& c_vec : diagram->river_edges) {
+			RiverPoint pre_c = RiverPoint(0, nullptr);
+			bool temp = false;
+			if (c_vec.size() == 3) {
+				/*std::vector<Cell*> cells;
+				for (auto c : c_vec) {
+					cells.push_back(c.cell);
+				}*/
+				drawCardinal(c_vec, dimension);
+			}
+			else if (c_vec.size() > 3) {
+				/*std::vector<Cell*> cells;
+				for (auto c : c_vec) {
+					cells.push_back(c.cell);
+				}*/
+				draw_spline(c_vec, dimension);
+			}
+			else {
+
+
+				for (RiverPoint c : c_vec) {
+					if (!temp) {
+						temp = true;
+						pre_c = c;
+						continue;
+					}
+
+
+					Point2& p1 = pre_c.cell->site.p;
+					Point2& p2 = c.cell->site.p;
+					glColor4f(0, 1, 1, 1);
+					glPointSize(8);
+					glBegin(GL_POINTS);
+					glVertex3d(normalize(p2.x, dimension), -normalize(p2.y, dimension), 0.0);
+					glEnd();
+
+					Color color;
+					glBegin(GL_LINES);
+					if (pre_c.cell->GetDetail().GetElevation() == c.cell->GetDetail().GetElevation()) {
+						glColor4f(0, 1, 0, 1);
+						color = Color(0, 1, 0);
+					}
+					else {
+						glColor4f(1, 0, 0, 1);
+						color = Color(1, 0, 0);
+					}
+					glVertex3d(normalize(p1[0], dimension), -normalize(p1[1], dimension), 0.0);
+					glVertex3d(normalize(p2[0], dimension), -normalize(p2[1], dimension), 0.0);
+					glEnd();
+
+
+
+					Point2 norm = (p2 - p1).Normailize();
+					double sacle1 = (pre_c.power) * river_sacle + 1;
+					double sacle2 = (c.power) * river_sacle + 1;
+
+					Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
+					Point2 PerpB = Point2(-norm.y, norm.x) * radius * sacle2;
+					glBegin(GL_TRIANGLES);
+					glColor4f(color.r, color.g, color.b, 1);
+					glVertex2f(normalize(p2.x, dimension), -normalize(p2.y, dimension));
+					glVertex2f(normalize(p1.x, dimension), -normalize(p1.y, dimension));
+					glColor4f(color.r, color.g, color.b, 0);
+					glVertex2f(normalize(p1.x - PerpA.x, dimension), -normalize(p1.y - PerpA.y, dimension));
+
+					glColor4f(color.r, color.g, color.b, 1);
+					glVertex2f(normalize(p2.x, dimension), -normalize(p2.y, dimension));
+					glVertex2f(normalize(p1.x, dimension), -normalize(p1.y, dimension));
+					glColor4f(color.r, color.g, color.b, 0);
+					glVertex2f(normalize(p1.x + PerpA.x, dimension), -normalize(p1.y + PerpA.y, dimension));
+
+
+					glColor4f(color.r, color.g, color.b, 1);
+					glVertex2f(normalize(p2.x, dimension), -normalize(p2.y, dimension));
+					glColor4f(color.r, color.g, color.b, 0);
+					glVertex2f(normalize(p1.x + PerpA.x, dimension), -normalize(p1.y + PerpA.y, dimension));
+					glVertex2f(normalize(p2.x + PerpB.x, dimension), -normalize(p2.y + PerpB.y, dimension));
+
+					glColor4f(color.r, color.g, color.b, 1);
+					glVertex2f(normalize(p2.x, dimension), -normalize(p2.y, dimension));
+					glColor4f(color.r, color.g, color.b, 0);
+					glVertex2f(normalize(p1.x - PerpA.x, dimension), -normalize(p1.y - PerpA.y, dimension));
+					glVertex2f(normalize(p2.x - PerpB.x, dimension), -normalize(p2.y - PerpB.y, dimension));
+					glEnd();
 					pre_c = c;
-					continue;
 				}
-
-
-				Point2& p1 = pre_c->site.p;
-				Point2& p2 = c->site.p;
-
-				glBegin(GL_LINES);
-				if (pre_c->GetDetail().GetElevation() == c->GetDetail().GetElevation()) {
-					glColor4f(0, 1, 0, 1);
-				}
-				else {
-					glColor4f(1, 0, 0, 1);
-				}
-				glVertex3d(normalize(p1[0], dimension), -normalize(p1[1], dimension), 0.0);
-				glVertex3d(normalize(p2[0], dimension), -normalize(p2[1], dimension), 0.0);
-				glEnd();
-
-				pre_c = c;
 			}
 		}
-	
-
+		//glDisable(GL_DEPTH_TEST);
 		for (Cell* c : diagram->cells) {
 			Point2& p = c->site.p;
 			Point2& p2 = c->GetDetail().GetUnionFind().UnionFindCell(Terrain::PEAK)->site.p;
@@ -544,12 +1040,13 @@ int main() {
 	glewInit();
 	// Define the viewport dimensions
 
+	glEnable(GL_BLEND);
 
-	// Uncommenting this call will result in wireframe polygons.
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	
-	
+	// 블렌딩 기능을 설정합니다.
+	glBlendEquation(GL_FUNC_ADD);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+
 	while (!glfwWindowShouldClose(window)) {
 		auto fame_start = std::clock();
 

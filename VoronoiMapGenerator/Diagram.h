@@ -5,6 +5,7 @@
 //#include "../src/MemoryPool/C-98/MemoryPool.h" //You will need to use this version instead of the one above if your compiler doesn't handle C++11's noexcept operator
 #include "Edge.h"
 #include "Cell.h"
+#include "Data/River.h"
 
 template<typename T>
 struct UnionArray;
@@ -18,7 +19,8 @@ public:
 	std::vector<Vertex*> vertices;
 	UnionArray<std::vector<Cell*>> oceanUnion;
 	UnionArray<IslandUnion> islandUnion;
-	std::vector<std::vector<Cell*>> river_edges;
+	std::vector<std::vector<RiverPoint>> river_edges;
+
 
 
 	~Diagram();

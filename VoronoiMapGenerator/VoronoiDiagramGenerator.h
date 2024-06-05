@@ -6,6 +6,7 @@
 #include "BeachLine.h"
 #include "Diagram.h"
 #include <vector>
+#include "Data/River.h"
 
 enum class MapType {
 	CONTINENT,
@@ -175,7 +176,176 @@ public:
 
 	std::pair<double, double> GetMinDist(std::vector<std::pair<Point2, double>>& points, Point2& center, double radius);
 	
+
+	void CreateRiverPoly() {
+
+	}
+
+	
+
+
+	double matrix_2[3][3] = { {2.0f, -4.0f, 2.0f}, {-3.0f, 4.0f, -1.0f}, {1.0f, 0.0f, 0.0f} };
+	double matrix_3[4][4] = { {-1.0f, 3.0f, -3.0f, 1.0f},
+							  {2.0f, -5.0f, 4.0f, -1.0f},
+							  {-1.0f, 0.0f, 1.0f, 0.0f},
+							  {0.0f, 2.0f, 0.0f, 0.0f} };
+
+	void drawCardinal(std::vector<RiverPoint>& point, std::vector<RiverDraw>& draw_arr) {
+		// init
+		double result[3][2];
+		memset(result, 0, sizeof(result));
+
+		// 행렬 (2) 와 (3) 의 곱
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				result[i][0] += matrix_2[i][j] * point[j].point.x;
+				result[i][1] += matrix_2[i][j] * point[j].point.y;
+			}
+		}
+
+		// 행렬 (1) 과 새로운 행렬 result 의 곱
+		double t = 0.0f;
+		double x, y;
+		std::vector<Point2> p_arr;
+		while (t < 1) {
+			/*if (t < 0.5) {
+
+				if (point[0]->GetDetail().GetElevation() == point[1]->GetDetail().GetElevation()) {
+					glColor4f(0, 1, 0, 1);
+				}
+				else {
+					glColor4f(1, 0, 0, 1);
+				}
+			}
+			else {
+				if (point[1]->GetDetail().GetElevation() == point[2]->GetDetail().GetElevation()) {
+					glColor4f(0, 1, 0, 1);
+				}
+				else {
+					glColor4f(1, 0, 0, 1);
+				}
+			}*/
+			x = result[2][0] + t * (result[1][0] + result[0][0] * t);
+			y = result[2][1] + t * (result[1][1] + result[0][1] * t);
+			p_arr.push_back(Point2(x, y));
+			t += 0.01f;
+		}
+
+		for (int i = 1; i < p_arr.size(); i++) {
+			double pow1 = point[0].power * (1 - (i - 1) / p_arr.size()) + point[1].power * (((i - 1) / p_arr.size()));
+			double pow2 = point[0].power * (1 - (i) / p_arr.size()) + point[1].power * (((i) / p_arr.size()));
+			draw_arr.push_back(RiverDraw(RiverPoint(pow1, nullptr, p_arr[i - 1]), RiverPoint(pow2, nullptr, p_arr[i])));
+		}
+
+	}
+
+	void draw_spline(std::vector<RiverPoint>& point, std::vector<RiverDraw>& draw_arr) {
+		double result[4][2];
+		double t = 0.0f;
+		double x, y;
+		int SIZE = point.size();
+		// Section 1.
+		// quadratic function
+		memset(result, 0, sizeof(result));
+
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				result[i][0] += matrix_2[i][j] * point[j].point.x;
+				result[i][1] += matrix_2[i][j] * point[j].point.y;
+			}
+		}
+
+
+		//if (point[0]->GetDetail().GetElevation() == point[1]->GetDetail().GetElevation()) {
+		//	glColor4f(0, 1, 0, 1);
+		//}
+		//else {
+		//	glColor4f(1, 0, 0, 1);
+		//}
+
+		std::vector<Point2> p_arr;
+		while (t < 0.5f) {
+			x = result[2][0] + t * (result[1][0] + result[0][0] * t);
+			y = result[2][1] + t * (result[1][1] + result[0][1] * t);
+			p_arr.push_back(Point2(x, y));
+			t += 0.01f;
+		}
+
+		for (int i = 1; i < p_arr.size(); i++) {
+			double pow1 = point[0].power * (1 - (i - 1) / p_arr.size()) + point[1].power * (((i - 1) / p_arr.size()));
+			double pow2 = point[0].power * (1 - (i) / p_arr.size()) + point[1].power * (((i) / p_arr.size()));
+			draw_arr.push_back(RiverDraw(RiverPoint(pow1, nullptr, p_arr[i - 1]), RiverPoint(pow2, nullptr, p_arr[i])));
+		}
+
+		// Section 2.
+		// cubic spline
+		for (int cubic_case = 0; cubic_case < SIZE - 3; cubic_case++)
+		{
+			memset(result, 0, sizeof(result));
+			for (int i = 0; i < 4; i++)
+			{
+				for (int j = 0; j < 4; j++)
+				{
+					result[i][0] += matrix_3[i][j] * point[j + cubic_case].point.x;
+					result[i][1] += matrix_3[i][j] * point[j + cubic_case].point.y;
+				}
+			}
+
+			p_arr.clear();
+			t = 0.0f;
+			while (t < 1.0f) {
+				x = (result[3][0] + t * (result[2][0] + t * (result[1][0] + result[0][0] * t))) * 0.5f;
+				y = (result[3][1] + t * (result[2][1] + t * (result[1][1] + result[0][1] * t))) * 0.5f;
+				p_arr.push_back(Point2(x, y));
+				t += 0.01f;
+			}
+
+			for (int i = 1; i < p_arr.size(); i++) {
+				double pow1 = point[cubic_case + 1].power * (1 - (i - 1) / p_arr.size()) + point[cubic_case + 2].power * (((i - 1) / p_arr.size()));
+				double pow2 = point[cubic_case + 1].power * (1 - (i) / p_arr.size()) + point[cubic_case + 2].power * (((i) / p_arr.size()));
+				draw_arr.push_back(RiverDraw(RiverPoint(pow1, nullptr, p_arr[i - 1]), RiverPoint(pow2, nullptr, p_arr[i])));
+			}
+
+
+		}
+
+		// Section 3.
+		// quadratic function
+		memset(result, 0, sizeof(result));
+
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				result[i][0] += matrix_2[i][j] * point[j + SIZE - 3].point.x;
+				result[i][1] += matrix_2[i][j] * point[j + SIZE - 3].point.y;
+			}
+		}
+		p_arr.push_back(Point2(x, y));
+		t = 0.5f;
+
+		while (t < 1.0f) {
+			x = result[2][0] + t * (result[1][0] + result[0][0] * t);
+			y = result[2][1] + t * (result[1][1] + result[0][1] * t);
+			p_arr.push_back(Point2(x, y));
+			t += 0.01f;
+		}
+
+		for (int i = 1; i < p_arr.size(); i++) {
+			double pow1 = point[0].power * (1 - (i - 1) / p_arr.size()) + point[1].power * (((i - 1) / p_arr.size()));
+			double pow2 = point[0].power * (1 - (i) / p_arr.size()) + point[1].power * (((i) / p_arr.size()));
+			draw_arr.push_back(RiverDraw(RiverPoint(pow1, nullptr, p_arr[i - 1]), RiverPoint(pow2, nullptr, p_arr[i])));
+		}
+
+	}
 };
+
+
+
 
 inline double VoronoiDiagramGenerator::CalcDistance(const Point2& a, const Point2& b) {
 	double x = (b.x - a.x);

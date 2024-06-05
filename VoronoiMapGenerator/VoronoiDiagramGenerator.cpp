@@ -9,7 +9,6 @@
 #include <unordered_map>
 #include "Data/Buffer.h"
 #include "Data/Triangle.h"
-#include "Data/River.h"
 #include <Windows.h>
 
 using std::cout;
@@ -1131,13 +1130,21 @@ void VoronoiDiagramGenerator::CreateRiver() {
 								}
 								else {
 
-
-									if (!RiverEdge::CheckRiverEdgeLinked(pre_e->GetOnwer(), iter->second[0]->GetOnwer()) &&
-										pre_e->GetOnwer() != iter->second[0]->GetOnwer()) {
+									bool check1 = false;
+									bool check2 = false;
+									for (auto check_e : iter->second) {
+										check1 = check1 || RiverEdge::CheckRiverEdgeLinked(pre_e->GetOnwer(), check_e->GetOnwer());
+										check2 = check2 || pre_e->GetOnwer() == check_e->GetOnwer();
+									}
+									/*if (!RiverEdge::CheckRiverEdgeLinked(pre_e->GetOnwer(), iter->second[0]->GetOnwer()) &&
+										pre_e->GetOnwer() != iter->second[0]->GetOnwer()) {*/
+									if(!check1 && !check2) {
 										auto new_e = RiverEdge::Create(c, targetCell, owner, pre_e, nullptr, next_dist);
+										new_e->SetRiverEnd(true);
 										RiverEdge::GetRiverEdges()[river_pos] = new_e;
 										auto find_v = iter->second;
 										for (auto find_e : find_v) {
+											new_e->AddNext(find_e);
 											find_e->SetDistAndNextAll(next_dist + 1, owner);
 										}
 										RiverEdge::AddLinkRiverEdge(pre_e->GetOnwer(), iter->second[0]->GetOnwer());
@@ -1196,8 +1203,9 @@ void VoronoiDiagramGenerator::CreateRiver() {
 							auto onwer_e = pre_e->GetOwnerEdge();
 							//if (onwer_e->GetDistance() == 0) {
 							auto new_e = RiverEdge::Create(c, targetCell, first_c, pre_e, nullptr, next_dist);
+							//new_e->SetRiverEnd(true);
 							RiverEdge::GetRiverEdges()[RiverEdge::GetPos(c, targetCell)] = new_e;
-							pre_e->GetNexts().push_back(new_e);
+							//pre_e->AddNext(new_e);
 							//	onwer_e->SetDist(next_dist);
 							cell_cnt++;
 							//}
@@ -1210,7 +1218,7 @@ void VoronoiDiagramGenerator::CreateRiver() {
 					}
 				}
 				if (cell_cnt == 0) {
-					pre_e->DeleteLine(buf.GetCalculating());
+					//pre_e->DeleteLine(buf.GetCalculating());
 					
 				}
 
@@ -1222,20 +1230,99 @@ void VoronoiDiagramGenerator::CreateRiver() {
 
 	for (auto item : diagram->islandUnion.unions) {
 		auto island = item.second;
+		//break;
 
-		
 		for (auto lake_union : island.lakeUnion.unions) {
-			
-			
+
+
 			for (auto lake : lake_union.second) {
-				
-				
+
+
 				auto river_pos = RiverEdge::GetPos(lake, lake);
 				//std::pair< RiverEdge*, std::vector<Cell*>>;
-				using Temp = std::pair< RiverEdge*, std::vector<Cell*>>;
+				using Temp = std::pair< RiverEdge*, int>;
 				std::stack<Temp> buf;
 				if (RiverEdge::GetRiverEdges().find(river_pos) != RiverEdge::GetRiverEdges().end()) {
-					buf.push(std::make_pair(RiverEdge::GetRiverEdges()[river_pos], std::vector<Cell*>()));
+					buf.push(std::make_pair(RiverEdge::GetRiverEdges()[river_pos], lake_union.second.size()));
+				}
+
+
+				while (!buf.empty()) {
+					auto value = buf.top();
+					buf.pop();
+					RiverEdge* e = value.first;
+					
+					
+
+					if (e == nullptr) continue;
+					auto power = std::max<int>(e->GetPower(), value.second);
+					//std::cout << "power: " << power << "\n";
+					//std::cout << "power: " << e->GetStart()->GetUnique() << "\n";
+					e->SetPower(power);
+					if (!e->IsStart()) {
+						if (e->GetStart()->GetDetail().GetElevation() < e->GetEnd()->GetDetail().GetElevation()) {
+							e->SetPower(power);
+							power++;
+						}
+					}
+
+					
+					
+					if (e->GetEnd()->GetDetail().GetTerrain() != Terrain::LAKE) {
+
+
+						if (e->GetNexts().size() == 0 || e->GetRiverEnd()) {
+							auto iter = RiverEdge::GetRiverOutEdges().find(e->GetEnd()->GetUnique());
+							if (iter != RiverEdge::GetRiverOutEdges().end()) {
+								for (auto iter_e : iter->second) {
+									if (!iter_e->IsStart() && iter_e->GetPower() + 1 > power) {
+										buf.push(std::make_pair(iter_e, power));
+									}
+								}
+							}
+						}
+						else {
+							if (e->GetNexts().size() == 1 || e->IsStart()) {
+								for (auto next_e : e->GetNexts()) {
+									if (!next_e->IsStart()) buf.push(std::make_pair(next_e, power));
+								}
+							}
+							else {
+								power /= 2;
+								e->SetPower(power);
+								//if (power < 1) power = 1;
+								for (auto next_e : e->GetNexts()) {
+									if (!next_e->IsStart()) buf.push(std::make_pair(next_e, power));
+								}
+							}
+
+						}
+					}
+
+				}
+
+			}
+
+		}
+	}
+
+
+	for (auto item : diagram->islandUnion.unions) {
+		auto island = item.second;
+
+
+		for (auto lake_union : island.lakeUnion.unions) {
+
+
+			for (auto lake : lake_union.second) {
+
+
+				auto river_pos = RiverEdge::GetPos(lake, lake);
+				//std::pair< RiverEdge*, std::vector<Cell*>>;
+				using Temp = std::pair< RiverEdge*, std::vector<RiverPoint>>;
+				std::stack<Temp> buf;
+				if (RiverEdge::GetRiverEdges().find(river_pos) != RiverEdge::GetRiverEdges().end()) {
+					buf.push(std::make_pair(RiverEdge::GetRiverEdges()[river_pos], std::vector<RiverPoint>()));
 				}
 
 
@@ -1244,29 +1331,66 @@ void VoronoiDiagramGenerator::CreateRiver() {
 					buf.pop();
 					RiverEdge* e = value.first;
 					auto c_arr = value.second;
+				
 					if (e == nullptr) continue;
-					if (e->IsStart()) c_arr.push_back(e->GetStart());
-					else c_arr.push_back(e->GetEnd());
+					if (e->GetRiverEnd()) continue;
+					//std::cout << "e->GetPower() " << e->GetPower() << "\n";
+					if (e->IsStart()) c_arr.push_back(RiverPoint(e->GetPower(), e->GetStart()));
+					else c_arr.push_back(RiverPoint(e->GetPower(), e->GetEnd()));
 
 					if (e->GetNexts().size() == 0) {
 						diagram->river_edges.push_back(c_arr);
 					}
 					else {
-						for (auto next_e : e->GetNexts()) {
-							buf.push(make_pair(next_e, c_arr));
+						if (e->GetNexts().size() == 1 || e->IsStart()) {
+							for (auto next_e : e->GetNexts()) {
+								buf.push(make_pair(next_e, c_arr));
+							}
 						}
+						else {
+							diagram->river_edges.push_back(c_arr);
+							for (auto next_e : e->GetNexts()) {
+								std::vector<RiverPoint> temp;
+								temp.push_back(RiverPoint(next_e->GetPower(), next_e->GetStart()));
+								//temp.push_back(next_e->GetEnd());
+								buf.push(make_pair(next_e, temp));
+							}
+						}
+
 					}
-					
+
+					/*while (!buf.empty()) {
+						auto value = buf.top();
+						buf.pop();
+						RiverEdge* e = value.first;
+						auto c_arr = value.second;
+						if (e == nullptr) continue;
+						if (e->IsStart()) c_arr.push_back(e->GetStart());
+						else c_arr.push_back(e->GetEnd());
+
+						if (e->GetNexts().size() == 0) {
+							diagram->river_edges.push_back(c_arr);
+						}
+						else {
+
+							for (auto next_e : e->GetNexts()) {
+								buf.push(make_pair(next_e, c_arr));
+							}
+						}
+
+
+					}*/
+
 
 				}
-				
-			}
-			
-		}
 
-		//if (temp_cnt > 2) break;
-		
+			}
+
+		}
 	}
+
+
+
 	
 }
 
@@ -1393,7 +1517,7 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 			else {
 				if (flag & ISLAND) {
 					auto tud = cd.UnionFindCellDetail(Terrain::OCEAN);
-					std::cout << tud.GetElevation() << " | " << cd.GetElevation() << "\n";
+					//std::cout << tud.GetElevation() << " | " << cd.GetElevation() << "\n";
 					double elev_scale = (double)(tud.GetElevation()) * elev_rate;
 					double scale = 1;
 					double color = elev_scale * scale;
@@ -1663,7 +1787,7 @@ void VoronoiDiagramGenerator::SaveAllImage(double dimension, double w, double h)
 
 void VoronoiDiagramGenerator::SaveImage(const char* filename, double dimension, double w, double h) {
 	char* pixel_data = new char[w * h * 3];
-
+	auto start = std::clock();
 	for (Cell* c : diagram->cells) {
 		//for (Edge* e : diagram->edges) {
 		for (HalfEdge* hf : c->halfEdges) {
@@ -1707,6 +1831,7 @@ void VoronoiDiagramGenerator::SaveImage(const char* filename, double dimension, 
 	//char pixel_data[IMAGE_WIDTH * IMAGE_HEIGHT * 300];
 	//glReadPixels(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT, GL_BGR_EXT, GL_UNSIGNED_BYTE, pixel_data);
 
+	auto duration = 1000 * (std::clock() - start) / (double)CLOCKS_PER_SEC;
 
 	BITMAPFILEHEADER bf;
 	BITMAPINFOHEADER bi;
@@ -1732,6 +1857,7 @@ void VoronoiDiagramGenerator::SaveImage(const char* filename, double dimension, 
 	fclose(out);
 	delete[] pixel_data;
 
-	std::cout << "file saved: " << filename << "\n";
+	auto duration2 = 1000 * (std::clock() - start) / (double)CLOCKS_PER_SEC;
+	std::cout << "file saved: " << filename << ", create time: " << duration << "ms, save time: " << duration2 - duration << ", result: " << duration2 << "ms \n";
 
 }

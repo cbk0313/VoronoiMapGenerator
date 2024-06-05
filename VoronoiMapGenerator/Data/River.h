@@ -2,7 +2,7 @@
 #include <vector>
 #include "Data/Buffer.h"
 #include "../Cell.h"
-
+#include "Triangle.h"
 
 struct RiverEdge;
 struct Cell;
@@ -59,16 +59,22 @@ class RiverEdge {
 	std::vector<RiverEdge*> nexts;
 	std::vector<Cell*> links;
 	bool is_start;
+	bool is_end;
 	Cell* start; // 나중에 유니크 번호로 변경?
 	Cell* end;
 	Cell* owner;
 	int dist;
+	int branch_dist;
+	int power;
 
 	static RiverEdgeMap river_edges;
 	static RiverOutMap river_out_edges;
 	static RiverLinkMap linked_river_edges;
 	static RiverLinkMap linked_rivers;
 	static RiverCntMap river_cnt;
+	static std::vector< RiverEdge*> RIVER_EDGES;
+	static std::queue<RiverEdge*> RIVER_DELETE_QUEUE;
+	unsigned int unique;
 public:
 
 	static void Clear() {
@@ -77,6 +83,11 @@ public:
 		linked_river_edges.clear();
 		linked_rivers.clear();
 		river_cnt.clear();
+		for (RiverEdge* e : RIVER_EDGES) {
+			delete e;
+		}
+		RIVER_EDGES.clear();
+		while(!RIVER_DELETE_QUEUE.empty()) RIVER_DELETE_QUEUE.pop();
 	}
 
 	static RiverEdgeMap& GetRiverEdges() {
@@ -143,25 +154,25 @@ public:
 
 	//RiverEdge() : is_start(false), start(nullptr), end(nullptr), dist(0) {};
 	RiverEdge(Cell* startCell, Cell* endCell, Cell* river_owner, RiverEdge* pre_edge, RiverEdge* next_edge, int distance)
-		: is_start(false)
-		, start(startCell)
-		, end(endCell)
-		, owner(river_owner)
-		, dist(distance)
 	{ 
-		if (pre_edge != nullptr) {
-			prevs.push_back(pre_edge);
-			pre_edge->nexts.push_back(this);
-			river_out_edges[start->GetUnique()].push_back(this);
-		}
-		if(next_edge != nullptr) nexts.push_back(next_edge);
+		Initialize(startCell, endCell, river_owner, pre_edge, next_edge, distance);
 	};
+
+	void Initialize(Cell* startCell, Cell* endCell, Cell* river_owner, RiverEdge* pre_edge, RiverEdge* next_edge, int distance);
 	int GetDistance() { return dist; };
 	Cell* GetOnwer();
 	void SetOnwer(Cell* c);
 	std::vector<RiverEdge*>& GetPrevs();
+	void AddPrev(RiverEdge* e);
 	std::vector<RiverEdge*>& GetNexts();
+	void AddNext(RiverEdge* e);
+
+
+	int GetPower() { return power; };
+	void SetPower(int num) { power = num; };
 	bool IsStart() { return is_start; };
+	void SetRiverEnd(bool b) { is_end = b; };
+	bool GetRiverEnd() { return is_end; };
 	Cell* GetStart() { return start; };
 	Cell* GetEnd() { return end; };
 	void SetStart(Cell* c) { start = c; };
@@ -174,7 +185,6 @@ public:
 	static RiverEdge* CreateStartPoint(Cell* c);
 	static RiverPos GetPos(Cell* start, Cell* end);
 
-	void AddNext(RiverEdge* e);
 	void ConnectPrev(RiverEdge* e);
 
 	RiverEdge* GetOwnerEdge();
@@ -197,4 +207,29 @@ public:
 			return river_cnt[num];
 		}
 	}
+};
+
+
+struct RiverPoint {
+	unsigned int power;
+	Point2 point;
+	Cell* cell;
+	RiverPoint(unsigned int pow, Cell* c, Point2 p = Point2(0, 0)) : power(pow), cell(c) {
+		if (c != nullptr) {
+			point = c->site.p;
+		}
+		else {
+			point = p;
+		}
+	};
+};
+
+class RiverDraw {
+
+	std::vector<Triangle> tris;
+
+public:
+	RiverPoint start;
+	RiverPoint end;
+	RiverDraw(RiverPoint p1, RiverPoint p2) : start(p1), end(p2) {};
 };

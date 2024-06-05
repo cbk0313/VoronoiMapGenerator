@@ -23,4 +23,6 @@ private:
 	bool isInside(const Point2& p) const;
 	Color interpolateColor(const Point2& p) const;
 	void drawPixel(char* pixel_data, int w, int h, int x, int y, const CharColor& c) const;
+
+	int FindStartX(int lowX, int highX, int y);
 };

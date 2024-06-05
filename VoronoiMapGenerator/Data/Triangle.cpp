@@ -61,18 +61,70 @@ void Triangle::drawPixel(char* pixel_data, int w, int h, int x, int y, const Cha
 	//std::cout << (int)pixel_data[pos] << ", " << (int)pixel_data[pos + 1] << ", " << (int)pixel_data[pos + 2] << "\n";
 }
 
+int Triangle::FindStartX(int lowX, int highX, int y) {
+	while (lowX <= highX) {
+		int m = (lowX + highX) / 2;
+
+		if (isInside(Point2(m, y))) {
+			lowX = m + 1;
+		}
+		else {
+			highX = m - 1;
+		}
+	}
+
+	return lowX;
+}
 
 void Triangle::draw(char* pixel_data, int w, int h) {
 	// 선형 보간을 사용하여 삼각형 내부를 채우기
-	for (int x = (int)minX() - 1, m_x = (int)maxX() + 1; x <= m_x; x += 1) {
-		for (int y = (int)minY() - 1, max_y = (int)maxY() + 1; y <= max_y; y += 1) {
+	int m_X = minX(), M_X = maxX(), m_Y = minY(), M_Y = maxY();
+
+	if (m_X < 0) m_X = 0;
+	if (M_X >= w) M_X = w - 1;
+	if (m_Y < 0) m_Y = 0;
+	if (M_Y >= h) M_Y = h - 1;
+
+	for (int y = m_Y; y <= M_Y; y += 1) {
+		bool drew = false;
+		//int find_x = FindStartX(m_X, M_X, y);
+		//bool state = !isInside(Point2(find_x - 1, y));
+		//if (state) {
+		//	for (int x = find_x - 1; x <= M_X; x += 1) {
+		//		//std::cout << FindStartX(m_X, M_X, y) << "\n";
+		//		if (x < 0 || y < 0 || x >= w || y >= h) break;
+		//		if (isInside(Point2(x, y))) {
+		//			drew = true;
+		//			CharColor c = interpolateColor(Point2(x, y));
+		//			drawPixel(pixel_data, w, h, x, y, c);
+		//		}
+		//		else if (drew) break;
+		//	}
+		//}
+		//else {
+		//	for (int x = find_x; x >= m_X; x -= 1) {
+		//		//std::cout << FindStartX(m_X, M_X, y) << "\n";
+		//		if (x < 0 || y < 0 || x >= w || y >= h) break;
+		//		if (isInside(Point2(x, y))) {
+		//			drew = true;
+		//			CharColor c = interpolateColor(Point2(x, y));
+		//			drawPixel(pixel_data, w, h, x, y, c);
+		//		}
+		//		else if (drew) break;
+		//	}
+		//}
+		
+
+	
+		for (int x = m_X; x <= M_X; x += 1) {
 			if (isInside(Point2(x, y))) {
+				drew = true;
 				CharColor c = interpolateColor(Point2(x, y));
-				if (x < 0 || y < 0 || x >= w || y >= h) continue;
-				//std::cout << (int)c.r << ", " << (int)c.g << ", " << (int)c.b << "\n";
-				//std::cout << c2.r << ", " << c2.g << ", " << c2.b << "\n";
 				drawPixel(pixel_data, w, h, x, y, c);
 			}
+			else if (drew) break;
 		}
+		
 	}
 }
+

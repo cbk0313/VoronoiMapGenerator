@@ -7,6 +7,28 @@ RiverLinkMap RiverEdge::linked_river_edges = RiverLinkMap();
 RiverLinkMap RiverEdge::linked_rivers = RiverLinkMap();
 RiverCntMap RiverEdge::river_cnt = RiverCntMap();
 
+std::vector< RiverEdge*> RiverEdge::RIVER_EDGES = std::vector< RiverEdge*>();
+std::queue<RiverEdge*> RiverEdge::RIVER_DELETE_QUEUE = std::queue<RiverEdge*>();
+
+void RiverEdge::Initialize(Cell* startCell, Cell* endCell, Cell* river_owner, RiverEdge* pre_edge, RiverEdge* next_edge, int distance) {
+	prevs.clear();
+	nexts.clear();
+	links.clear();
+	is_start = false;
+	start = startCell;
+	end = endCell;
+	owner = river_owner;
+	dist = distance;
+	if (pre_edge != nullptr) {
+		prevs.push_back(pre_edge);
+		pre_edge->nexts.push_back(this);
+		//river_out_edges[start->GetUnique()].push_back(this);
+	}
+
+	river_out_edges[start->GetUnique()].push_back(this);
+	if (next_edge != nullptr) nexts.push_back(next_edge);
+}
+
 Cell* RiverEdge::GetOnwer() {
 	return owner;
 }
@@ -16,9 +38,18 @@ void RiverEdge::SetOnwer(Cell* c) {
 std::vector<RiverEdge*>& RiverEdge::GetPrevs() {
 	return prevs;
 }
+
+void RiverEdge::AddPrev(RiverEdge* e) {
+	prevs.push_back(e);
+}
+
 std::vector<RiverEdge*>& RiverEdge::GetNexts()
 {
 	return nexts;
+}
+
+void RiverEdge::AddNext(RiverEdge* e) {
+	nexts.push_back(e);
 }
 
 void RiverEdge::ChangeDist(int num) {
@@ -75,20 +106,37 @@ void RiverEdge::DeleteLine(std::vector<bool>& buf) {
 
 			}
 		}
-		
+		for (auto pre_e : prevs) {
+			if (pre_e->GetRiverEnd() && pre_e->GetNexts().size() <= 1) {
+				pre_e->SetRiverEnd(false);
+				//std::cout << "test\n";
+			}
+		}
 
 		river_edges.erase(RiverEdge::GetPos(start, end));
-		delete this;
+		RIVER_DELETE_QUEUE.push(this);
+		//delete this;
 	}
 
 }
 
 RiverEdge* RiverEdge::Create(Cell* startCell, Cell* endCell, Cell* river_owner, RiverEdge* pre_edge, RiverEdge* next_edge, int distance) {
-	return new RiverEdge(startCell, endCell, river_owner, pre_edge, next_edge, distance);
+	RiverEdge* e;
+	if (RIVER_DELETE_QUEUE.empty()) {
+		e = new RiverEdge(startCell, endCell, river_owner, pre_edge, next_edge, distance);
+		e->unique = RIVER_EDGES.size();
+		RIVER_EDGES.push_back(e);
+	}
+	else {
+		e = RIVER_DELETE_QUEUE.front();
+		RIVER_DELETE_QUEUE.pop();
+		e->Initialize(startCell, endCell, river_owner, pre_edge, next_edge, distance);
+	}
+	return e;
 }
 
 RiverEdge* RiverEdge::CreateStartPoint(Cell* c) {
-	RiverEdge* e = new RiverEdge(c, c, c, nullptr, nullptr, 0);
+	RiverEdge* e = Create(c, c, c, nullptr, nullptr, 0);
 	e->is_start = true;
 	return e;
 }
@@ -98,10 +146,6 @@ RiverPos RiverEdge::GetPos(Cell* start, Cell* end) {
 	return std::make_pair(start->GetUnique(), end->GetUnique());
 }
 
-
-void RiverEdge::AddNext(RiverEdge* e) {
-	nexts.push_back(e);
-}
 
 void RiverEdge::ConnectPrev(RiverEdge* e) {
 	prevs.push_back(e);
