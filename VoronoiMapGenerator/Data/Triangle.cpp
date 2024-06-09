@@ -52,7 +52,7 @@ Color Triangle::interpolateColor(const Point2& p) const {
 	);
 }
 
-void Triangle::drawPixel(char* pixel_data, int w, int h, int x, int y, const CharColor& c) const {
+void Triangle::drawPixel(char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y, const CharColor& c) const {
 	int pos = x * 3 + w * 3 * (h - y - 1);
 	//std::cout << pos << "\n";
 	pixel_data[pos] = c.b;
@@ -76,16 +76,16 @@ int Triangle::FindStartX(int lowX, int highX, int y) {
 	return lowX;
 }
 
-void Triangle::draw(char* pixel_data, int w, int h) {
+void Triangle::draw(char* pixel_data, unsigned int w, unsigned int h) {
 	// 선형 보간을 사용하여 삼각형 내부를 채우기
-	int m_X = minX(), M_X = maxX(), m_Y = minY(), M_Y = maxY();
+	unsigned int m_X = (unsigned int)minX(), M_X = (unsigned int)maxX(), m_Y = (unsigned int)minY(), M_Y = (unsigned int)maxY();
 
 	if (m_X < 0) m_X = 0;
 	if (M_X >= w) M_X = w - 1;
 	if (m_Y < 0) m_Y = 0;
 	if (M_Y >= h) M_Y = h - 1;
 
-	for (int y = m_Y; y <= M_Y; y += 1) {
+	for (unsigned int y = m_Y; y <= M_Y; y += 1) {
 		bool drew = false;
 		//int find_x = FindStartX(m_X, M_X, y);
 		//bool state = !isInside(Point2(find_x - 1, y));
@@ -116,7 +116,7 @@ void Triangle::draw(char* pixel_data, int w, int h) {
 		
 
 	
-		for (int x = m_X; x <= M_X; x += 1) {
+		for (unsigned int x = m_X; x <= M_X; x += 1) {
 			if (isInside(Point2(x, y))) {
 				drew = true;
 				CharColor c = interpolateColor(Point2(x, y));

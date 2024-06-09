@@ -997,7 +997,7 @@ void VoronoiDiagramGenerator::SetupMoisture() {
 	for (auto item : diagram->islandUnion.unions) {
 		auto island = item.second;
 		for (auto highestPeak_union : island.lakeUnion.unions) {
-			int power = highestPeak_union.second.size() * 2;
+			int power = (int)highestPeak_union.second.size() * 2;
 			for (auto highestPeak : highestPeak_union.second) {
 				auto new_v = std::make_pair(highestPeak, power);
 				lake_q.push(new_v);
@@ -1776,7 +1776,7 @@ void VoronoiDiagramGenerator::SetupEdgePos() {
 	}
 }
 
-void VoronoiDiagramGenerator::SaveAllImage(double dimension, double w, double h) {
+void VoronoiDiagramGenerator::SaveAllImage(double dimension, unsigned int w, unsigned int h) {
 	SetupColor(ALL_IMAGE);
 	SaveImage("voronoi_map_all.bmp", dimension, w, h);
 
@@ -1789,7 +1789,14 @@ void VoronoiDiagramGenerator::SaveAllImage(double dimension, double w, double h)
 	SetupColor(ALL_IMAGE);
 }
 
-void VoronoiDiagramGenerator::SaveImage(const char* filename, double dimension, double w, double h) {
+void VoronoiDiagramGenerator::SaveImage(const char* filename, double dimension, unsigned int w, unsigned int h) {
+	FILE* out = nullptr;
+	errno_t err = fopen_s(&out, filename, "wb");
+	if (err != 0) {
+		std::cout << "File write error!!\n";
+		return;
+	}
+
 	char* pixel_data = new char[w * h * 3];
 	auto start = std::clock();
 	for (Cell* c : diagram->cells) {
@@ -1839,11 +1846,11 @@ void VoronoiDiagramGenerator::SaveImage(const char* filename, double dimension, 
 
 	BITMAPFILEHEADER bf;
 	BITMAPINFOHEADER bi;
-	FILE* out = nullptr;
-	char buff[256];
+	
 	//const char* filename = "voronoi_map.bmp";
-	fopen_s(&out, filename, "wb");
-	char* data = pixel_data;
+
+
+	//char* data = pixel_data;
 	memset(&bf, 0, sizeof(bf));
 	memset(&bi, 0, sizeof(bi));
 	bf.bfType = 'MB';
@@ -1857,7 +1864,7 @@ void VoronoiDiagramGenerator::SaveImage(const char* filename, double dimension, 
 	bi.biSizeImage = w * h * 3;
 	fwrite(&bf, sizeof(bf), 1, out);
 	fwrite(&bi, sizeof(bi), 1, out);
-	fwrite(data, sizeof(unsigned char), w * h * 3, out);
+	fwrite(pixel_data, sizeof(unsigned char), w * h * 3, out);
 	fclose(out);
 	delete[] pixel_data;
 

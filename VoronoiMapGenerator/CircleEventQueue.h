@@ -14,7 +14,7 @@ struct CircleEvent {
 	double yCenter;
 	treeNode<BeachSection>* beachSection;
 
-	CircleEvent() {};
+	CircleEvent() : site(nullptr), x(0), y(0), yCenter(0), beachSection(nullptr) {};
 	~CircleEvent() {};
 	CircleEvent(Site* _site, double _x, double _y, double _yCenter, treeNode<BeachSection>* _section) {
 		site = _site;

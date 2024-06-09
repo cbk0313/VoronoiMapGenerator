@@ -13,6 +13,7 @@ public:
     Point2(const Point2& p);
     Point2(double _x, double _y);
     Point2(int _x, int _y);
+    Point2(unsigned int _x, unsigned int _y);
 
     Point2& operator=(const Point2& a);  
 

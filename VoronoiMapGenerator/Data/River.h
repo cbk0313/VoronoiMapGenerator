@@ -4,7 +4,7 @@
 #include "../Cell.h"
 #include "Triangle.h"
 
-struct RiverEdge;
+class RiverEdge;
 struct Cell;
 template<template<typename> class Q, typename T, typename ...args>
 class UniqueBuffer;

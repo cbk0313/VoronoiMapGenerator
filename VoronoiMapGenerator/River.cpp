@@ -127,7 +127,7 @@ RiverEdge* RiverEdge::Create(Cell* startCell, Cell* endCell, Cell* river_owner, 
 	RiverEdge* e;
 	if (RIVER_DELETE_QUEUE.empty()) {
 		e = new RiverEdge(startCell, endCell, river_owner, pre_edge, next_edge, distance);
-		e->unique = RIVER_EDGES.size();
+		e->unique = (unsigned int)(RIVER_EDGES.size());
 		RIVER_EDGES.push_back(e);
 	}
 	else {

@@ -8,6 +8,7 @@ Point2::Point2(const Point2& p) : x(p[0]), y(p[1]) {}
 
 Point2::Point2(double _x, double _y) : x(_x), y(_y) {}
 Point2::Point2(int _x, int _y) : x((double)_x), y((double)_y) {}
+Point2::Point2(unsigned int _x, unsigned int _y) : x((double)_x), y((double)_y) {}
 
 Point2& Point2::operator=(const Point2& a) {
     x = a[0];

@@ -74,8 +74,8 @@ bool mouse_left_down = false;
 GLuint fbo;
 GLuint texture;
 
-GLfloat matrix_2[3][3] = { {2.0f, -4.0f, 2.0f}, {-3.0f, 4.0f, -1.0f}, {1.0f, 0.0f, 0.0f} };
-GLfloat matrix_3[4][4] = { {-1.0f, 3.0f, -3.0f, 1.0f},
+double matrix_2[3][3] = { {2.0f, -4.0f, 2.0f}, {-3.0f, 4.0f, -1.0f}, {1.0f, 0.0f, 0.0f} };
+double matrix_3[4][4] = { {-1.0f, 3.0f, -3.0f, 1.0f},
 						  {2.0f, -5.0f, 4.0f, -1.0f},
 						  {-1.0f, 0.0f, 1.0f, 0.0f},
 						  {0.0f, 2.0f, 0.0f, 0.0f} };
@@ -84,7 +84,7 @@ GLfloat matrix_3[4][4] = { {-1.0f, 3.0f, -3.0f, 1.0f},
 GLvoid drawCardinal(RiverPointVector& point, unsigned int dimension, double radius, double river_scale) {
 	// init
 
-	GLfloat result[3][2];
+	double result[3][2];
 	memset(result, 0, sizeof(result));
 
 	// 행렬 (2) 와 (3) 의 곱
@@ -100,8 +100,8 @@ GLvoid drawCardinal(RiverPointVector& point, unsigned int dimension, double radi
 	const int num_segments = 100; // 원을 근사하기 위한 세그먼트 수
   // 원의 반지름
 
-	GLfloat t = 0.0f;
-	GLfloat x, y;
+	double t = 0.0f;
+	double x, y;
 
 
 	//glColor4f(1.0f, 0.0f, 0.0f, 0.0f);
@@ -112,14 +112,14 @@ GLvoid drawCardinal(RiverPointVector& point, unsigned int dimension, double radi
 	//	float x_ = radius * (river_scale * point[0].power + 1) * cosf(theta); // x 좌표
 	//	float y_ = radius * (river_scale * point[0].power + 1) * sinf(theta); // y 좌표
 	//	glColor4f(1.0f, 0.0f, 0.0f, 0.0f);
-	//	glVertex2f(normalize(x_ + point[0].cell->site.p.x, dimension), -normalize(y_ + point[0].cell->site.p.y, dimension)); // 원의 점
+	//	glVertex2f((GLfloat)normalize(x_ + point[0].cell->site.p.x, dimension), -(GLfloat)normalize(y_ + point[0].cell->site.p.y, dimension)); // 원의 점
 	//
 	//	theta = 2.0f * 3.1415926f * float(i - 1) / float(num_segments); // 현재 각도
 	//	x_ = radius * (river_scale * point[0].power + 1) * cosf(theta); // x 좌표
 	//	y_ = radius * (river_scale * point[0].power + 1) * sinf(theta); // y 좌표
-	//	glVertex2f(normalize(x_ + point[0].cell->site.p.x, dimension), -normalize(y_ + point[0].cell->site.p.y, dimension)); // 원의 점
+	//	glVertex2f((GLfloat)normalize(x_ + point[0].cell->site.p.x, dimension), -(GLfloat)normalize(y_ + point[0].cell->site.p.y, dimension)); // 원의 점
 	//	glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
-	//	glVertex2f(normalize(point[0].cell->site.p.x, dimension), -normalize(point[0].cell->site.p.y, dimension)); // 원의 점
+	//	glVertex2f((GLfloat)normalize(point[0].cell->site.p.x, dimension), -(GLfloat)normalize(point[0].cell->site.p.y, dimension)); // 원의 점
 	//	
 	//}
 	//glEnd();
@@ -127,7 +127,7 @@ GLvoid drawCardinal(RiverPointVector& point, unsigned int dimension, double radi
 	/*glPointSize(3);
 	glBegin(GL_POINTS);
 	glColor4f(0, 1, 0, 1);
-	glVertex3d(normalize(point[0].cell->site.p.x, dimension), -normalize(point[0].cell->site.p.y, dimension), 0);
+	glVertex3d((GLfloat)normalize(point[0].cell->site.p.x, dimension), -(GLfloat)normalize(point[0].cell->site.p.y, dimension), 0);
 	glEnd();*/
 
 	
@@ -153,7 +153,7 @@ GLvoid drawCardinal(RiverPointVector& point, unsigned int dimension, double radi
 		}
 		x = result[2][0] + t * (result[1][0] + result[0][0] * t);
 		y = result[2][1] + t * (result[1][1] + result[0][1] * t);
-		glVertex2f(normalize(x, dimension), -normalize(y, dimension));
+		glVertex2f((GLfloat)normalize(x, dimension), -(GLfloat)normalize(y, dimension));
 		t += 0.01f;
 	}
 	glEnd();
@@ -197,29 +197,29 @@ GLvoid drawCardinal(RiverPointVector& point, unsigned int dimension, double radi
 			norm2 = norm2.Normailize();
 			Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
 			Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
-			glColor4f(c.r, c.g, c.b, 1);
-			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
-			glVertex2f(normalize(pre_p.x, dimension), -normalize(pre_p.y, dimension));
-			glColor4f(c.r, c.g, c.b, 0);
-			glVertex2f(normalize(pre_p.x - PerpA.x, dimension), -normalize(pre_p.y - PerpA.y, dimension));
+			glColor4f((GLfloat)c.r, (GLfloat)c.g, (GLfloat)c.b, 1);
+			glVertex2f((GLfloat)normalize(new_p.x, dimension), -(GLfloat)normalize(new_p.y, dimension));
+			glVertex2f((GLfloat)normalize(pre_p.x, dimension), -(GLfloat)normalize(pre_p.y, dimension));
+			glColor4f((GLfloat)c.r, (GLfloat)c.g, (GLfloat)c.b, 0);
+			glVertex2f((GLfloat)normalize(pre_p.x - PerpA.x, dimension), -(GLfloat)normalize(pre_p.y - PerpA.y, dimension));
 
-			glColor4f(c.r, c.g, c.b, 1);
-			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
-			glVertex2f(normalize(pre_p.x, dimension), -normalize(pre_p.y, dimension));
-			glColor4f(c.r, c.g, c.b, 0);
-			glVertex2f(normalize(pre_p.x + PerpA.x, dimension), -normalize(pre_p.y + PerpA.y, dimension));
+			glColor4f((GLfloat)c.r, (GLfloat)c.g, (GLfloat)c.b, 1);
+			glVertex2f((GLfloat)normalize(new_p.x, dimension), -(GLfloat)normalize(new_p.y, dimension));
+			glVertex2f((GLfloat)normalize(pre_p.x, dimension), -(GLfloat)normalize(pre_p.y, dimension));
+			glColor4f((GLfloat)c.r, (GLfloat)c.g, (GLfloat)c.b, 0);
+			glVertex2f((GLfloat)normalize(pre_p.x + PerpA.x, dimension), -(GLfloat)normalize(pre_p.y + PerpA.y, dimension));
 			
-			glColor4f(c.r, c.g, c.b, 1);
-			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
-			glColor4f(c.r, c.g, c.b, 0);
-			glVertex2f(normalize(pre_p.x + PerpA.x, dimension), -normalize(pre_p.y + PerpA.y, dimension));
-			glVertex2f(normalize(new_p.x + PerpB.x, dimension), -normalize(new_p.y + PerpB.y, dimension));
+			glColor4f((GLfloat)c.r, (GLfloat)c.g, (GLfloat)c.b, 1);
+			glVertex2f((GLfloat)normalize(new_p.x, dimension), -(GLfloat)normalize(new_p.y, dimension));
+			glColor4f((GLfloat)c.r, (GLfloat)c.g, (GLfloat)c.b, 0);
+			glVertex2f((GLfloat)normalize(pre_p.x + PerpA.x, dimension), -(GLfloat)normalize(pre_p.y + PerpA.y, dimension));
+			glVertex2f((GLfloat)normalize(new_p.x + PerpB.x, dimension), -(GLfloat)normalize(new_p.y + PerpB.y, dimension));
 
-			glColor4f(c.r, c.g, c.b, 1);
-			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
-			glColor4f(c.r, c.g, c.b, 0);
-			glVertex2f(normalize(pre_p.x - PerpA.x, dimension), -normalize(pre_p.y - PerpA.y, dimension));
-			glVertex2f(normalize(new_p.x - PerpB.x, dimension), -normalize(new_p.y - PerpB.y, dimension));
+			glColor4f((GLfloat)c.r, (GLfloat)c.g, (GLfloat)c.b, 1);
+			glVertex2f((GLfloat)normalize(new_p.x, dimension), -(GLfloat)normalize(new_p.y, dimension));
+			glColor4f((GLfloat)c.r, (GLfloat)c.g, (GLfloat)c.b, 0);
+			glVertex2f((GLfloat)normalize(pre_p.x - PerpA.x, dimension), -(GLfloat)normalize(pre_p.y - PerpA.y, dimension));
+			glVertex2f((GLfloat)normalize(new_p.x - PerpB.x, dimension), -(GLfloat)normalize(new_p.y - PerpB.y, dimension));
 		}
 		pre_p = new_p;
 	}
@@ -227,10 +227,10 @@ GLvoid drawCardinal(RiverPointVector& point, unsigned int dimension, double radi
 }
 
 void draw_spline(RiverPointVector& point, unsigned int dimension, double radius, double river_scale) {
-	GLfloat result[4][2];
-	GLfloat t = 0.0f;
-	GLfloat x, y;
-	int SIZE = point.size();
+	double result[4][2];
+	double t = 0.0f;
+	double x, y;
+	size_t SIZE = point.size();
 	// Section 1.
 	// quadratic function
 	memset(result, 0, sizeof(result));
@@ -256,7 +256,7 @@ void draw_spline(RiverPointVector& point, unsigned int dimension, double radius,
 	while (t < 0.5f) {
 		x = result[2][0] + t * (result[1][0] + result[0][0] * t);
 		y = result[2][1] + t * (result[1][1] + result[0][1] * t);
-		glVertex2f(normalize(x, dimension), -normalize(y, dimension));
+		glVertex2f((GLfloat)normalize(x, dimension), -(GLfloat)normalize(y, dimension));
 		t += 0.01f;
 	}
 	glEnd();
@@ -292,28 +292,28 @@ void draw_spline(RiverPointVector& point, unsigned int dimension, double radius,
 			Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
 			Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
 			glColor4f(1, 0, 0, 1);
-			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
-			glVertex2f(normalize(pre_p.x, dimension), -normalize(pre_p.y, dimension));
+			glVertex2f((GLfloat)normalize(new_p.x, dimension), -(GLfloat)normalize(new_p.y, dimension));
+			glVertex2f((GLfloat)normalize(pre_p.x, dimension), -(GLfloat)normalize(pre_p.y, dimension));
 			glColor4f(1, 0, 0, 0);
-			glVertex2f(normalize(pre_p.x - PerpA.x, dimension), -normalize(pre_p.y - PerpA.y, dimension));
+			glVertex2f((GLfloat)normalize(pre_p.x - PerpA.x, dimension), -(GLfloat)normalize(pre_p.y - PerpA.y, dimension));
 
 			glColor4f(1, 0, 0, 1);
-			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
-			glVertex2f(normalize(pre_p.x, dimension), -normalize(pre_p.y, dimension));
+			glVertex2f((GLfloat)normalize(new_p.x, dimension), -(GLfloat)normalize(new_p.y, dimension));
+			glVertex2f((GLfloat)normalize(pre_p.x, dimension), -(GLfloat)normalize(pre_p.y, dimension));
 			glColor4f(1, 0, 0, 0);
-			glVertex2f(normalize(pre_p.x + PerpA.x, dimension), -normalize(pre_p.y + PerpA.y, dimension));
+			glVertex2f((GLfloat)normalize(pre_p.x + PerpA.x, dimension), -(GLfloat)normalize(pre_p.y + PerpA.y, dimension));
 
 			glColor4f(1, 0, 0, 1);
-			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
+			glVertex2f((GLfloat)normalize(new_p.x, dimension), -(GLfloat)normalize(new_p.y, dimension));
 			glColor4f(1, 0, 0, 0);
-			glVertex2f(normalize(pre_p.x + PerpA.x, dimension), -normalize(pre_p.y + PerpA.y, dimension));
-			glVertex2f(normalize(new_p.x + PerpB.x, dimension), -normalize(new_p.y + PerpB.y, dimension));
+			glVertex2f((GLfloat)normalize(pre_p.x + PerpA.x, dimension), -(GLfloat)normalize(pre_p.y + PerpA.y, dimension));
+			glVertex2f((GLfloat)normalize(new_p.x + PerpB.x, dimension), -(GLfloat)normalize(new_p.y + PerpB.y, dimension));
 
 			glColor4f(1, 0, 0, 1);
-			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
+			glVertex2f((GLfloat)normalize(new_p.x, dimension), -(GLfloat)normalize(new_p.y, dimension));
 			glColor4f(1, 0, 0, 0);
-			glVertex2f(normalize(pre_p.x - PerpA.x, dimension), -normalize(pre_p.y - PerpA.y, dimension));
-			glVertex2f(normalize(new_p.x - PerpB.x, dimension), -normalize(new_p.y - PerpB.y, dimension));
+			glVertex2f((GLfloat)normalize(pre_p.x - PerpA.x, dimension), -(GLfloat)normalize(pre_p.y - PerpA.y, dimension));
+			glVertex2f((GLfloat)normalize(new_p.x - PerpB.x, dimension), -(GLfloat)normalize(new_p.y - PerpB.y, dimension));
 		}
 		pre_p = new_p;
 	}
@@ -345,7 +345,7 @@ void draw_spline(RiverPointVector& point, unsigned int dimension, double radius,
 		while (t < 1.0f) {
 			x = (result[3][0] + t * (result[2][0] + t * (result[1][0] + result[0][0] * t))) * 0.5f;
 			y = (result[3][1] + t * (result[2][1] + t * (result[1][1] + result[0][1] * t))) * 0.5f;
-			glVertex2f(normalize(x, dimension), -normalize(y, dimension));
+			glVertex2f((GLfloat)normalize(x, dimension), -(GLfloat)normalize(y, dimension));
 			t += 0.01f;
 		}
 		glEnd();
@@ -385,28 +385,28 @@ void draw_spline(RiverPointVector& point, unsigned int dimension, double radius,
 				Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
 				Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
 				glColor4f(1, 0, 0, 1);
-				glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
-				glVertex2f(normalize(pre_p.x, dimension), -normalize(pre_p.y, dimension));
+				glVertex2f((GLfloat)normalize(new_p.x, dimension), -(GLfloat)normalize(new_p.y, dimension));
+				glVertex2f((GLfloat)normalize(pre_p.x, dimension), -(GLfloat)normalize(pre_p.y, dimension));
 				glColor4f(1, 0, 0, 0);
-				glVertex2f(normalize(pre_p.x - PerpA.x, dimension), -normalize(pre_p.y - PerpA.y, dimension));
+				glVertex2f((GLfloat)normalize(pre_p.x - PerpA.x, dimension), -(GLfloat)normalize(pre_p.y - PerpA.y, dimension));
 
 				glColor4f(1, 0, 0, 1);
-				glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
-				glVertex2f(normalize(pre_p.x, dimension), -normalize(pre_p.y, dimension));
+				glVertex2f((GLfloat)normalize(new_p.x, dimension), -(GLfloat)normalize(new_p.y, dimension));
+				glVertex2f((GLfloat)normalize(pre_p.x, dimension), -(GLfloat)normalize(pre_p.y, dimension));
 				glColor4f(1, 0, 0, 0);
-				glVertex2f(normalize(pre_p.x + PerpA.x, dimension), -normalize(pre_p.y + PerpA.y, dimension));
+				glVertex2f((GLfloat)normalize(pre_p.x + PerpA.x, dimension), -(GLfloat)normalize(pre_p.y + PerpA.y, dimension));
 
 				glColor4f(1, 0, 0, 1);
-				glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
+				glVertex2f((GLfloat)normalize(new_p.x, dimension), -(GLfloat)normalize(new_p.y, dimension));
 				glColor4f(1, 0, 0, 0);
-				glVertex2f(normalize(pre_p.x + PerpA.x, dimension), -normalize(pre_p.y + PerpA.y, dimension));
-				glVertex2f(normalize(new_p.x + PerpB.x, dimension), -normalize(new_p.y + PerpB.y, dimension));
+				glVertex2f((GLfloat)normalize(pre_p.x + PerpA.x, dimension), -(GLfloat)normalize(pre_p.y + PerpA.y, dimension));
+				glVertex2f((GLfloat)normalize(new_p.x + PerpB.x, dimension), -(GLfloat)normalize(new_p.y + PerpB.y, dimension));
 
 				glColor4f(1, 0, 0, 1);
-				glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
+				glVertex2f((GLfloat)normalize(new_p.x, dimension), -(GLfloat)normalize(new_p.y, dimension));
 				glColor4f(1, 0, 0, 0);
-				glVertex2f(normalize(pre_p.x - PerpA.x, dimension), -normalize(pre_p.y - PerpA.y, dimension));
-				glVertex2f(normalize(new_p.x - PerpB.x, dimension), -normalize(new_p.y - PerpB.y, dimension));
+				glVertex2f((GLfloat)normalize(pre_p.x - PerpA.x, dimension), -(GLfloat)normalize(pre_p.y - PerpA.y, dimension));
+				glVertex2f((GLfloat)normalize(new_p.x - PerpB.x, dimension), -(GLfloat)normalize(new_p.y - PerpB.y, dimension));
 			}
 			pre_p = new_p;
 		}
@@ -442,7 +442,7 @@ void draw_spline(RiverPointVector& point, unsigned int dimension, double radius,
 	while (t < 1.0f) {
 		x = result[2][0] + t * (result[1][0] + result[0][0] * t);
 		y = result[2][1] + t * (result[1][1] + result[0][1] * t);
-		glVertex2f(normalize(x, dimension), -normalize(y, dimension));
+		glVertex2f((GLfloat)normalize(x, dimension), -(GLfloat)normalize(y, dimension));
 		t += 0.01f;
 	}
 	glEnd();
@@ -477,28 +477,28 @@ void draw_spline(RiverPointVector& point, unsigned int dimension, double radius,
 			Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
 			Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
 			glColor4f(1, 0, 0, 1);
-			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
-			glVertex2f(normalize(pre_p.x, dimension), -normalize(pre_p.y, dimension));
+			glVertex2f((GLfloat)normalize(new_p.x, dimension), -(GLfloat)normalize(new_p.y, dimension));
+			glVertex2f((GLfloat)normalize(pre_p.x, dimension), -(GLfloat)normalize(pre_p.y, dimension));
 			glColor4f(1, 0, 0, 0);
-			glVertex2f(normalize(pre_p.x - PerpA.x, dimension), -normalize(pre_p.y - PerpA.y, dimension));
+			glVertex2f((GLfloat)normalize(pre_p.x - PerpA.x, dimension), -(GLfloat)normalize(pre_p.y - PerpA.y, dimension));
 
 			glColor4f(1, 0, 0, 1);
-			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
-			glVertex2f(normalize(pre_p.x, dimension), -normalize(pre_p.y, dimension));
+			glVertex2f((GLfloat)normalize(new_p.x, dimension), -(GLfloat)normalize(new_p.y, dimension));
+			glVertex2f((GLfloat)normalize(pre_p.x, dimension), -(GLfloat)normalize(pre_p.y, dimension));
 			glColor4f(1, 0, 0, 0);
-			glVertex2f(normalize(pre_p.x + PerpA.x, dimension), -normalize(pre_p.y + PerpA.y, dimension));
+			glVertex2f((GLfloat)normalize(pre_p.x + PerpA.x, dimension), -(GLfloat)normalize(pre_p.y + PerpA.y, dimension));
 
 			glColor4f(1, 0, 0, 1);
-			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
+			glVertex2f((GLfloat)normalize(new_p.x, dimension), -(GLfloat)normalize(new_p.y, dimension));
 			glColor4f(1, 0, 0, 0);
-			glVertex2f(normalize(pre_p.x + PerpA.x, dimension), -normalize(pre_p.y + PerpA.y, dimension));
-			glVertex2f(normalize(new_p.x + PerpB.x, dimension), -normalize(new_p.y + PerpB.y, dimension));
+			glVertex2f((GLfloat)normalize(pre_p.x + PerpA.x, dimension), -(GLfloat)normalize(pre_p.y + PerpA.y, dimension));
+			glVertex2f((GLfloat)normalize(new_p.x + PerpB.x, dimension), -(GLfloat)normalize(new_p.y + PerpB.y, dimension));
 
 			glColor4f(1, 0, 0, 1);
-			glVertex2f(normalize(new_p.x, dimension), -normalize(new_p.y, dimension));
+			glVertex2f((GLfloat)normalize(new_p.x, dimension), -(GLfloat)normalize(new_p.y, dimension));
 			glColor4f(1, 0, 0, 0);
-			glVertex2f(normalize(pre_p.x - PerpA.x, dimension), -normalize(pre_p.y - PerpA.y, dimension));
-			glVertex2f(normalize(new_p.x - PerpB.x, dimension), -normalize(new_p.y - PerpB.y, dimension));
+			glVertex2f((GLfloat)normalize(pre_p.x - PerpA.x, dimension), -(GLfloat)normalize(pre_p.y - PerpA.y, dimension));
+			glVertex2f((GLfloat)normalize(new_p.x - PerpB.x, dimension), -(GLfloat)normalize(new_p.y - PerpB.y, dimension));
 		}
 		pre_p = new_p;
 	}
@@ -508,7 +508,7 @@ void draw_spline(RiverPointVector& point, unsigned int dimension, double radius,
 
 void move_screen(double x, double y, double z) {
 	cur_pos = cur_pos + Point2(x, y);
-	glTranslatef(x, y, z);
+	glTranslatef((GLfloat)x, (GLfloat)y, (GLfloat)z);
 }
 
 // Is called whenever a key is pressed/released via GLFW
@@ -564,6 +564,14 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 void screen_dump()
 {
+	const char* filename = "voronoi_map_opengl.bmp";
+	FILE* out = nullptr;
+	errno_t err = fopen_s(&out, filename, "wb");
+	if (err != 0) {
+		std::cout << "File write error!!\n";
+		return;
+	}
+
 	auto start = std::clock();
 	//W: window with H: window height
 	glReadBuffer(GL_FRONT);
@@ -576,10 +584,10 @@ void screen_dump()
 
 	BITMAPFILEHEADER bf;
 	BITMAPINFOHEADER bi;
-	FILE* out = nullptr;
-	char buff[256];
-	const char* filename = "voronoi_map_opengl.bmp";
-	fopen_s(&out, filename, "wb");
+	
+	
+	
+
 	char* data = pixel_data;
 	memset(&bf, 0, sizeof(bf));
 	memset(&bi, 0, sizeof(bi));
@@ -641,7 +649,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 		double value = sqrt(cur_scale);
 
-		glScalef(1 + yoffset, 1 + yoffset, 1);
+		glScalef((GLfloat)(1 + yoffset), (GLfloat)(1 + yoffset), 1.f);
 		move_screen(cur_pos.x * temp_offset / value, cur_pos.y * temp_offset / value, 0);
 		//if (yoffset > 0) {
 		//	glScalef(xoffset, xoffset, 1);
@@ -731,27 +739,27 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 			//middle_c = (colorA + colorB) / 2;
 			
 			glColor4f((GLfloat)std::clamp(center_c.r, 0.0, 1.0), (GLfloat)std::clamp(center_c.g, 0.0, 1.0), (GLfloat)std::clamp(center_c.b, 0.0, 1.0), (GLfloat)center_c.a);
-			glVertex3d(normalize(center.x, dimension), -normalize(center.y, dimension), 0.0);
+			glVertex3d((GLfloat)normalize(center.x, dimension), -(GLfloat)normalize(center.y, dimension), 0.0);
 
 
 			glColor4f((GLfloat)std::clamp(middle_c.r, 0.0, 1.0), (GLfloat)std::clamp(middle_c.g, 0.0, 1.0), (GLfloat)std::clamp(middle_c.b, 0.0, 1.0), (GLfloat)middle_c.a);
-			glVertex3d(normalize(edge_mp.x, dimension), -normalize(edge_mp.y, dimension), 0.0);
+			glVertex3d((GLfloat)normalize(edge_mp.x, dimension), -(GLfloat)normalize(edge_mp.y, dimension), 0.0);
 
 
 			glColor4f((GLfloat)std::clamp(colorA.r, 0.0, 1.0), (GLfloat)std::clamp(colorA.g, 0.0, 1.0), (GLfloat)std::clamp(colorA.b, 0.0, 1.0), (GLfloat)colorA.a);
-			glVertex3d(normalize(pA.x, dimension), -normalize(pA.y, dimension), 0.0);
+			glVertex3d((GLfloat)normalize(pA.x, dimension), -(GLfloat)normalize(pA.y, dimension), 0.0);
 
 
 
 
 			glColor4f((GLfloat)std::clamp(center_c.r, 0.0, 1.0), (GLfloat)std::clamp(center_c.g, 0.0, 1.0), (GLfloat)std::clamp(center_c.b, 0.0, 1.0), (GLfloat)center_c.a);
-			glVertex3d(normalize(center.x, dimension), -normalize(center.y, dimension), 0.0);
+			glVertex3d((GLfloat)normalize(center.x, dimension), -(GLfloat)normalize(center.y, dimension), 0.0);
 
 			glColor4f((GLfloat)std::clamp(colorB.r, 0.0, 1.0), (GLfloat)std::clamp(colorB.g, 0.0, 1.0), (GLfloat)std::clamp(colorB.b, 0.0, 1.0), (GLfloat)colorB.a);
-			glVertex3d(normalize(pB.x, dimension), -normalize(pB.y, dimension), 0.0);
+			glVertex3d((GLfloat)normalize(pB.x, dimension), -(GLfloat)normalize(pB.y, dimension), 0.0);
 
 			glColor4f((GLfloat)std::clamp(middle_c.r, 0.0, 1.0), (GLfloat)std::clamp(middle_c.g, 0.0, 1.0), (GLfloat)std::clamp(middle_c.b, 0.0, 1.0), (GLfloat)middle_c.a);
-			glVertex3d(normalize(edge_mp.x, dimension), -normalize(edge_mp.y, dimension), 0.0);
+			glVertex3d((GLfloat)normalize(edge_mp.x, dimension), -(GLfloat)normalize(edge_mp.y, dimension), 0.0);
 
 
 		}
@@ -767,11 +775,11 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 
 			glBegin(GL_LINES);
 			glColor4f(0, 0, 0, 1);
-			glVertex3d(normalize(p1[0], dimension), -normalize(p1[1], dimension), 0.0);
-			glVertex3d(normalize(mp[0], dimension), -normalize(mp[1], dimension), 0.0);
+			glVertex3d((GLfloat)normalize(p1[0], dimension), -(GLfloat)normalize(p1[1], dimension), 0.0);
+			glVertex3d((GLfloat)normalize(mp[0], dimension), -(GLfloat)normalize(mp[1], dimension), 0.0);
 
-			glVertex3d(normalize(mp[0], dimension), -normalize(mp[1], dimension), 0.0);
-			glVertex3d(normalize(p2[0], dimension), -normalize(p2[1], dimension), 0.0);
+			glVertex3d((GLfloat)normalize(mp[0], dimension), -(GLfloat)normalize(mp[1], dimension), 0.0);
+			glVertex3d((GLfloat)normalize(p2[0], dimension), -(GLfloat)normalize(p2[1], dimension), 0.0);
 			
 			glEnd();
 		}
@@ -799,9 +807,9 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 
 				//glColor4d(c->color1, c->color2, c->color3, 0.2f);
 
-				//glVertex3d(normalize(c->site.p[0], dimension), -normalize(c->site.p[1], dimension), 0.0);
-				//glVertex3d(normalize(p1[0], dimension), -normalize(p1[1], dimension), 0.0);
-				//glVertex3d(normalize(p2[0], dimension), -normalize(p2[1], dimension), 0.0);
+				//glVertex3d((GLfloat)normalize(c->site.p[0], dimension), -(GLfloat)normalize(c->site.p[1], dimension), 0.0);
+				//glVertex3d((GLfloat)normalize(p1[0], dimension), -(GLfloat)normalize(p1[1], dimension), 0.0);
+				//glVertex3d((GLfloat)normalize(p2[0], dimension), -(GLfloat)normalize(p2[1], dimension), 0.0);
 				//glEnd();
 
 
@@ -848,7 +856,7 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 					glColor4f(0, 1, 1, 1);
 					glPointSize(8);
 					glBegin(GL_POINTS);
-					glVertex3d(normalize(p2.x, dimension), -normalize(p2.y, dimension), 0.0);
+					glVertex3d((GLfloat)normalize(p2.x, dimension), -(GLfloat)normalize(p2.y, dimension), 0.0);
 					glEnd();
 
 					Color color;
@@ -861,8 +869,8 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 						glColor4f(1, 0, 0, 1);
 						color = Color(1, 0, 0);
 					}
-					glVertex3d(normalize(p1[0], dimension), -normalize(p1[1], dimension), 0.0);
-					glVertex3d(normalize(p2[0], dimension), -normalize(p2[1], dimension), 0.0);
+					glVertex3d((GLfloat)normalize(p1[0], dimension), -(GLfloat)normalize(p1[1], dimension), 0.0);
+					glVertex3d((GLfloat)normalize(p2[0], dimension), -(GLfloat)normalize(p2[1], dimension), 0.0);
 					glEnd();
 
 
@@ -874,30 +882,30 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 					Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
 					Point2 PerpB = Point2(-norm.y, norm.x) * radius * sacle2;
 					glBegin(GL_TRIANGLES);
-					glColor4f(color.r, color.g, color.b, 1);
-					glVertex2f(normalize(p2.x, dimension), -normalize(p2.y, dimension));
-					glVertex2f(normalize(p1.x, dimension), -normalize(p1.y, dimension));
-					glColor4f(color.r, color.g, color.b, 0);
-					glVertex2f(normalize(p1.x - PerpA.x, dimension), -normalize(p1.y - PerpA.y, dimension));
+					glColor4f((GLfloat)color.r, (GLfloat)color.g, (GLfloat)color.b, 1);
+					glVertex2f((GLfloat)normalize(p2.x, dimension), -(GLfloat)normalize(p2.y, dimension));
+					glVertex2f((GLfloat)normalize(p1.x, dimension), -(GLfloat)normalize(p1.y, dimension));
+					glColor4f((GLfloat)color.r, (GLfloat)color.g, (GLfloat)color.b, 0);
+					glVertex2f((GLfloat)normalize(p1.x - PerpA.x, dimension), -(GLfloat)normalize(p1.y - PerpA.y, dimension));
 
-					glColor4f(color.r, color.g, color.b, 1);
-					glVertex2f(normalize(p2.x, dimension), -normalize(p2.y, dimension));
-					glVertex2f(normalize(p1.x, dimension), -normalize(p1.y, dimension));
-					glColor4f(color.r, color.g, color.b, 0);
-					glVertex2f(normalize(p1.x + PerpA.x, dimension), -normalize(p1.y + PerpA.y, dimension));
+					glColor4f((GLfloat)color.r, (GLfloat)color.g, (GLfloat)color.b, 1);
+					glVertex2f((GLfloat)normalize(p2.x, dimension), -(GLfloat)normalize(p2.y, dimension));
+					glVertex2f((GLfloat)normalize(p1.x, dimension), -(GLfloat)normalize(p1.y, dimension));
+					glColor4f((GLfloat)color.r, (GLfloat)color.g, (GLfloat)color.b, 0);
+					glVertex2f((GLfloat)normalize(p1.x + PerpA.x, dimension), -(GLfloat)normalize(p1.y + PerpA.y, dimension));
 
 
-					glColor4f(color.r, color.g, color.b, 1);
-					glVertex2f(normalize(p2.x, dimension), -normalize(p2.y, dimension));
-					glColor4f(color.r, color.g, color.b, 0);
-					glVertex2f(normalize(p1.x + PerpA.x, dimension), -normalize(p1.y + PerpA.y, dimension));
-					glVertex2f(normalize(p2.x + PerpB.x, dimension), -normalize(p2.y + PerpB.y, dimension));
+					glColor4f((GLfloat)color.r, (GLfloat)color.g, (GLfloat)color.b, 1);
+					glVertex2f((GLfloat)normalize(p2.x, dimension), -(GLfloat)normalize(p2.y, dimension));
+					glColor4f((GLfloat)color.r, (GLfloat)color.g, (GLfloat)color.b, 0);
+					glVertex2f((GLfloat)normalize(p1.x + PerpA.x, dimension), -(GLfloat)normalize(p1.y + PerpA.y, dimension));
+					glVertex2f((GLfloat)normalize(p2.x + PerpB.x, dimension), -(GLfloat)normalize(p2.y + PerpB.y, dimension));
 
-					glColor4f(color.r, color.g, color.b, 1);
-					glVertex2f(normalize(p2.x, dimension), -normalize(p2.y, dimension));
-					glColor4f(color.r, color.g, color.b, 0);
-					glVertex2f(normalize(p1.x - PerpA.x, dimension), -normalize(p1.y - PerpA.y, dimension));
-					glVertex2f(normalize(p2.x - PerpB.x, dimension), -normalize(p2.y - PerpB.y, dimension));
+					glColor4f((GLfloat)color.r, (GLfloat)color.g, (GLfloat)color.b, 1);
+					glVertex2f((GLfloat)normalize(p2.x, dimension), -(GLfloat)normalize(p2.y, dimension));
+					glColor4f((GLfloat)color.r, (GLfloat)color.g, (GLfloat)color.b, 0);
+					glVertex2f((GLfloat)normalize(p1.x - PerpA.x, dimension), -(GLfloat)normalize(p1.y - PerpA.y, dimension));
+					glVertex2f((GLfloat)normalize(p2.x - PerpB.x, dimension), -(GLfloat)normalize(p2.y - PerpB.y, dimension));
 					glEnd();
 					pre_c = c;
 				}
@@ -912,7 +920,7 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 			//	glPointSize(5);
 			//	glBegin(GL_POINTS);
 			//	glColor4f(1, 0, 0, 1);
-			//	glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
+			//	glVertex3d((GLfloat)normalize(p.x, dimension), -(GLfloat)normalize(p.y, dimension), 0.0);
 			//	glEnd();
 			//}
 
@@ -920,7 +928,7 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 				glPointSize(pointSize);
 				glBegin(GL_POINTS);
 				glColor4f(0, 0, 0, 1);
-				glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
+				glVertex3d((GLfloat)normalize(p.x, dimension), -(GLfloat)normalize(p.y, dimension), 0.0);
 				glEnd();
 			}
 			else if (draw_special_dot && c->GetDetail().GetPeak()) {
@@ -928,21 +936,21 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 				/*	glPointSize(8);
 					glBegin(GL_POINTS);
 					glColor4f((GLfloat)1, (GLfloat)0, (GLfloat)0, (GLfloat)0.5);
-					glVertex3d(normalize(p2.x, dimension), -normalize(p2.y, dimension), 0.0);
+					glVertex3d((GLfloat)normalize(p2.x, dimension), -(GLfloat)normalize(p2.y, dimension), 0.0);
 					glEnd();*/
 
 
 				glPointSize(pointSize);
 				glBegin(GL_POINTS);
 				glColor4f((GLfloat)0.7, (GLfloat)0.7, (GLfloat)0, (GLfloat)1);
-				glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
+				glVertex3d((GLfloat)normalize(p.x, dimension), -(GLfloat)normalize(p.y, dimension), 0.0);
 				glEnd();
 			}
 			else if (draw_special_dot && c->GetDetail().GetTerrain() == Terrain::COAST) {
 				glPointSize(pointSize);
 				glBegin(GL_POINTS);
 				glColor4f((GLfloat)0.4, (GLfloat)0.7, (GLfloat)1, (GLfloat)1);
-				glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
+				glVertex3d((GLfloat)normalize(p.x, dimension), -(GLfloat)normalize(p.y, dimension), 0.0);
 				glEnd();
 			}
 			else if (draw_white_dot) {
@@ -951,8 +959,8 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 				double temp = (double)c->GetDetail().GetMoisture() / vdg->GetMaxMoisture();
 				//temp *= 2;
 				//std::cout << "GetMoisture: " << c->GetDetail().GetMoisture() << ", LocalMoisture: " << c->GetDetail().GetLocalMoisture() << ", AreaMoisture: " << c->GetDetail().GetAreaMoisture() << ", GetMaxMoisture: " << vdg->GetMaxMoisture() << "\n";
-				glColor4f(1.0 - temp, 1.0 - temp, 1, 1);
-				glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
+				glColor4f((GLfloat)(1.0 - temp), (GLfloat)(1.0 - temp), 1.f, 1.f);
+				glVertex3d((GLfloat)normalize(p.x, dimension), -(GLfloat)normalize(p.y, dimension), 0.0);
 				glEnd();
 			}
 
@@ -972,7 +980,7 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 					glColor4f((GLfloat)0, (GLfloat)0, (GLfloat)1, (GLfloat)1);
 					for (auto lake : lake_union.second) {
 						Point2& p = lake->site.p;
-						glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
+						glVertex3d((GLfloat)normalize(p.x, dimension), -(GLfloat)normalize(p.y, dimension), 0.0);
 					}
 				}
 
@@ -982,7 +990,7 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 					for (auto peak : peak_union.second) {
 						Point2& p = peak->site.p;
 						glColor4f(0, color, 1 - color, 1);
-						glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
+						glVertex3d((GLfloat)normalize(p.x, dimension), -(GLfloat)normalize(p.y, dimension), 0.0);
 					}
 					color += 0.4;
 				}*/
@@ -993,7 +1001,7 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 
 				//	Point2& p = cell->site.p;
 				//	glColor4f(1 - color, color, 0, 1);
-				//	glVertex3d(normalize(p.x, dimension), -normalize(p.y, dimension), 0.0);
+				//	glVertex3d((GLfloat)normalize(p.x, dimension), -(GLfloat)normalize(p.y, dimension), 0.0);
 				//}
 				//color += 0.5;
 
@@ -1179,7 +1187,7 @@ int main() {
 		glfwPollEvents();
 
 		double fame_duration = 1000 * (std::clock() - fame_start) / (double)CLOCKS_PER_SEC;
-		if (fame_duration < 33) Sleep(33 - fame_duration);
+		if (fame_duration < 33) Sleep(DWORD(33 - fame_duration));
 	}
 
 	// Terminate GLFW, clearing any resources allocated by it.

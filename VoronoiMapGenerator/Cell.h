@@ -21,7 +21,7 @@ struct Site {
 	Point2 p;
 	Cell* cell;
 
-	Site() {};
+	Site() : cell(nullptr) {};
 	Site(Point2 _p, Cell* _cell) : p(_p), cell(_cell) {};
 };
 

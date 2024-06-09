@@ -19,7 +19,7 @@ struct BoundingBox {
 	double yB;
 	double yT;
 
-	BoundingBox() {};
+	BoundingBox() : xL(0), xR(0), yB(0), yT(0) {};
 	BoundingBox(double xmin, double xmax, double ymin, double ymax) :
 		xL(xmin), xR(xmax), yB(ymin), yT(ymax) {};
 };
@@ -186,8 +186,8 @@ public:
 	void SetupEdgePos();
 	void SetupColor(int flag = ALL_IMAGE);
 
-	void SaveAllImage(double dimension, double w, double h);
-	void SaveImage(const char* filename, double dimension, double w, double h);
+	void SaveAllImage(double dimension, unsigned int w, unsigned int h);
+	void SaveImage(const char* filename, double dimension, unsigned int w, unsigned int h);
 
 	std::pair<double, double> GetMinDist(std::vector<std::pair<Point2, double>>& points, Point2& center, double radius);
 	
