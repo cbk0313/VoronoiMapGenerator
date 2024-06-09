@@ -1063,6 +1063,7 @@ struct LakeComp {
 void VoronoiDiagramGenerator::CreateRiver() {
 
 	RiverEdge::Clear();
+	RiverCrossing::Clear();
 
 	for (auto item : diagram->islandUnion.unions) {
 		auto island = item.second;
@@ -1218,7 +1219,7 @@ void VoronoiDiagramGenerator::CreateRiver() {
 					}
 				}
 				if (cell_cnt == 0) {
-					//pre_e->DeleteLine(buf.GetCalculating());
+					pre_e->DeleteLine(buf.GetCalculating());
 					
 				}
 
@@ -1319,10 +1320,10 @@ void VoronoiDiagramGenerator::CreateRiver() {
 
 				auto river_pos = RiverEdge::GetPos(lake, lake);
 				//std::pair< RiverEdge*, std::vector<Cell*>>;
-				using Temp = std::pair< RiverEdge*, std::vector<RiverPoint>>;
+				using Temp = std::pair< RiverEdge*, RiverLine>;
 				std::stack<Temp> buf;
 				if (RiverEdge::GetRiverEdges().find(river_pos) != RiverEdge::GetRiverEdges().end()) {
-					buf.push(std::make_pair(RiverEdge::GetRiverEdges()[river_pos], std::vector<RiverPoint>()));
+					buf.push(std::make_pair(RiverEdge::GetRiverEdges()[river_pos], RiverLine(setting.GetRiverRadius(), setting.GetRiverPowerScale())));
 				}
 
 
@@ -1330,30 +1331,33 @@ void VoronoiDiagramGenerator::CreateRiver() {
 					auto value = buf.top();
 					buf.pop();
 					RiverEdge* e = value.first;
-					auto c_arr = value.second;
+					RiverLine& c_arr = value.second;
 				
 					if (e == nullptr) continue;
 					if (e->GetRiverEnd()) continue;
 					//std::cout << "e->GetPower() " << e->GetPower() << "\n";
-					if (e->IsStart()) c_arr.push_back(RiverPoint(e->GetPower(), e->GetStart()));
-					else c_arr.push_back(RiverPoint(e->GetPower(), e->GetEnd()));
+					if (e->IsStart()) c_arr.AddPoint(RiverPoint(e->GetPower(), e->GetStart()));
+					else c_arr.AddPoint(RiverPoint(e->GetPower(), e->GetEnd()));
 
 					if (e->GetNexts().size() == 0) {
-						diagram->river_edges.push_back(c_arr);
+						//diagram->river_edges.push_back(c_arr);
+						diagram->river_lines.AddLine(c_arr);
 					}
 					else {
 						if (e->GetNexts().size() == 1 || e->IsStart()) {
 							for (auto next_e : e->GetNexts()) {
-								buf.push(make_pair(next_e, c_arr));
+								buf.push(std::make_pair(next_e, c_arr));
 							}
 						}
 						else {
-							diagram->river_edges.push_back(c_arr);
+							//diagram->river_edges.push_back(c_arr);
+							diagram->river_lines.AddLine(c_arr);
 							for (auto next_e : e->GetNexts()) {
-								std::vector<RiverPoint> temp;
-								temp.push_back(RiverPoint(next_e->GetPower(), next_e->GetStart()));
+								
+								RiverLine temp(setting.GetRiverRadius(), setting.GetRiverPowerScale());
+								temp.AddPoint(RiverPoint(next_e->GetPower(), next_e->GetStart()));
 								//temp.push_back(next_e->GetEnd());
-								buf.push(make_pair(next_e, temp));
+								buf.push(std::make_pair(next_e, temp));
 							}
 						}
 

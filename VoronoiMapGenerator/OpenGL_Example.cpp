@@ -80,9 +80,8 @@ GLfloat matrix_3[4][4] = { {-1.0f, 3.0f, -3.0f, 1.0f},
 						  {-1.0f, 0.0f, 1.0f, 0.0f},
 						  {0.0f, 2.0f, 0.0f, 0.0f} };
 
-const float radius = 500.f;
-const float river_sacle = 0.2;
-GLvoid drawCardinal(std::vector<RiverPoint>& point, unsigned int dimension) {
+
+GLvoid drawCardinal(RiverPointVector& point, unsigned int dimension, double radius, double river_scale) {
 	// init
 
 	GLfloat result[3][2];
@@ -93,8 +92,8 @@ GLvoid drawCardinal(std::vector<RiverPoint>& point, unsigned int dimension) {
 	{
 		for (int j = 0; j < 3; j++)
 		{
-			result[i][0] += matrix_2[i][j] * point[j].cell->site.p.x;
-			result[i][1] += matrix_2[i][j] * point[j].cell->site.p.y;
+			result[i][0] += matrix_2[i][j] * point[j].point.x;
+			result[i][1] += matrix_2[i][j] * point[j].point.y;
 		}
 	}
 
@@ -110,14 +109,14 @@ GLvoid drawCardinal(std::vector<RiverPoint>& point, unsigned int dimension) {
 	////glVertex2f(cx, cy); // 원의 중심
 	//for (int i = 0; i < num_segments; i++) {
 	//	float theta = 2.0f * 3.1415926f * float(i) / float(num_segments); // 현재 각도
-	//	float x_ = radius * (river_sacle * point[0].power + 1) * cosf(theta); // x 좌표
-	//	float y_ = radius * (river_sacle * point[0].power + 1) * sinf(theta); // y 좌표
+	//	float x_ = radius * (river_scale * point[0].power + 1) * cosf(theta); // x 좌표
+	//	float y_ = radius * (river_scale * point[0].power + 1) * sinf(theta); // y 좌표
 	//	glColor4f(1.0f, 0.0f, 0.0f, 0.0f);
 	//	glVertex2f(normalize(x_ + point[0].cell->site.p.x, dimension), -normalize(y_ + point[0].cell->site.p.y, dimension)); // 원의 점
 	//
 	//	theta = 2.0f * 3.1415926f * float(i - 1) / float(num_segments); // 현재 각도
-	//	x_ = radius * (river_sacle * point[0].power + 1) * cosf(theta); // x 좌표
-	//	y_ = radius * (river_sacle * point[0].power + 1) * sinf(theta); // y 좌표
+	//	x_ = radius * (river_scale * point[0].power + 1) * cosf(theta); // x 좌표
+	//	y_ = radius * (river_scale * point[0].power + 1) * sinf(theta); // y 좌표
 	//	glVertex2f(normalize(x_ + point[0].cell->site.p.x, dimension), -normalize(y_ + point[0].cell->site.p.y, dimension)); // 원의 점
 	//	glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
 	//	glVertex2f(normalize(point[0].cell->site.p.x, dimension), -normalize(point[0].cell->site.p.y, dimension)); // 원의 점
@@ -137,7 +136,7 @@ GLvoid drawCardinal(std::vector<RiverPoint>& point, unsigned int dimension) {
 	while (t < 1) {
 		if (t < 0.5) {
 
-			if (point[0].cell->GetDetail().GetElevation() == point[1].cell->GetDetail().GetElevation()) {
+			if (point[0].GetCell()->GetDetail().GetElevation() == point[1].GetCell()->GetDetail().GetElevation()) {
 				glColor4f(0, 1, 0, 1);
 			}
 			else {
@@ -145,7 +144,7 @@ GLvoid drawCardinal(std::vector<RiverPoint>& point, unsigned int dimension) {
 			}
 		}
 		else {
-			if (point[1].cell->GetDetail().GetElevation() == point[2].cell->GetDetail().GetElevation()) {
+			if (point[1].GetCell()->GetDetail().GetElevation() == point[2].GetCell()->GetDetail().GetElevation()) {
 				glColor4f(0, 1, 0, 1);
 			}
 			else {
@@ -160,8 +159,8 @@ GLvoid drawCardinal(std::vector<RiverPoint>& point, unsigned int dimension) {
 	glEnd();
 
 	t = 0.0f;
-	Point2 pre_p = point[0].cell->site.p;
-	Point2 pre_norm = point[0].cell->site.p;
+	Point2 pre_p = point[0].point;
+	Point2 pre_norm = point[0].point;
 	
 	glBegin(GL_TRIANGLES);
 	while (t < 1) {
@@ -172,7 +171,7 @@ GLvoid drawCardinal(std::vector<RiverPoint>& point, unsigned int dimension) {
 		double x2 = result[2][0] + (t + 0.01) * (result[1][0] + result[0][0] * (t + 0.01));
 		double y2 = result[2][1] + (t + 0.01) * (result[1][1] + result[0][1] * (t + 0.01));
 		Color c;
-		if (point[0].cell->GetDetail().GetElevation() == point[1].cell->GetDetail().GetElevation()) {
+		if (point[0].GetCell()->GetDetail().GetElevation() == point[1].GetCell()->GetDetail().GetElevation()) {
 			c = Color(0, 1, 0);
 		}
 		else {
@@ -185,14 +184,14 @@ GLvoid drawCardinal(std::vector<RiverPoint>& point, unsigned int dimension) {
 		Point2 next_p = Point2(x2, y2);
 		Point2 norm = (new_p - pre_p);
 		Point2 norm2 = (next_p - new_p);
-		double sacle1 = (point[0].power * (1 - t) + point[2].power * t) * river_sacle + 1;
+		double sacle1 = (point[0].power * (1 - t) + point[2].power * t) * river_scale + 1;
 		
 		if (t == 0) {
 			t += 0.01f;
 			continue;
 		}
 		t += 0.01f;
-		double sacle2 = (point[0].power * (1 - t) + point[2].power * t) * river_sacle + 1;
+		double sacle2 = (point[0].power * (1 - t) + point[2].power * t) * river_scale + 1;
 		if (norm != Point2(0, 0)) {
 			norm = norm.Normailize();
 			norm2 = norm2.Normailize();
@@ -227,7 +226,7 @@ GLvoid drawCardinal(std::vector<RiverPoint>& point, unsigned int dimension) {
 	glEnd();
 }
 
-void draw_spline(std::vector<RiverPoint>& point, unsigned int dimension) {
+void draw_spline(RiverPointVector& point, unsigned int dimension, double radius, double river_scale) {
 	GLfloat result[4][2];
 	GLfloat t = 0.0f;
 	GLfloat x, y;
@@ -240,13 +239,13 @@ void draw_spline(std::vector<RiverPoint>& point, unsigned int dimension) {
 	{
 		for (int j = 0; j < 3; j++)
 		{
-			result[i][0] += matrix_2[i][j] * point[j].cell->site.p.x;
-			result[i][1] += matrix_2[i][j] * point[j].cell->site.p.y;
+			result[i][0] += matrix_2[i][j] * point[j].point.x;
+			result[i][1] += matrix_2[i][j] * point[j].point.y;
 		}
 	}
 
 
-	if (point[0].cell->GetDetail().GetElevation() == point[1].cell->GetDetail().GetElevation()) {
+	if (point[0].GetCell()->GetDetail().GetElevation() == point[1].GetCell()->GetDetail().GetElevation()) {
 		glColor4f(0, 1, 0, 1);
 	}
 	else {
@@ -263,8 +262,8 @@ void draw_spline(std::vector<RiverPoint>& point, unsigned int dimension) {
 	glEnd();
 
 	t = 0.0f;
-	Point2 pre_p = point[0].cell->site.p;
-	Point2 pre_norm = point[0].cell->site.p;
+	Point2 pre_p = point[0].point;
+	Point2 pre_norm = point[0].point;
 	glColor4f(1.0f, 0.0f, 0.0f, 0.0f);
 	glBegin(GL_TRIANGLES);
 	while (t < 0.5f) {
@@ -280,13 +279,13 @@ void draw_spline(std::vector<RiverPoint>& point, unsigned int dimension) {
 		Point2 next_p = Point2(x2, y2);
 		Point2 norm = (new_p - pre_p);
 		Point2 norm2 = (next_p - new_p);
-		double sacle1 = (point[0].power * ((0.5 - t) * 2) + point[1].power * (t * 2)) * river_sacle + 1;
+		double sacle1 = (point[0].power * ((0.5 - t) * 2) + point[1].power * (t * 2)) * river_scale + 1;
 		if (t == 0) {
 			t += 0.01f;
 			continue;
 		}
 		t += 0.01f;
-		double sacle2 = (point[0].power * ((0.5 - t) * 2) + point[1].power * (t * 2)) * river_sacle + 1;
+		double sacle2 = (point[0].power * ((0.5 - t) * 2) + point[1].power * (t * 2)) * river_scale + 1;
 		if (norm != Point2(0, 0)) {
 			norm = norm.Normailize();
 			norm2 = norm2.Normailize();
@@ -329,12 +328,12 @@ void draw_spline(std::vector<RiverPoint>& point, unsigned int dimension) {
 		{
 			for (int j = 0; j < 4; j++)
 			{
-				result[i][0] += matrix_3[i][j] * point[j + cubic_case].cell->site.p.x;
-				result[i][1] += matrix_3[i][j] * point[j + cubic_case].cell->site.p.y;
+				result[i][0] += matrix_3[i][j] * point[j + cubic_case].point.x;
+				result[i][1] += matrix_3[i][j] * point[j + cubic_case].point.y;
 			}
 		}
 		
-		if (point[cubic_case + 1].cell->GetDetail().GetElevation() == point[cubic_case + 2].cell->GetDetail().GetElevation()) {
+		if (point[cubic_case + 1].GetCell()->GetDetail().GetElevation() == point[cubic_case + 2].GetCell()->GetDetail().GetElevation()) {
 			glColor4f(0, 1, 0, 1);
 		}
 		else {
@@ -373,13 +372,13 @@ void draw_spline(std::vector<RiverPoint>& point, unsigned int dimension) {
 			Point2 next_p = Point2(x2, y2);
 			Point2 norm = (new_p - pre_p);
 			Point2 norm2 = (next_p - new_p);
-			double sacle1 = (point[cubic_case + 1].power * (1 - t) + point[cubic_case + 2].power * t) * river_sacle + 1;
+			double sacle1 = (point[cubic_case + 1].power * (1 - t) + point[cubic_case + 2].power * t) * river_scale + 1;
 			if (t == 0) {
 				t += 0.01f;
 				continue;
 			}
 			t += 0.01f;
-			double sacle2 = (point[cubic_case + 1].power * (1 - t) + point[cubic_case + 2].power * t) * river_sacle + 1;
+			double sacle2 = (point[cubic_case + 1].power * (1 - t) + point[cubic_case + 2].power * t) * river_scale + 1;
 			if (norm != Point2(0, 0)) {
 				norm = norm.Normailize();
 				norm2 = norm2.Normailize();
@@ -426,12 +425,12 @@ void draw_spline(std::vector<RiverPoint>& point, unsigned int dimension) {
 	{
 		for (int j = 0; j < 3; j++)
 		{
-			result[i][0] += matrix_2[i][j] * point[j + SIZE - 3].cell->site.p.x;
-			result[i][1] += matrix_2[i][j] * point[j + SIZE - 3].cell->site.p.y;
+			result[i][0] += matrix_2[i][j] * point[j + SIZE - 3].point.x;
+			result[i][1] += matrix_2[i][j] * point[j + SIZE - 3].point.y;
 		}
 	}
 
-	if (point[SIZE - 2].cell->GetDetail().GetElevation() == point[SIZE - 1].cell->GetDetail().GetElevation()) {
+	if (point[SIZE - 2].GetCell()->GetDetail().GetElevation() == point[SIZE - 1].GetCell()->GetDetail().GetElevation()) {
 		glColor4f(0, 1, 0, 1);
 	}
 	else {
@@ -465,13 +464,13 @@ void draw_spline(std::vector<RiverPoint>& point, unsigned int dimension) {
 		Point2 next_p = Point2(x2, y2);
 		Point2 norm = (new_p - pre_p);
 		Point2 norm2 = (next_p - new_p);
-		double sacle1 = (point[SIZE - 2].power * (1 - t) + point[SIZE - 1].power * t) * river_sacle + 1;
+		double sacle1 = (point[SIZE - 2].power * (1 - t) + point[SIZE - 1].power * t) * river_scale + 1;
 		if (t == 0) {
 			t += 0.01f;
 			continue;
 		}
 		t += 0.01f;
-		double sacle2 = (point[SIZE - 2].power * (1 - t) + point[SIZE - 1].power * t) * river_sacle + 1;
+		double sacle2 = (point[SIZE - 2].power * (1 - t) + point[SIZE - 1].power * t) * river_scale + 1;
 		if (norm != Point2(0, 0)) {
 			norm = norm.Normailize();
 			norm2 = norm2.Normailize();
@@ -813,27 +812,30 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 	if (draw_white_dot || draw_special_dot) {
 		
 		//glEnable(GL_DEPTH_TEST);
-		for (std::vector<RiverPoint>& c_vec : diagram->river_edges) {
+		for (RiverLine& line : diagram->river_lines.GetArray()) {
+			RiverPointVector& point_vec = line.GetPointArray();
 			RiverPoint pre_c = RiverPoint(0, nullptr);
 			bool temp = false;
-			if (c_vec.size() == 3) {
+			const double radius = vdg->GetSetting().GetRiverRadius();
+			const double river_scale = vdg->GetSetting().GetRiverPowerScale();
+			if (point_vec.size() == 3) {
 				/*std::vector<Cell*> cells;
 				for (auto c : c_vec) {
 					cells.push_back(c.cell);
 				}*/
-				drawCardinal(c_vec, dimension);
+				drawCardinal(point_vec, dimension, radius, river_scale);
 			}
-			else if (c_vec.size() > 3) {
+			else if (point_vec.size() > 3) {
 				/*std::vector<Cell*> cells;
 				for (auto c : c_vec) {
 					cells.push_back(c.cell);
 				}*/
-				draw_spline(c_vec, dimension);
+				draw_spline(point_vec, dimension, radius, river_scale);
 			}
 			else {
 
 
-				for (RiverPoint c : c_vec) {
+				for (RiverPoint c : point_vec) {
 					if (!temp) {
 						temp = true;
 						pre_c = c;
@@ -841,8 +843,8 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 					}
 
 
-					Point2& p1 = pre_c.cell->site.p;
-					Point2& p2 = c.cell->site.p;
+					Point2& p1 = pre_c.point;
+					Point2& p2 = c.point;
 					glColor4f(0, 1, 1, 1);
 					glPointSize(8);
 					glBegin(GL_POINTS);
@@ -851,7 +853,7 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 
 					Color color;
 					glBegin(GL_LINES);
-					if (pre_c.cell->GetDetail().GetElevation() == c.cell->GetDetail().GetElevation()) {
+					if (pre_c.GetCell()->GetDetail().GetElevation() == c.GetCell()->GetDetail().GetElevation()) {
 						glColor4f(0, 1, 0, 1);
 						color = Color(0, 1, 0);
 					}
@@ -866,8 +868,8 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 
 
 					Point2 norm = (p2 - p1).Normailize();
-					double sacle1 = (pre_c.power) * river_sacle + 1;
-					double sacle2 = (c.power) * river_sacle + 1;
+					double sacle1 = (pre_c.power) * river_scale + 1;
+					double sacle2 = (c.power) * river_scale + 1;
 
 					Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
 					Point2 PerpB = Point2(-norm.y, norm.x) * radius * sacle2;
@@ -1015,7 +1017,7 @@ int main() {
 	unsigned int loop_cnt = 3;
 
 	VoronoiDiagramGenerator vdg = VoronoiDiagramGenerator();
-	vdg.SetSetting(GenerateSetting(MapType::CONTINENT, seed, radius, 0.5, 0.5, 10, radius / 3, radius / 5, 50, radius / 15, radius / 20));
+	vdg.SetSetting(GenerateSetting(MapType::CONTINENT, seed, radius, 0.5, 0.5, 10, radius / 3, radius / 5, 50, radius / 15, radius / 20, 500.f, 0.2f));
 	
 	std::vector<Point2>* sites = nullptr;
 	BoundingBox bbox;

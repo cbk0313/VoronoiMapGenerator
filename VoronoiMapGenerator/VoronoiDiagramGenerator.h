@@ -40,6 +40,9 @@ private:
 	unsigned int lake_cnt;
 	double lake_radius_max;
 	double lake_radius_min;
+
+	double river_radius;
+	double river_power_scale;
 public:
 	GenerateSetting() 
 		: type(MapType::CONTINENT)
@@ -52,8 +55,14 @@ public:
 		, island_radius_min(200000)
 		, lake_cnt(10)
 		, lake_radius_max(200000)
-		, lake_radius_min(142857.1428571429) {};
-	GenerateSetting(MapType _type, int _seed, double _radius, double _lake_scale, double _lake_size, unsigned int _island_cnt, double _island_radius_max, double _island_radius_min, unsigned int _lake_cnt, double _lake_radius_max, double _lake_radius_min)
+		, lake_radius_min(142857.1428571429)
+		, river_radius(500)
+		, river_power_scale(0.2) 
+	{};
+	GenerateSetting(MapType _type, int _seed, double _radius, double _lake_scale,
+		double _lake_size, unsigned int _island_cnt, double _island_radius_max,
+		double _island_radius_min, unsigned int _lake_cnt, double _lake_radius_max,
+		double _lake_radius_min, double _river_radius, double _river_power_scale)
 		: type(_type)
 		, seed(_seed)
 		, radius(_radius)
@@ -65,6 +74,8 @@ public:
 		, lake_cnt(_lake_cnt)
 		, lake_radius_max(_lake_radius_max)
 		, lake_radius_min(_lake_radius_min)
+		, river_radius(_river_radius)
+		, river_power_scale(_river_power_scale)
 	{};
 
 
@@ -79,6 +90,8 @@ public:
 	inline void SetLakeCount(unsigned int new_cnt) { lake_cnt = new_cnt; };
 	inline void SetLakeRadiusMax(double new_radius) { lake_radius_max = new_radius; };
 	inline void SetLakeRadiusMin(double new_radius) { lake_radius_min = new_radius; };
+	inline void SetRiverRadius(double new_radius) { river_radius = new_radius; };
+	inline void SetRiverPowerScale(double new_sacle) { river_power_scale = new_sacle; };
 
 	inline MapType GetMapType() { return type; };
 	inline int GetSeed() { return seed; };
@@ -91,6 +104,8 @@ public:
 	inline unsigned int GetLakeCount() { return lake_cnt; };
 	inline double GetLakeRadiusMax() { return lake_radius_max; };
 	inline double GetLakeRadiusMin() { return lake_radius_min; };
+	inline double GetRiverRadius() { return river_radius; };
+	inline double GetRiverPowerScale() { return river_power_scale; };
 
 };
 
@@ -176,172 +191,6 @@ public:
 
 	std::pair<double, double> GetMinDist(std::vector<std::pair<Point2, double>>& points, Point2& center, double radius);
 	
-
-	void CreateRiverPoly() {
-
-	}
-
-	
-
-
-	double matrix_2[3][3] = { {2.0f, -4.0f, 2.0f}, {-3.0f, 4.0f, -1.0f}, {1.0f, 0.0f, 0.0f} };
-	double matrix_3[4][4] = { {-1.0f, 3.0f, -3.0f, 1.0f},
-							  {2.0f, -5.0f, 4.0f, -1.0f},
-							  {-1.0f, 0.0f, 1.0f, 0.0f},
-							  {0.0f, 2.0f, 0.0f, 0.0f} };
-
-	void drawCardinal(std::vector<RiverPoint>& point, std::vector<RiverDraw>& draw_arr) {
-		// init
-		double result[3][2];
-		memset(result, 0, sizeof(result));
-
-		// 행렬 (2) 와 (3) 의 곱
-		for (int i = 0; i < 3; i++)
-		{
-			for (int j = 0; j < 3; j++)
-			{
-				result[i][0] += matrix_2[i][j] * point[j].point.x;
-				result[i][1] += matrix_2[i][j] * point[j].point.y;
-			}
-		}
-
-		// 행렬 (1) 과 새로운 행렬 result 의 곱
-		double t = 0.0f;
-		double x, y;
-		std::vector<Point2> p_arr;
-		while (t < 1) {
-			/*if (t < 0.5) {
-
-				if (point[0]->GetDetail().GetElevation() == point[1]->GetDetail().GetElevation()) {
-					glColor4f(0, 1, 0, 1);
-				}
-				else {
-					glColor4f(1, 0, 0, 1);
-				}
-			}
-			else {
-				if (point[1]->GetDetail().GetElevation() == point[2]->GetDetail().GetElevation()) {
-					glColor4f(0, 1, 0, 1);
-				}
-				else {
-					glColor4f(1, 0, 0, 1);
-				}
-			}*/
-			x = result[2][0] + t * (result[1][0] + result[0][0] * t);
-			y = result[2][1] + t * (result[1][1] + result[0][1] * t);
-			p_arr.push_back(Point2(x, y));
-			t += 0.01f;
-		}
-
-		for (int i = 1; i < p_arr.size(); i++) {
-			double pow1 = point[0].power * (1 - (i - 1) / p_arr.size()) + point[1].power * (((i - 1) / p_arr.size()));
-			double pow2 = point[0].power * (1 - (i) / p_arr.size()) + point[1].power * (((i) / p_arr.size()));
-			draw_arr.push_back(RiverDraw(RiverPoint(pow1, nullptr, p_arr[i - 1]), RiverPoint(pow2, nullptr, p_arr[i])));
-		}
-
-	}
-
-	void draw_spline(std::vector<RiverPoint>& point, std::vector<RiverDraw>& draw_arr) {
-		double result[4][2];
-		double t = 0.0f;
-		double x, y;
-		int SIZE = point.size();
-		// Section 1.
-		// quadratic function
-		memset(result, 0, sizeof(result));
-
-		for (int i = 0; i < 3; i++)
-		{
-			for (int j = 0; j < 3; j++)
-			{
-				result[i][0] += matrix_2[i][j] * point[j].point.x;
-				result[i][1] += matrix_2[i][j] * point[j].point.y;
-			}
-		}
-
-
-		//if (point[0]->GetDetail().GetElevation() == point[1]->GetDetail().GetElevation()) {
-		//	glColor4f(0, 1, 0, 1);
-		//}
-		//else {
-		//	glColor4f(1, 0, 0, 1);
-		//}
-
-		std::vector<Point2> p_arr;
-		while (t < 0.5f) {
-			x = result[2][0] + t * (result[1][0] + result[0][0] * t);
-			y = result[2][1] + t * (result[1][1] + result[0][1] * t);
-			p_arr.push_back(Point2(x, y));
-			t += 0.01f;
-		}
-
-		for (int i = 1; i < p_arr.size(); i++) {
-			double pow1 = point[0].power * (1 - (i - 1) / p_arr.size()) + point[1].power * (((i - 1) / p_arr.size()));
-			double pow2 = point[0].power * (1 - (i) / p_arr.size()) + point[1].power * (((i) / p_arr.size()));
-			draw_arr.push_back(RiverDraw(RiverPoint(pow1, nullptr, p_arr[i - 1]), RiverPoint(pow2, nullptr, p_arr[i])));
-		}
-
-		// Section 2.
-		// cubic spline
-		for (int cubic_case = 0; cubic_case < SIZE - 3; cubic_case++)
-		{
-			memset(result, 0, sizeof(result));
-			for (int i = 0; i < 4; i++)
-			{
-				for (int j = 0; j < 4; j++)
-				{
-					result[i][0] += matrix_3[i][j] * point[j + cubic_case].point.x;
-					result[i][1] += matrix_3[i][j] * point[j + cubic_case].point.y;
-				}
-			}
-
-			p_arr.clear();
-			t = 0.0f;
-			while (t < 1.0f) {
-				x = (result[3][0] + t * (result[2][0] + t * (result[1][0] + result[0][0] * t))) * 0.5f;
-				y = (result[3][1] + t * (result[2][1] + t * (result[1][1] + result[0][1] * t))) * 0.5f;
-				p_arr.push_back(Point2(x, y));
-				t += 0.01f;
-			}
-
-			for (int i = 1; i < p_arr.size(); i++) {
-				double pow1 = point[cubic_case + 1].power * (1 - (i - 1) / p_arr.size()) + point[cubic_case + 2].power * (((i - 1) / p_arr.size()));
-				double pow2 = point[cubic_case + 1].power * (1 - (i) / p_arr.size()) + point[cubic_case + 2].power * (((i) / p_arr.size()));
-				draw_arr.push_back(RiverDraw(RiverPoint(pow1, nullptr, p_arr[i - 1]), RiverPoint(pow2, nullptr, p_arr[i])));
-			}
-
-
-		}
-
-		// Section 3.
-		// quadratic function
-		memset(result, 0, sizeof(result));
-
-		for (int i = 0; i < 3; i++)
-		{
-			for (int j = 0; j < 3; j++)
-			{
-				result[i][0] += matrix_2[i][j] * point[j + SIZE - 3].point.x;
-				result[i][1] += matrix_2[i][j] * point[j + SIZE - 3].point.y;
-			}
-		}
-		p_arr.push_back(Point2(x, y));
-		t = 0.5f;
-
-		while (t < 1.0f) {
-			x = result[2][0] + t * (result[1][0] + result[0][0] * t);
-			y = result[2][1] + t * (result[1][1] + result[0][1] * t);
-			p_arr.push_back(Point2(x, y));
-			t += 0.01f;
-		}
-
-		for (int i = 1; i < p_arr.size(); i++) {
-			double pow1 = point[0].power * (1 - (i - 1) / p_arr.size()) + point[1].power * (((i - 1) / p_arr.size()));
-			double pow2 = point[0].power * (1 - (i) / p_arr.size()) + point[1].power * (((i) / p_arr.size()));
-			draw_arr.push_back(RiverDraw(RiverPoint(pow1, nullptr, p_arr[i - 1]), RiverPoint(pow2, nullptr, p_arr[i])));
-		}
-
-	}
 };
 
 

@@ -1,14 +1,17 @@
 #include "Data/River.h"
 
 
-RiverEdgeMap RiverEdge::river_edges = RiverEdgeMap();
-RiverOutMap RiverEdge::river_out_edges = RiverOutMap();
-RiverLinkMap RiverEdge::linked_river_edges = RiverLinkMap();
-RiverLinkMap RiverEdge::linked_rivers = RiverLinkMap();
-RiverCntMap RiverEdge::river_cnt = RiverCntMap();
+RiverEdgeMap RiverEdge::RIVER_EDGES_MAP = RiverEdgeMap();
+RiverOutMap RiverEdge::RIVER_OUT_MAP = RiverOutMap();
+RiverLinkMap RiverEdge::LINKED_RIVER_EDGES = RiverLinkMap();
+RiverLinkMap RiverEdge::LINKED_RIVERS = RiverLinkMap();
+RiverCntMap RiverEdge::RIVER_CNT = RiverCntMap();
 
 std::vector< RiverEdge*> RiverEdge::RIVER_EDGES = std::vector< RiverEdge*>();
 std::queue<RiverEdge*> RiverEdge::RIVER_DELETE_QUEUE = std::queue<RiverEdge*>();
+
+
+RiverCrossingMap RiverCrossing::RIVER_CROSSING_MAP = RiverCrossingMap();
 
 void RiverEdge::Initialize(Cell* startCell, Cell* endCell, Cell* river_owner, RiverEdge* pre_edge, RiverEdge* next_edge, int distance) {
 	prevs.clear();
@@ -22,10 +25,10 @@ void RiverEdge::Initialize(Cell* startCell, Cell* endCell, Cell* river_owner, Ri
 	if (pre_edge != nullptr) {
 		prevs.push_back(pre_edge);
 		pre_edge->nexts.push_back(this);
-		//river_out_edges[start->GetUnique()].push_back(this);
+		//RIVER_OUT_MAP[start->GetUnique()].push_back(this);
 	}
 
-	river_out_edges[start->GetUnique()].push_back(this);
+	RIVER_OUT_MAP[start->GetUnique()].push_back(this);
 	if (next_edge != nullptr) nexts.push_back(next_edge);
 }
 
@@ -90,10 +93,10 @@ void RiverEdge::DeleteLine(std::vector<bool>& buf) {
 		//if(pre_e != nullptr) pre_e->DeleteLine(map, buf);
 		buf[end->GetUnique()] = false;
 		//buf[start->GetUnique()] = false;
-		if (river_out_edges.find(start->GetUnique()) != river_out_edges.end()) {
-			auto& arr = river_out_edges[start->GetUnique()];
+		if (RIVER_OUT_MAP.find(start->GetUnique()) != RIVER_OUT_MAP.end()) {
+			auto& arr = RIVER_OUT_MAP[start->GetUnique()];
 			if (arr.size() == 1) {
-				river_out_edges.erase(start->GetUnique());
+				RIVER_OUT_MAP.erase(start->GetUnique());
 			}
 			else {
 				std::vector<RiverEdge*> tmp;
@@ -102,7 +105,7 @@ void RiverEdge::DeleteLine(std::vector<bool>& buf) {
 						tmp.push_back(e);
 					}
 				}
-				river_out_edges[start->GetUnique()] = tmp;
+				RIVER_OUT_MAP[start->GetUnique()] = tmp;
 
 			}
 		}
@@ -113,7 +116,7 @@ void RiverEdge::DeleteLine(std::vector<bool>& buf) {
 			}
 		}
 
-		river_edges.erase(RiverEdge::GetPos(start, end));
+		RIVER_EDGES_MAP.erase(RiverEdge::GetPos(start, end));
 		RIVER_DELETE_QUEUE.push(this);
 		//delete this;
 	}
@@ -153,6 +156,6 @@ void RiverEdge::ConnectPrev(RiverEdge* e) {
 }
 
 RiverEdge* RiverEdge::GetOwnerEdge() {
-	return river_edges[RiverEdge::GetPos(GetOnwer(), GetOnwer())];
+	return RIVER_EDGES_MAP[RiverEdge::GetPos(GetOnwer(), GetOnwer())];
 }
 

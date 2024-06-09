@@ -19,7 +19,7 @@ public:
 	std::vector<Vertex*> vertices;
 	UnionArray<std::vector<Cell*>> oceanUnion;
 	UnionArray<IslandUnion> islandUnion;
-	std::vector<std::vector<RiverPoint>> river_edges;
+	RiverLines river_lines;
 
 
 
