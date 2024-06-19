@@ -167,6 +167,7 @@ GLvoid drawCardinal(RiverPointVector& point, unsigned int dimension, double radi
 		
 		x = result[2][0] + t * (result[1][0] + result[0][0] * t);
 		y = result[2][1] + t * (result[1][1] + result[0][1] * t);
+
 		
 		double x2 = result[2][0] + (t + 0.01) * (result[1][0] + result[0][0] * (t + 0.01));
 		double y2 = result[2][1] + (t + 0.01) * (result[1][1] + result[0][1] * (t + 0.01));
@@ -826,19 +827,41 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 			bool temp = false;
 			const double radius = vdg->GetSetting().GetRiverRadius();
 			const double river_scale = vdg->GetSetting().GetRiverPowerScale();
+			
 			if (point_vec.size() == 3) {
 				/*std::vector<Cell*> cells;
 				for (auto c : c_vec) {
 					cells.push_back(c.cell);
 				}*/
-				drawCardinal(point_vec, dimension, radius, river_scale);
+
+
+				//drawCardinal(point_vec, dimension, radius, river_scale);
+				glBegin(GL_TRIANGLES);
+				for (Triangle& tri : line.GetTriangle()) {
+					for (int i = 0; i < 3; i++) {
+						glColor4f((GLfloat)tri.colors[i].r, (GLfloat)tri.colors[i].g, (GLfloat)tri.colors[i].b, (GLfloat)tri.colors[i].a);
+						glVertex2f((GLfloat)normalize(tri.points[i].x, dimension), -(GLfloat)normalize(tri.points[i].y, dimension));
+					}
+					
+				}
+				glEnd();
+
+
 			}
 			else if (point_vec.size() > 3) {
 				/*std::vector<Cell*> cells;
 				for (auto c : c_vec) {
 					cells.push_back(c.cell);
 				}*/
-				draw_spline(point_vec, dimension, radius, river_scale);
+				glBegin(GL_TRIANGLES);
+				for (Triangle& tri : line.GetTriangle()) {
+					for (int i = 0; i < 3; i++) {
+						glColor4f((GLfloat)tri.colors[i].r, (GLfloat)tri.colors[i].g, (GLfloat)tri.colors[i].b, (GLfloat)tri.colors[i].a);
+						glVertex2f((GLfloat)normalize(tri.points[i].x, dimension), -(GLfloat)normalize(tri.points[i].y, dimension));
+					}
+
+				}
+				glEnd();
 			}
 			else {
 
@@ -853,11 +876,6 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 
 					Point2& p1 = pre_c.point;
 					Point2& p2 = c.point;
-					glColor4f(0, 1, 1, 1);
-					glPointSize(8);
-					glBegin(GL_POINTS);
-					glVertex3d((GLfloat)normalize(p2.x, dimension), -(GLfloat)normalize(p2.y, dimension), 0.0);
-					glEnd();
 
 					Color color;
 					glBegin(GL_LINES);
@@ -908,6 +926,31 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 					glVertex2f((GLfloat)normalize(p2.x - PerpB.x, dimension), -(GLfloat)normalize(p2.y - PerpB.y, dimension));
 					glEnd();
 					pre_c = c;
+
+
+					double scale = radius * (point_vec[0].power * river_scale + 1);
+					Point2 norm_ = (point_vec[1].GetCell()->site.p - point_vec[0].GetCell()->site.p).Normailize();
+					Point2 PerpA_ = Point2(-norm_.y, norm_.x) * scale;
+
+					Point2 temp1 = point_vec[0].point + PerpA_;
+					Point2 temp2 = point_vec[0].point - PerpA_;
+					Point2 temp3 = (temp1 + temp2) / 2;
+					//Color color_ = Color(1, 0, 0);
+					glBegin(GL_TRIANGLES);
+					glColor4f((GLfloat)color.r, (GLfloat)color.g, (GLfloat)color.b, 0);
+					glVertex2f((GLfloat)normalize(point_vec[0].GetCell()->site.p.x, dimension), -(GLfloat)normalize(point_vec[0].GetCell()->site.p.y, dimension));
+					glColor4f((GLfloat)color.r, (GLfloat)color.g, (GLfloat)color.b, 1);
+					glVertex2f((GLfloat)normalize(temp3.x, dimension), -(GLfloat)normalize(temp3.y, dimension));
+					glColor4f((GLfloat)color.r, (GLfloat)color.g, (GLfloat)color.b, 0);
+					glVertex2f((GLfloat)normalize(temp1.x, dimension), -(GLfloat)normalize(temp1.y, dimension));
+
+					glColor4f((GLfloat)color.r, (GLfloat)color.g, (GLfloat)color.b, 0);
+					glVertex2f((GLfloat)normalize(point_vec[0].GetCell()->site.p.x, dimension), -(GLfloat)normalize(point_vec[0].GetCell()->site.p.y, dimension));
+					glColor4f((GLfloat)color.r, (GLfloat)color.g, (GLfloat)color.b, 1);
+					glVertex2f((GLfloat)normalize(temp3.x, dimension), -(GLfloat)normalize(temp3.y, dimension));
+					glColor4f((GLfloat)color.r, (GLfloat)color.g, (GLfloat)color.b, 0);
+					glVertex2f((GLfloat)normalize(temp2.x, dimension), -(GLfloat)normalize(temp2.y, dimension));
+					glEnd();
 				}
 			}
 		}
@@ -1051,10 +1094,8 @@ int main() {
 	// Define the viewport dimensions
 
 	glEnable(GL_BLEND);
-
-	// 블렌딩 기능을 설정합니다.
-	glBlendEquation(GL_FUNC_ADD);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 
 
 	while (!glfwWindowShouldClose(window)) {

@@ -1831,8 +1831,8 @@ void VoronoiDiagramGenerator::SaveImage(const char* filename, double dimension, 
 
 			//middle_c = (colorA + colorB) / 2;
 
-			Triangle triA = Triangle({ &pA, &center, &edge_mp, &colorA, &center_c, &edge_c });
-			Triangle triB = Triangle({ &pB, &center, &edge_mp, &colorB, &center_c, &edge_c });
+			Triangle triA = Triangle({ pA, center, edge_mp, colorA, center_c, edge_c });
+			Triangle triB = Triangle({ pB, center, edge_mp, colorB, center_c, edge_c });
 
 			triA.draw(pixel_data, w, h);
 			triB.draw(pixel_data, w, h);

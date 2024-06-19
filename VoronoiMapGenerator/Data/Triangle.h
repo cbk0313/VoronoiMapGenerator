@@ -1,14 +1,17 @@
 #pragma once
 
-class Point2;
-class Color;
-class CharColor;
+#include "../Point2.h"
+#include "Color.h"
+
+//class Point2;
+//class Color;
+//class CharColor;
 
 
 class Triangle {
 public:
-	Point2* points[3];
-	Color* colors[3];
+	Point2 points[3];
+	Color colors[3];
 
 	//Triangle(Point2* p1, Point2* p2, Point2* p3, Color* c1, Color* c2, Color* c3);
 

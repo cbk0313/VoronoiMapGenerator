@@ -13,6 +13,21 @@ std::queue<RiverEdge*> RiverEdge::RIVER_DELETE_QUEUE = std::queue<RiverEdge*>();
 
 RiverCrossingMap RiverCrossing::RIVER_CROSSING_MAP = RiverCrossingMap();
 
+void RiverEdge::Clear() { 
+	
+	RIVER_EDGES_MAP.clear();
+	RIVER_OUT_MAP.clear();
+	LINKED_RIVER_EDGES.clear();
+	LINKED_RIVERS.clear();
+	RIVER_CNT.clear();
+	for (RiverEdge* e : RIVER_EDGES) {
+		delete e;
+	}
+	RIVER_EDGES.clear();
+	//while(!RIVER_DELETE_QUEUE.empty()) RIVER_DELETE_QUEUE.pop();
+	RIVER_DELETE_QUEUE = std::queue<RiverEdge*>();
+	
+}
 void RiverEdge::Initialize(Cell* startCell, Cell* endCell, Cell* river_owner, RiverEdge* pre_edge, RiverEdge* next_edge, int distance) {
 	prevs.clear();
 	nexts.clear();
@@ -159,3 +174,10 @@ RiverEdge* RiverEdge::GetOwnerEdge() {
 	return RIVER_EDGES_MAP[RiverEdge::GetPos(GetOnwer(), GetOnwer())];
 }
 
+
+
+const double RiverLine::matrix_2[3][3] = { {2.0f, -4.0f, 2.0f}, {-3.0f, 4.0f, -1.0f}, {1.0f, 0.0f, 0.0f} };
+const double RiverLine::matrix_3[4][4] = { {-1.0f, 3.0f, -3.0f, 1.0f},
+						  {2.0f, -5.0f, 4.0f, -1.0f},
+						  {-1.0f, 0.0f, 1.0f, 0.0f},
+						  {0.0f, 2.0f, 0.0f, 0.0f} };

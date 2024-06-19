@@ -79,19 +79,7 @@ class RiverEdge {
 	unsigned int unique;
 public:
 
-	static void Clear() {
-		RIVER_EDGES_MAP.clear();
-		RIVER_OUT_MAP.clear();
-		LINKED_RIVER_EDGES.clear();
-		LINKED_RIVERS.clear();
-		RIVER_CNT.clear();
-		for (RiverEdge* e : RIVER_EDGES) {
-			delete e;
-		}
-		RIVER_EDGES.clear();
-		//while(!RIVER_DELETE_QUEUE.empty()) RIVER_DELETE_QUEUE.pop();
-		RIVER_DELETE_QUEUE = std::queue<RiverEdge*>();
-	}
+	static void Clear();
 
 	static RiverEdgeMap& GetRiverEdges() {
 		return RIVER_EDGES_MAP;
@@ -236,22 +224,31 @@ public:
 using RiverPointVector = std::vector<RiverPoint>;
 
 class RiverLine {
+
+	static const double matrix_2[3][3];
+	static const double matrix_3[4][4];
+
+
 	RiverPointVector points;
 	std::vector<Triangle> tris;
 	double radius;
 	double power_sacle;
+	double line_step;
 public:
 	RiverLine(double _radius, double _power_sacle)
 		: radius(_radius)
 		, power_sacle(_power_sacle)
+		, line_step(0.02f)
 	{};
+
+	std::vector<Triangle>& GetTriangle() {
+		return tris;
+	}
 
 	void AddPoint(RiverPoint p) {
 		points.push_back(p);
 	}
-	void CrateTriangle() {
-
-	}
+	
 	RiverPointVector& GetPointArray() {
 		return points;
 	}
@@ -267,24 +264,390 @@ public:
 		return points[points.size() - 1];
 	}
 
-	Point2 GetFirstDirection() {
-		return (points[1].point - points[0].point).Normailize();
-	}
+	Point2 GetCardinalDirection(double result[][2], double prev, double next) {
 
-	Point2 GetEndDirection() {
-		return (points[points.size() - 2].point - points[points.size() - 1].point).Normailize();
-	}
-
-	void AdjustFirstPoint() {
-		RiverPoint& r_p = GetFirstPoint();
-		r_p.point = r_p.point + GetFirstDirection() * radius * (power_sacle * r_p.power + 1);
+		return (GetCardinalPoint(result, next) - GetCardinalPoint(result, prev)).Normailize();
 	}
 
 
-	void AdjustLastPoint() {
-		RiverPoint& r_p = GetEndPoint();
-		r_p.point = r_p.point + GetEndDirection() * radius * (power_sacle * r_p.power + 1);
+	void AdjustPoint() {
+		RiverPoint& f_p = GetFirstPoint();
+		RiverPoint& e_p = GetEndPoint();
+		double f_scale = radius * (power_sacle * f_p.power + 1);
+		double e_scale = radius * (power_sacle * e_p.power + 1);
+		if (points.size() > 2) {
+
+			double start_result[3][2];
+			double end_result[3][2];
+			CalcCardinal(start_result, 0);
+			CalcCardinal(end_result, (int)points.size() - 3);
+
+			f_p.point = f_p.point + GetCardinalDirection(start_result, 0, line_step) * f_scale;
+
+			e_p.point = e_p.point + GetCardinalDirection(end_result, 1, 1 - line_step) * e_scale;
+		}
+		else {
+			Point2 dir = (e_p.point - f_p.point).Normailize();
+
+			f_p.point = f_p.point + dir * f_scale;
+			e_p.point = e_p.point - dir * e_scale;
+		}
+		
 	}
+	void CrateTriangle() {
+
+		if (points.size() > 2) {
+			
+
+			
+			AdjustPoint();
+
+			if (points.size() > 3) {
+			/*	double start_result[3][2];
+				double end_result[3][2];
+				memset(start_result, 0, sizeof(start_result));
+				memset(end_result, 0, sizeof(end_result));
+				CalcCardinal(start_result, 0);
+				CalcCardinal(end_result, (int)points.size() - 3);*/
+				CreateSplineTri(radius, power_sacle);
+			}
+			else {
+
+				CreateCardinalTri(radius, power_sacle);
+			}
+
+
+			
+		}
+		
+
+	}
+
+	
+
+
+
+	// https://m.blog.naver.com/mykepzzang/220578028540
+	// https://wtg-study.tistory.com/101
+	// https://blog.naver.com/mykepzzang/220578097319
+	// https://wtg-study.tistory.com/102
+
+	void CalcCardinal(double result[][2], int start = 0) {
+		memset(result, 0, sizeof(double) * 3 * 2);
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				result[i][0] += matrix_2[i][j] * points[j + start].point.x;
+				result[i][1] += matrix_2[i][j] * points[j + start].point.y;
+			}
+		}
+
+	}
+
+	Point2 GetCardinalPoint(double result[][2], double t) {
+		return Point2(result[2][0] + t * (result[1][0] + result[0][0] * t), result[2][1] + t * (result[1][1] + result[0][1] * t));
+	}
+
+
+
+
+
+	void CreateCardinalTri(double radius, double river_scale) {
+		double result[3][2];
+		//memset(result, 0, sizeof(result));
+		CalcCardinal(result, 0);
+
+		double t = 0.0f;
+		double x, y;
+
+
+		RiverPointVector& point = points;
+
+		t = line_step;
+		Point2 pre_p = point[0].point;
+		Point2 pre_norm = point[0].point;
+
+		//glBegin(GL_TRIANGLES);
+		Color c_red = Color(1, 0, 0, 1);
+		Color c_trans = Color(1, 0, 0, 0);
+		while (t < 1) {
+
+			x = result[2][0] + t * (result[1][0] + result[0][0] * t);
+			y = result[2][1] + t * (result[1][1] + result[0][1] * t);
+
+			double x2 = result[2][0] + (t + line_step) * (result[1][0] + result[0][0] * (t + line_step));
+			double y2 = result[2][1] + (t + line_step) * (result[1][1] + result[0][1] * (t + line_step));
+			/*Color c;
+			if (point[0].GetCell()->GetDetail().GetElevation() == point[1].GetCell()->GetDetail().GetElevation()) {
+				c = Color(0, 1, 0);
+			}
+			else {
+				c = Color(1, 0, 0);
+			}*/
+			
+			/*	std::cout << point[0].power << "\n";
+				std::cout << point[2].power << "\n";*/
+			Point2 new_p = Point2(x, y);
+			Point2 next_p = Point2(x2, y2);
+			Point2 norm = (new_p - pre_p);
+			Point2 norm2 = (next_p - new_p);
+			double sacle1 = (point[0].power * (1 - t) + point[2].power * t) * river_scale + 1;
+
+			t += line_step;
+			double sacle2 = (point[0].power * (1 - t) + point[2].power * t) * river_scale + 1;
+			if (norm != Point2(0, 0)) {
+				norm = norm.Normailize();
+				norm2 = norm2.Normailize();
+				Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
+				Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
+
+				tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpA), c_red, c_red, c_trans }));
+				tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpA), c_red, c_red, c_trans }));
+				tris.push_back(Triangle({ new_p, (pre_p + PerpA), (new_p + PerpB), c_red, c_trans, c_trans }));
+				tris.push_back(Triangle({ new_p, (pre_p - PerpA), (new_p - PerpB), c_red, c_trans, c_trans }));
+
+			}
+			pre_p = new_p;
+		}
+		//glEnd();
+
+
+		double scale = radius * (point[0].power * river_scale + 1);
+		Point2 norm = GetCardinalDirection(result, 0, line_step);
+		Point2 PerpA = Point2(-norm.y, norm.x) * scale;
+
+		Point2 temp1 = point[0].point + PerpA;
+		Point2 temp2 = point[0].point - PerpA;
+		Point2 temp3 = (temp1 + temp2) / 2;
+		tris.push_back(Triangle({ temp3, temp1, point[0].GetCell()->site.p, c_red, c_trans, c_trans }));
+		tris.push_back(Triangle({ temp3, temp2, point[0].GetCell()->site.p, c_red, c_trans, c_trans }));
+
+
+		
+
+		scale = radius * (point[point.size() - 1].power * river_scale + 1);
+		norm = GetCardinalDirection(result, 1, 1 + line_step);
+		PerpA = Point2(-norm.y, norm.x) * scale;
+
+		temp1 = point[point.size() - 1].point + PerpA;
+		temp2 = point[point.size() - 1].point - PerpA;
+		temp3 = (temp1 + temp2) / 2;
+		tris.push_back(Triangle({ temp3, temp1, point[point.size() - 1].GetCell()->site.p, c_red, c_trans, c_trans }));
+		tris.push_back(Triangle({ temp3, temp2, point[point.size() - 1].GetCell()->site.p, c_red, c_trans, c_trans}));
+	}
+
+	void CreateSplineTri(double radius, double river_scale) {
+		
+		RiverPointVector& point = points;
+		double result[4][2];
+
+		double t = 0.0f;
+		double x, y;
+		const size_t SIZE = point.size();
+		// Section 1.
+		// quadratic function
+
+		CalcCardinal(result, 0);
+
+	/*	if (point[0].GetCell()->GetDetail().GetElevation() == point[1].GetCell()->GetDetail().GetElevation()) {
+			glColor4f(0, 1, 0, 1);
+		}
+		else {
+			glColor4f(1, 0, 0, 1);
+		}*/
+
+
+		Color c_red = Color(1, 0, 0, 1);
+		Color c_trans = Color(1, 0, 0, 0);
+		t = 0.0f;
+		Point2 pre_p = point[0].point;
+		Point2 pre_norm = point[0].point;
+		//glColor4f(1.0f, 0.0f, 0.0f, 0.0f);
+		//glBegin(GL_TRIANGLES);
+		while (t < 0.5f) {
+
+			x = result[2][0] + t * (result[1][0] + result[0][0] * t);
+			y = result[2][1] + t * (result[1][1] + result[0][1] * t);
+
+			double x2 = result[2][0] + (t + line_step) * (result[1][0] + result[0][0] * (t + line_step));
+			double y2 = result[2][1] + (t + line_step) * (result[1][1] + result[0][1] * (t + line_step));
+
+
+			Point2 new_p = Point2(x, y);
+			Point2 next_p = Point2(x2, y2);
+			Point2 norm = (new_p - pre_p);
+			Point2 norm2 = (next_p - new_p);
+			double sacle1 = (point[0].power * ((0.5 - t) * 2) + point[1].power * (t * 2)) * river_scale + 1;
+			if (t == 0) {
+				t += line_step;
+				continue;
+			}
+			t += line_step;
+			double sacle2 = (point[0].power * ((0.5 - t) * 2) + point[1].power * (t * 2)) * river_scale + 1;
+			if (norm != Point2(0, 0)) {
+				norm = norm.Normailize();
+				norm2 = norm2.Normailize();
+				Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
+				Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
+
+				tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpA), c_red, c_red, c_trans }));
+				tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpA), c_red, c_red, c_trans }));
+				tris.push_back(Triangle({ new_p, (pre_p + PerpA), (new_p + PerpB), c_red, c_trans, c_trans }));
+				tris.push_back(Triangle({ new_p, (pre_p - PerpA), (new_p - PerpB), c_red, c_trans, c_trans }));
+				
+			}
+			pre_p = new_p;
+		}
+
+		double scale = radius * (point[0].power * river_scale + 1);
+		Point2 norm = GetCardinalDirection(result, 0, line_step);
+		Point2 PerpA = Point2(-norm.y, norm.x) * scale;
+
+		Point2 temp1 = point[0].point + PerpA;
+		Point2 temp2 = point[0].point - PerpA;
+		Point2 temp3 = (temp1 + temp2) / 2;
+		tris.push_back(Triangle({ temp3, temp1, point[0].GetCell()->site.p, c_red, c_trans, c_trans }));
+		tris.push_back(Triangle({ temp3, temp2, point[0].GetCell()->site.p, c_red, c_trans, c_trans }));
+
+
+
+		//glEnd();
+
+		// Section 2.
+		// cubic spline
+		for (int cubic_case = 0; cubic_case < SIZE - 3; cubic_case++)
+		{
+			memset(result, 0, sizeof(result));
+			for (int i = 0; i < 4; i++)
+			{
+				for (int j = 0; j < 4; j++)
+				{
+					result[i][0] += matrix_3[i][j] * point[j + cubic_case].point.x;
+					result[i][1] += matrix_3[i][j] * point[j + cubic_case].point.y;
+				}
+			}
+
+			//if (point[cubic_case + 1].GetCell()->GetDetail().GetElevation() == point[cubic_case + 2].GetCell()->GetDetail().GetElevation()) {
+			//	glColor4f(0, 1, 0, 1);
+			//}
+			//else {
+			//	glColor4f(1, 0, 0, 1);
+			//}
+
+			//t = 0.0f;
+			////glBegin(GL_LINE_STRIP);
+			//while (t < 1.0f) {
+			//	x = (result[3][0] + t * (result[2][0] + t * (result[1][0] + result[0][0] * t))) * 0.5f;
+			//	y = (result[3][1] + t * (result[2][1] + t * (result[1][1] + result[0][1] * t))) * 0.5f;
+			//	glVertex2f((GLfloat)normalize(x, dimension), -(GLfloat)normalize(y, dimension));
+			//	t += 0.01f;
+			//}
+			////glEnd();
+
+
+
+
+
+			t = 0.0f;
+			//Point2 pre_p = point[0]->site.p;
+			//Point2 pre_norm = point[0]->site.p;
+
+			//glBegin(GL_TRIANGLES);
+			while (t < 1.0f) {
+
+				x = (result[3][0] + t * (result[2][0] + t * (result[1][0] + result[0][0] * t))) * 0.5f;
+				y = (result[3][1] + t * (result[2][1] + t * (result[1][1] + result[0][1] * t))) * 0.5f;
+
+				double x2 = (result[3][0] + (t + line_step) * (result[2][0] + (t + line_step) * (result[1][0] + result[0][0] * (t + line_step)))) * 0.5f;
+				double y2 = (result[3][1] + (t + line_step) * (result[2][1] + (t + line_step) * (result[1][1] + result[0][1] * (t + line_step)))) * 0.5f;
+
+
+				Point2 new_p = Point2(x, y);
+				Point2 next_p = Point2(x2, y2);
+				Point2 norm = (new_p - pre_p);
+				Point2 norm2 = (next_p - new_p);
+				double sacle1 = (point[cubic_case + 1].power * (1 - t) + point[cubic_case + 2].power * t) * river_scale + 1;
+				if (t == 0) {
+					t += line_step;
+					continue;
+				}
+				t += line_step;
+				double sacle2 = (point[cubic_case + 1].power * (1 - t) + point[cubic_case + 2].power * t) * river_scale + 1;
+				if (norm != Point2(0, 0)) {
+					norm = norm.Normailize();
+					norm2 = norm2.Normailize();
+					Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
+					Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
+
+					tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpA), c_red, c_red, c_trans }));
+					tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpA), c_red, c_red, c_trans }));
+					tris.push_back(Triangle({ new_p, (pre_p + PerpA), (new_p + PerpB), c_red, c_trans, c_trans }));
+					tris.push_back(Triangle({ new_p, (pre_p - PerpA), (new_p - PerpB), c_red, c_trans, c_trans }));
+}
+				pre_p = new_p;
+			}
+			//glEnd();
+
+
+
+
+		}
+
+		// Section 3.
+		// quadratic function
+		CalcCardinal(result, (int)SIZE - 3);
+	
+
+
+		t = 0.5f + line_step;
+		//glBegin(GL_TRIANGLES);
+		while (t < 1.0f) {
+
+			x = result[2][0] + t * (result[1][0] + result[0][0] * t);
+			y = result[2][1] + t * (result[1][1] + result[0][1] * t);
+
+			double x2 = result[2][0] + (t + line_step) * (result[1][0] + result[0][0] * (t + line_step));
+			double y2 = result[2][1] + (t + line_step) * (result[1][1] + result[0][1] * (t + line_step));
+
+
+			Point2 new_p = Point2(x, y);
+			Point2 next_p = Point2(x2, y2);
+			Point2 norm = (new_p - pre_p);
+			Point2 norm2 = (next_p - new_p);
+			double sacle1 = (point[SIZE - 2].power * (1 - t) + point[SIZE - 1].power * t) * river_scale + 1;
+
+			t += line_step;
+			double sacle2 = (point[SIZE - 2].power * (1 - t) + point[SIZE - 1].power * t) * river_scale + 1;
+			if (norm != Point2(0, 0)) {
+				norm = norm.Normailize();
+				norm2 = norm2.Normailize();
+				Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
+				Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
+
+				tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpA), c_red, c_red, c_trans }));
+				tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpA), c_red, c_red, c_trans }));
+				tris.push_back(Triangle({ new_p, (pre_p + PerpA), (new_p + PerpB), c_red, c_trans, c_trans }));
+				tris.push_back(Triangle({ new_p, (pre_p - PerpA), (new_p - PerpB), c_red, c_trans, c_trans }));
+			}
+			pre_p = new_p;
+		}
+
+
+
+		scale = radius * (point[point.size() - 1].power * river_scale + 1);
+		norm = GetCardinalDirection(result, 1, 1 + line_step);
+		PerpA = Point2(-norm.y, norm.x) * scale;
+
+		temp1 = point[point.size() - 1].point + PerpA;
+		temp2 = point[point.size() - 1].point - PerpA;
+		temp3 = (temp1 + temp2) / 2;
+		tris.push_back(Triangle({ temp3, temp1, point[point.size() - 1].GetCell()->site.p, c_red, c_trans, c_trans }));
+		tris.push_back(Triangle({ temp3, temp2, point[point.size() - 1].GetCell()->site.p, c_red, c_trans, c_trans }));
+
+
+		//glEnd();
+	};
 
 };
 
@@ -330,8 +693,10 @@ public:
 
 		first_crossing.outputs.push_back(&river);
 		end_crossing.inputs.push_back(&river);
-		river.AdjustFirstPoint();
-		river.AdjustLastPoint();
+		
+
+		river.CrateTriangle();
+		
 
 	}
 };

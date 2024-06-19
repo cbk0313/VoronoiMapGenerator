@@ -6,26 +6,26 @@
 
 
 double Triangle::minX() const {
-	return std::min({ points[0]->x, points[1]->x, points[2]->x });
+	return std::min({ points[0].x, points[1].x, points[2].x });
 }
 
 double Triangle::maxX() const {
-	return std::max({ points[0]->x, points[1]->x, points[2]->x });
+	return std::max({ points[0].x, points[1].x, points[2].x });
 }
 
 double Triangle::minY() const {
-	return std::min({ points[0]->y, points[1]->y, points[2]->y });
+	return std::min({ points[0].y, points[1].y, points[2].y });
 }
 
 double Triangle::maxY() const {
-	return std::max({ points[0]->y, points[1]->y, points[2]->y });
+	return std::max({ points[0].y, points[1].y, points[2].y });
 }
 
 
 bool Triangle::isInside(const Point2& p) const {
-	double x0 = points[0]->x, y0 = points[0]->y;
-	double x1 = points[1]->x, y1 = points[1]->y;
-	double x2 = points[2]->x, y2 = points[2]->y;
+	double x0 = points[0].x, y0 = points[0].y;
+	double x1 = points[1].x, y1 = points[1].y;
+	double x2 = points[2].x, y2 = points[2].y;
 
 	double alpha = ((y1 - y2) * (p.x - x2) + (x2 - x1) * (p.y - y2)) / ((y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2));
 	double beta = ((y2 - y0) * (p.x - x2) + (x0 - x2) * (p.y - y2)) / ((y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2));
@@ -35,15 +35,15 @@ bool Triangle::isInside(const Point2& p) const {
 }
 
 Color Triangle::interpolateColor(const Point2& p) const {
-	double x0 = points[0]->x, y0 = points[0]->y;
-	double x1 = points[1]->x, y1 = points[1]->y;
-	double x2 = points[2]->x, y2 = points[2]->y;
+	double x0 = points[0].x, y0 = points[0].y;
+	double x1 = points[1].x, y1 = points[1].y;
+	double x2 = points[2].x, y2 = points[2].y;
 
 	double alpha = ((y1 - y2) * (p.x - x2) + (x2 - x1) * (p.y - y2)) / ((y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2));
 	double beta = ((y2 - y0) * (p.x - x2) + (x0 - x2) * (p.y - y2)) / ((y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2));
 	double gamma = 1.0f - alpha - beta;
 	//std::cout << alpha + beta + gamma << "\n";
-	Color& c0 = *colors[0], & c1 = *colors[1], & c2 = *colors[2];
+	const Color& c0 = colors[0], &c1 = colors[1], &c2 = colors[2];
 	//return Color::lerp(c0, c1, alpha) + Color::lerp(c1, c2, beta) + Color::lerp(c2, c0, gamma);
 	return Color(
 		c0.r * alpha + c1.r * beta + c2.r * gamma,
