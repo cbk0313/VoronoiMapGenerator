@@ -109,7 +109,7 @@ public:
 
 };
 
-#define ALL_IMAGE ((VoronoiDiagramGenerator::ISLAND | VoronoiDiagramGenerator::OCEAN | VoronoiDiagramGenerator::LAKE | VoronoiDiagramGenerator::COAST))
+#define ALL_IMAGE ((VoronoiDiagramGenerator::ISLAND | VoronoiDiagramGenerator::OCEAN | VoronoiDiagramGenerator::LAKE | VoronoiDiagramGenerator::COAST | VoronoiDiagramGenerator::RIVER))
 
 struct CellVector;
 class VoronoiDiagramGenerator {
@@ -119,26 +119,31 @@ public:
 		OCEAN		= 0b00010,
 		LAKE		= 0b00100,
 		COAST		= 0b01000,
+		RIVER		= 0b10000,
 	};
 
 private:
 
 	bool has_created_ocean;
 	bool has_set_color;
-	//;
-	CircleEventQueue* circleEventQueue;
-	//std::vector<Point2*>* siteEventQueue;
-	BoundingBox	boundingBox;
-	GenerateSetting setting;
+
+	int image_flag;
+
 	int max_elevation;
 	unsigned int max_moisture;
 	Diagram* diagram;
+	//;
+	CircleEventQueue* circleEventQueue;
+	//std::vector<Point2*>* siteEventQueue;
+
+	BoundingBox	boundingBox;
+	GenerateSetting setting;
 
 	void SetupVertexColor(Vertex* v, Cell* c, Cell* opposite_c, Color& elev_rate_c);
 
 
 public:
-	VoronoiDiagramGenerator() : diagram(nullptr), max_elevation(0), max_moisture(0), has_created_ocean(false), has_set_color(false), circleEventQueue(nullptr), beachLine(nullptr) {};
+	VoronoiDiagramGenerator() : has_created_ocean(false), has_set_color(false), image_flag(ALL_IMAGE), max_elevation(0), max_moisture(0), diagram(nullptr), circleEventQueue(nullptr), boundingBox(BoundingBox()), beachLine(nullptr) {};
 	~VoronoiDiagramGenerator() {};
 
 	Diagram* GetDiagram();
@@ -185,6 +190,7 @@ public:
 	void SetupMoisture();
 	void SetupEdgePos();
 	void SetupColor(int flag = ALL_IMAGE);
+	void SetupRiverTriangle(Color c);
 
 	void SaveAllImage(double dimension, unsigned int w, unsigned int h);
 	void SaveImage(const char* filename, double dimension, unsigned int w, unsigned int h);

@@ -265,7 +265,7 @@ public:
 	}
 
 
-	static void CreateLineTri(Triangles& tris, RiverPointVector& point, double radius, double river_scale, double spacing, bool fade_in = false, bool fade_out = false) {
+	static void CreateLineTri(Triangles& tris, RiverPointVector& point, Color color, double radius, double river_scale, double spacing, bool fade_in = false, bool fade_out = false) {
 
 
 		RiverPoint& pre_c = point[0];
@@ -273,8 +273,8 @@ public:
 		Point2 p1 = pre_c.point;
 		RiverPoint& c = point[1];
 		Point2 p2 = c.point;
-		Color c_red = Color(1, 0, 0, 1);
-		Color c_trans = Color(1, 0, 0, 0);
+		color.a = 1;
+		Color c_trans = Color(color.r, color.g, color.b, 0);
 
 
 
@@ -286,22 +286,22 @@ public:
 
 		Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
 		Point2 PerpB = Point2(-norm.y, norm.x) * radius * sacle2;
-		tris.push_back(Triangle({ p2, p1, (p1 - PerpA), c_red, c_red, c_trans }));
-		tris.push_back(Triangle({ p2, p1, (p1 + PerpA), c_red, c_red, c_trans }));
-		tris.push_back(Triangle({ p2, (p1 + PerpA), (p2 + PerpB), c_red, c_trans, c_trans }));
-		tris.push_back(Triangle({ p2, (p1 - PerpA), (p2 - PerpB), c_red, c_trans, c_trans }));
+		tris.push_back(Triangle({ p2, p1, (p1 - PerpA), color, color, c_trans }));
+		tris.push_back(Triangle({ p2, p1, (p1 + PerpA), color, color, c_trans }));
+		tris.push_back(Triangle({ p2, (p1 + PerpA), (p2 + PerpB), color, c_trans, c_trans }));
+		tris.push_back(Triangle({ p2, (p1 - PerpA), (p2 - PerpB), color, c_trans, c_trans }));
 
 
 		if (fade_in) {
-			RiverTriangle::DrawCircle(tris, point[0].point, 100, norm.GetAngle() + 90, 50, radius, river_scale, point[0].power, c_red);
+			RiverTriangle::DrawCircle(tris, point[0].point, 100, norm.GetAngle() + 90, 50, radius, river_scale, point[0].power, color);
 		}
 		if (fade_out) {
-			RiverTriangle::DrawCircle(tris, point[1].point, 100, norm.GetAngle() - 90, 50, radius, river_scale, point[1].power, c_red);
+			RiverTriangle::DrawCircle(tris, point[1].point, 100, norm.GetAngle() - 90, 50, radius, river_scale, point[1].power, color);
 		}
 
 	}
 
-	static void CreateCardinalTri(Triangles& tris, RiverPointVector& point, double radius, double river_scale, double spacing, bool fade_in = false, bool fade_out = false) {
+	static void CreateCardinalTri(Triangles& tris, RiverPointVector& point, Color color, double radius, double river_scale, double spacing, bool fade_in = false, bool fade_out = false) {
 		double result[3][2];
 		//memset(result, 0, sizeof(result));
 		CalcCardinal(point, result, 0);
@@ -315,9 +315,8 @@ public:
 		Point2 pre_norm = point[0].point;
 
 		//glBegin(GL_TRIANGLES);
-		Color c_red = Color(1, 0, 0, 1);
-		Color c_half_red = Color(1, 0, 0, 1);
-		Color c_trans = Color(1, 0, 0, 0);
+		color.a = 1;
+		Color c_trans = Color(color.r, color.g, color.b, 0);
 		while (t < 1) {
 
 			x = result[2][0] + t * (result[1][0] + result[0][0] * t);
@@ -347,16 +346,16 @@ public:
 				Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
 				Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
 
-				tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpA), c_red, c_red, c_trans }));
-				tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpA), c_red, c_red, c_trans }));
-				tris.push_back(Triangle({ new_p, (pre_p + PerpA), (new_p + PerpB), c_red, c_trans, c_trans }));
-				tris.push_back(Triangle({ new_p, (pre_p - PerpA), (new_p - PerpB), c_red, c_trans, c_trans }));
+				tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpA), color, color, c_trans }));
+				tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpA), color, color, c_trans }));
+				tris.push_back(Triangle({ new_p, (pre_p + PerpA), (new_p + PerpB), color, c_trans, c_trans }));
+				tris.push_back(Triangle({ new_p, (pre_p - PerpA), (new_p - PerpB), color, c_trans, c_trans }));
 
 			}
 
 			if (t == spacing) {
 				if (fade_in) {
-					RiverTriangle::DrawCircle(tris, point[0].point, 100, norm.GetAngle() + 90, 50, radius, river_scale, point[0].power, c_half_red);
+					RiverTriangle::DrawCircle(tris, point[0].point, 100, norm.GetAngle() + 90, 50, radius, river_scale, point[0].power, color);
 				}
 			}
 			pre_p = new_p;
@@ -383,7 +382,7 @@ public:
 
 
 		if (fade_out) {
-			RiverTriangle::DrawCircle(tris, point[point.size() - 1].point, 100, pre_norm.GetAngle() - 90, 50, radius, river_scale, point[2].power, c_half_red);
+			RiverTriangle::DrawCircle(tris, point[point.size() - 1].point, 100, pre_norm.GetAngle() - 90, 50, radius, river_scale, point[2].power, color);
 			
 		/*	double scale = radius * (point[point.size() - 1].power * river_scale + 1);
 			Point2 norm = GetCardinalDirection(result, 1, 1 + spacing);
@@ -398,7 +397,7 @@ public:
 		}
 	}
 
-	static void CreateSplineTri(Triangles& tris, RiverPointVector& point, double radius, double river_scale, double spacing, bool fade_in = false, bool fade_out = false) {
+	static void CreateSplineTri(Triangles& tris, RiverPointVector& point, Color color, double radius, double river_scale, double spacing, bool fade_in = false, bool fade_out = false) {
 
 		double result[4][2];
 
@@ -419,9 +418,8 @@ public:
 			}*/
 
 
-		Color c_red = Color(1, 0, 0, 1);
-		Color c_half_red = Color(1, 0, 0, 1);
-		Color c_trans = Color(1, 0, 0, 0);
+		color.a = 1;
+		Color c_trans = Color(color.r, color.g, color.b, 0);
 		t = spacing;
 		Point2 pre_p = point[0].point;
 		Point2 pre_norm = point[0].point;
@@ -449,16 +447,16 @@ public:
 				Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
 				Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
 
-				tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpA), c_red, c_red, c_trans }));
-				tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpA), c_red, c_red, c_trans }));
-				tris.push_back(Triangle({ new_p, (pre_p + PerpA), (new_p + PerpB), c_red, c_trans, c_trans }));
-				tris.push_back(Triangle({ new_p, (pre_p - PerpA), (new_p - PerpB), c_red, c_trans, c_trans }));
+				tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpA), color, color, c_trans }));
+				tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpA), color, color, c_trans }));
+				tris.push_back(Triangle({ new_p, (pre_p + PerpA), (new_p + PerpB), color, c_trans, c_trans }));
+				tris.push_back(Triangle({ new_p, (pre_p - PerpA), (new_p - PerpB), color, c_trans, c_trans }));
 
 			}
 
 			if (t == spacing) {
 				if (fade_in) {
-					RiverTriangle::DrawCircle(tris, point[0].point, 100, norm.GetAngle() + 90, 50, radius, river_scale, point[0].power, c_half_red);
+					RiverTriangle::DrawCircle(tris, point[0].point, 100, norm.GetAngle() + 90, 50, radius, river_scale, point[0].power, color);
 				}
 			}
 
@@ -543,10 +541,10 @@ public:
 					Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
 					Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
 
-					tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpA), c_red, c_red, c_trans }));
-					tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpA), c_red, c_red, c_trans }));
-					tris.push_back(Triangle({ new_p, (pre_p + PerpA), (new_p + PerpB), c_red, c_trans, c_trans }));
-					tris.push_back(Triangle({ new_p, (pre_p - PerpA), (new_p - PerpB), c_red, c_trans, c_trans }));
+					tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpA), color, color, c_trans }));
+					tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpA), color, color, c_trans }));
+					tris.push_back(Triangle({ new_p, (pre_p + PerpA), (new_p + PerpB), color, c_trans, c_trans }));
+					tris.push_back(Triangle({ new_p, (pre_p - PerpA), (new_p - PerpB), color, c_trans, c_trans }));
 				}
 				pre_norm = norm2;
 				pre_p = new_p;
@@ -588,10 +586,10 @@ public:
 				Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
 				Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
 
-				tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpA), c_red, c_red, c_trans }));
-				tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpA), c_red, c_red, c_trans }));
-				tris.push_back(Triangle({ new_p, (pre_p + PerpA), (new_p + PerpB), c_red, c_trans, c_trans }));
-				tris.push_back(Triangle({ new_p, (pre_p - PerpA), (new_p - PerpB), c_red, c_trans, c_trans }));
+				tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpA), color, color, c_trans }));
+				tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpA), color, color, c_trans }));
+				tris.push_back(Triangle({ new_p, (pre_p + PerpA), (new_p + PerpB), color, c_trans, c_trans }));
+				tris.push_back(Triangle({ new_p, (pre_p - PerpA), (new_p - PerpB), color, c_trans, c_trans }));
 			}
 			pre_norm = norm2;
 			pre_p = new_p;
@@ -599,7 +597,7 @@ public:
 		}
 
 		if (fade_out) {
-			RiverTriangle::DrawCircle(tris, point[SIZE - 1].point, 100, pre_norm.GetAngle() - 90, 50, radius, river_scale, point[SIZE - 1].power, c_half_red);
+			RiverTriangle::DrawCircle(tris, point[SIZE - 1].point, 100, pre_norm.GetAngle() - 90, 50, radius, river_scale, point[SIZE - 1].power, color);
 		}
 
 		//if (fade_out) {
@@ -770,9 +768,8 @@ public:
 		}
 		
 	}
-	void CrateTriangle() {
-		AdjustPoint();
-			
+	void CreateTriangle(Color c) {
+		tris.clear();
 		if (points.size() > 3) {
 		/*	double start_result[3][2];
 			double end_result[3][2];
@@ -780,13 +777,13 @@ public:
 			memset(end_result, 0, sizeof(end_result));
 			CalcCardinal(start_result, 0);
 			CalcCardinal(end_result, (int)points.size() - 3);*/
-			RiverTriangle::CreateSplineTri(tris, points, radius, power_sacle, curv_spacing, true, true);
+			RiverTriangle::CreateSplineTri(tris, points, c, radius, power_sacle, curv_spacing, true, true);
 		}
 		else if(points.size() == 3){
-			RiverTriangle::CreateCardinalTri(tris, points, radius, power_sacle, curv_spacing, true, true);
+			RiverTriangle::CreateCardinalTri(tris, points, c, radius, power_sacle, curv_spacing, true, true);
 		}
 		else {
-			RiverTriangle::CreateLineTri(tris, points, radius, power_sacle, curv_spacing, true, true);
+			RiverTriangle::CreateLineTri(tris, points, c, radius, power_sacle, curv_spacing, true, true);
 		}
 
 			
@@ -853,16 +850,17 @@ public:
 		first_crossing.outputs.push_back(river);
 		end_crossing.inputs.push_back(river);
 
-		river->CrateTriangle();
 		
 	}
 
-	static void CreateCrossingPointTriagle(double radius, double river_scale, double spacing) {
+
+	static void CreateCrossingPointTriagle(Color color, double radius, double river_scale, double spacing) {
 		//return;
 		//radius *= std::sqrt(2);
 		
 		for (auto& iter : RIVER_CROSSING_MAP) {
 			RiverCrossing& rc = iter.second;
+			rc.tris.clear();
 			if (rc.inputs.size() > 0 && rc.outputs.size() > 0) {
 				RiverPointVector points;
 				RiverPoint& input_point = rc.inputs[0]->GetEndPoint();
@@ -887,7 +885,8 @@ public:
 				
 
 				//glVertex2f(cx, cy); // 원의 중심
-
+				color.a = 1;
+				Color trans_c = Color(color.r, color.g, color.b, 0);
 				for (int i = 0; i < num_segments; i++) {
 					double theta = 2.0f * 3.1415926f * double(i) / double(num_segments); // 현재 각도
 					double x_ = radius * (river_scale * power + 1) * cosf((float)theta); // x 좌표
@@ -899,9 +898,9 @@ public:
 						Point2(x_ + rc.GetCell()->site.p.x, y_ + rc.GetCell()->site.p.y),
 						Point2(x_2 + rc.GetCell()->site.p.x, y_2 + rc.GetCell()->site.p.y),
 						Point2(rc.GetCell()->site.p.x, rc.GetCell()->site.p.y),
-						Color(1.0f, 0.0f, 0.0f, 0.0f),
-						Color(1.0f, 0.0f, 0.0f, 0.0f),
-						Color(1.0f, 0.0f, 0.0f, 1.0f) }));
+						trans_c,
+						trans_c,
+						color }));
 
 				
 				}
@@ -935,6 +934,19 @@ public:
 
 	std::vector<RiverLine*>& GetArray() {
 		return lines;
+	}
+
+	void AdjustPoint() {
+		for (auto river : lines) {
+			river->AdjustPoint();
+		}
+	}
+
+	void CreateTriagle(Color c) {
+		for (auto river : lines) {
+			river->CreateTriangle(c);
+		}
+		
 	}
 
 };

@@ -79,30 +79,52 @@ Color Color::lerp(const Color& a, const Color& b, double t) {
 
 Color const Color::black = Color(0, 0, 0);
 Color const Color::lake = Color(0.2, 0.4, 0.6);
+Color const Color::white = Color(1, 1, 1);
 Color const Color::edgeOcean = Color(0.1, 0, 0.3, 1);
 Color const Color::ocean = Color(0.2, 0, 0.6, 1);
 Color const Color::coast = Color(0.4, 0, 1, 1);
 
-
+#include <iostream>
 Color ::operator CharColor() const {
-	return CharColor(
-		(char)(std::clamp(r, 0.0, 1.0) * 255),
-		(char)(std::clamp(g, 0.0, 1.0) * 255),
-		(char)(std::clamp(b, 0.0, 1.0) * 255));
-}
+	
+	//auto t = CharColor(
+	//	(unsigned char)(std::clamp(r, 0.0, 1.0) * 255.0),
+	//	(unsigned char)(std::clamp(g, 0.0, 1.0) * 255.0),
+	//	(unsigned char)(std::clamp(b, 0.0, 1.0) * 255.0));
 
+	//if ((unsigned int)t.b > 255) {
+	//	std::cout << r << ", " << g << ", " << b << "\n";
+	//	std::cout << (unsigned int)t.r << ", " << (unsigned int)t.g << ", " << (unsigned int)t.b << "\n";
+
+	//	std::cout << std::clamp(b, 0.0, 1.0) << "\n";
+	//	std::cout << (std::clamp(b, 0.0, 1.0) * 255.0) << "\n";
+	//	std::cout << (unsigned int)(std::clamp(b, 0.0, 1.0) * 255.0) << "\n";
+	//	std::cout << (unsigned int)((unsigned char)((unsigned int)(std::clamp(b, 0.0, 1.0) * 255.0))) << "\n";
+	//	std::cout << (unsigned int)((unsigned char)((unsigned int)(std::clamp(b, 0.0, 1.0) * 255.0))) << "\n";
+
+	//	unsigned int test = static_cast<unsigned int>(std::clamp(b, 0.0, 1.0) * 255.0);
+	//	char test2 = static_cast<unsigned char>(test);
+	//	unsigned int test3 = test2;
+	//	std::cout << test3 << "\n";
+	//}
+	//
+	return CharColor(
+		(unsigned char)(std::clamp(r * 255.0, 0.0, 255.0)),
+		(unsigned char)(std::clamp(g * 255.0, 0.0, 255.0)),
+		(unsigned char)(std::clamp(b * 255.0, 0.0, 255.0)));
+}
 
 
 CharColor& CharColor::operator =(const Color& a) {
-	r = (char)(a.r > 1.0 ? 255.0 : a.r * 255.0);
-	g = (char)(a.g > 1.0 ? 255.0 : a.g * 255.0);
-	b = (char)(a.g > 1.0 ? 255.0 : a.b * 255.0);
+	r = (unsigned char)(a.r >= 1.0 ? 255.0 : a.r * 255.0);
+	g = (unsigned char)(a.g >= 1.0 ? 255.0 : a.g * 255.0);
+	b = (unsigned char)(a.b >= 1.0 ? 255.0 : a.b * 255.0);
 	return *this;
 }
 CharColor& CharColor::operator =(const Color* a) {
-	r = (char)(a->r > 1.0 ? 255.0 : a->r * 255.0);
-	g = (char)(a->g > 1.0 ? 255.0 : a->g * 255.0);
-	b = (char)(a->g > 1.0 ? 255.0 : a->b * 255.0);
+	r = (unsigned char)(a->r >= 1.0 ? 255.0 : a->r * 255.0);
+	g = (unsigned char)(a->g >= 1.0 ? 255.0 : a->g * 255.0);
+	b = (unsigned char)(a->b >= 1.0 ? 255.0 : a->b * 255.0);
 	return *this;
 }
 

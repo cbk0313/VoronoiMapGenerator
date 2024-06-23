@@ -1393,10 +1393,14 @@ void VoronoiDiagramGenerator::CreateRiver() {
 
 		}
 	}
-
-
-	RiverCrossing::CreateCrossingPointTriagle(setting.GetRiverRadius(), setting.GetRiverPowerScale(), 0.1);
+	SetupRiverTriangle(Color(1, 0, 0));
 	RiverLine::ClearJunk();
+}
+
+void VoronoiDiagramGenerator::SetupRiverTriangle(Color c) {
+	diagram->river_lines.CreateTriagle(c);
+	RiverCrossing::CreateCrossingPointTriagle(c, setting.GetRiverRadius(), setting.GetRiverPowerScale(), 0.1);
+
 }
 
 void VoronoiDiagramGenerator::SetupBiome() {
@@ -1466,6 +1470,8 @@ void VoronoiDiagramGenerator::SetupVertexColor(Vertex* v, Cell* c, Cell* opposit
 }
 
 void VoronoiDiagramGenerator::SetupColor(int flag) {
+	image_flag = flag;
+
 	if (has_set_color) {
 		for (Vertex* v : diagram->vertices) {
 			v->Reset();
@@ -1517,7 +1523,13 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 			cd.GetColor().g += elev_scale * scale;
 			cd.GetColor().b += elev_scale * scale;*/
 			if (flag & LAKE) {
-				cd.GetColor() = Color::lake;
+				if (flag == LAKE) {
+					/*auto tud = cd.UnionFindCellDetail(Terrain::OCEAN);
+					double elev_scale = (double)(tud.GetElevation()) * elev_rate;
+					cd.GetColor() = Color(elev_scale, elev_scale, elev_scale, 1);*/
+					cd.GetColor() = Color::white;
+				}
+				else cd.GetColor() = Color::lake;
 			}
 			else {
 				if (flag & ISLAND) {
@@ -1787,6 +1799,11 @@ void VoronoiDiagramGenerator::SaveAllImage(double dimension, unsigned int w, uns
 	SetupColor(LAKE);
 	SaveImage("voronoi_map_lake.bmp", dimension, w, h);
 
+	SetupColor(RIVER);
+	SetupRiverTriangle(Color(1, 1, 1));
+	SaveImage("voronoi_map_river.bmp", dimension, w, h);
+
+	SetupRiverTriangle(Color(1, 0, 0));
 	SetupColor(ALL_IMAGE);
 }
 
@@ -1798,46 +1815,71 @@ void VoronoiDiagramGenerator::SaveImage(const char* filename, double dimension, 
 		return;
 	}
 
-	char* pixel_data = new char[w * h * 3];
+	unsigned char* pixel_data = new unsigned char[w * h * 3];
 	auto start = std::clock();
-	for (Cell* c : diagram->cells) {
-		//for (Edge* e : diagram->edges) {
-		for (HalfEdge* hf : c->halfEdges) {
-			Edge* e = hf->edge;
 
-			Site* s = e->lSite->cell == c || e->rSite == nullptr ? e->lSite : e->rSite;
-			//if (s == nullptr) continue;
-			Site* opposite_s = e->rSite && e->lSite->cell == c ? e->rSite : e->lSite;
+	if (image_flag != RIVER) {
+		for (Cell* c : diagram->cells) {
+			//for (Edge* e : diagram->edges) {
+			for (HalfEdge* hf : c->halfEdges) {
+				Edge* e = hf->edge;
 
-			Point2 center = c->site.p / dimension;
-			center.x *= w;
-			center.y *= h;
+				Site* s = e->lSite->cell == c || e->rSite == nullptr ? e->lSite : e->rSite;
+				//if (s == nullptr) continue;
+				Site* opposite_s = e->rSite && e->lSite->cell == c ? e->rSite : e->lSite;
 
-			Point2 pA = e->vertA->point / dimension;
-			pA.x *= w;
-			pA.y *= h;
+				Point2 center = c->site.p;
 
-			Point2 pB = e->vertB->point / dimension;
-			pB.x *= w;
-			pB.y *= h;
+				Point2 pA = e->vertA->point;
 
-			Point2 edge_mp = e->p / dimension;
-			edge_mp.x *= w;
-			edge_mp.y *= h;
+				Point2 pB = e->vertB->point;
 
-			Color colorA = e->vertA->color;
-			Color colorB = e->vertB->color;
-			Color edge_c = e->color;
+				Point2 edge_mp = e->p;
 
-			Color center_c = s->cell->GetDetail().GetColor();
+				Color colorA = e->vertA->color;
+				Color colorB = e->vertB->color;
+				Color edge_c = e->color;
 
-			//middle_c = (colorA + colorB) / 2;
+				Color center_c = s->cell->GetDetail().GetColor();
 
-			Triangle triA = Triangle({ pA, center, edge_mp, colorA, center_c, edge_c });
-			Triangle triB = Triangle({ pB, center, edge_mp, colorB, center_c, edge_c });
+				//middle_c = (colorA + colorB) / 2;
 
-			triA.Draw(pixel_data, w, h);
-			triB.Draw(pixel_data, w, h);
+				Triangle triA = Triangle({ pA, center, edge_mp, colorA, center_c, edge_c });
+				Triangle triB = Triangle({ pB, center, edge_mp, colorB, center_c, edge_c });
+				triA.AdjustSize(w, h, dimension);
+				triB.AdjustSize(w, h, dimension);
+				triA.Draw(pixel_data, w, h);
+				triB.Draw(pixel_data, w, h);
+			}
+		}
+	}
+	
+
+	if (image_flag & RIVER) {
+
+		for (RiverLine* line : diagram->river_lines.GetArray()) {
+
+			for (Triangle tri : line->GetTriangle()) {
+
+				tri.AdjustSize(w, h, dimension);
+				/*for (auto p : tri.points) {
+
+					std::cout << p << "\n";
+				}*/
+				/*for (auto p : tri.colors) {
+
+					std::cout << p.r << "\n";
+					std::cout << p.g << "\n";
+					std::cout << p.b << "\n";
+				}*/
+				tri.DrawTransparent(pixel_data, w, h);
+			}
+		}
+
+
+		for (Triangle tri : RiverCrossing::GetTriangle()) {
+			tri.AdjustSize(w, h, dimension);
+			tri.DrawTransparent(pixel_data, w, h);
 		}
 	}
 

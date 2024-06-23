@@ -37,6 +37,7 @@ public:
 
 	static const Color black;
 	static const Color lake;
+	static const Color white;
 	static const Color edgeOcean;
 	static const Color ocean;
 	static const Color coast;
@@ -45,10 +46,10 @@ public:
 
 class CharColor {
 public:
-	char r;
-	char g;
-	char b;
-	CharColor(char c_r, char c_g, char c_b) : r(c_r), g(c_g), b(c_b) {};
+	unsigned char r;
+	unsigned char g;
+	unsigned char b;
+	CharColor(unsigned char c_r, unsigned char c_g, unsigned char c_b) : r(c_r), g(c_g), b(c_b) {};
 	CharColor& operator=(const Color& a);
 	CharColor& operator=(const Color* a);
 };

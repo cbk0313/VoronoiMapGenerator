@@ -2,7 +2,7 @@
 
 #include "../Point2.h"
 #include "Color.h"
-
+#include <algorithm>
 
 
 double Triangle::MinX() const {
@@ -48,17 +48,23 @@ Color Triangle::InterpolateColor(const Point2& p) const {
 	return Color(
 		c0.r * alpha + c1.r * beta + c2.r * gamma,
 		c0.g * alpha + c1.g * beta + c2.g * gamma,
-		c0.b * alpha + c1.b * beta + c2.b * gamma
+		c0.b * alpha + c1.b * beta + c2.b * gamma,
+		c0.a * alpha + c1.a * beta + c2.a * gamma
 	);
 }
 
-void Triangle::DrawPixel(char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y, const CharColor& c) const {
+void Triangle::DrawPixel(unsigned char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y, const CharColor& c) const {
 	int pos = x * 3 + w * 3 * (h - y - 1);
 	//std::cout << pos << "\n";
 	pixel_data[pos] = c.b;
 	pixel_data[pos + 1] = c.g;
 	pixel_data[pos + 2] = c.r;
 	//std::cout << (int)pixel_data[pos] << ", " << (int)pixel_data[pos + 1] << ", " << (int)pixel_data[pos + 2] << "\n";
+}
+
+CharColor Triangle::GetPixelColor(unsigned char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y) const {
+	int pos = x * 3 + w * 3 * (h - y - 1);
+	return CharColor(pixel_data[pos + 2], pixel_data[pos + 1], pixel_data[pos]);
 }
 
 
@@ -159,28 +165,7 @@ unsigned int Triangle::FindRightmostXGivenY(unsigned int y, unsigned int max_x) 
 }
 
 
-
-void Triangle::Draw(char* pixel_data, unsigned int w, unsigned int h) {
-
-	unsigned int m_X = (unsigned int)MinX(), M_X = (unsigned int)MaxX(), m_Y = (unsigned int)MinY(), M_Y = (unsigned int)MaxY();
-
-	if (m_X < 0) m_X = 0;
-	if (M_X >= w) M_X = w - 1;
-	if (m_Y < 0) m_Y = 0;
-	if (M_Y >= h) M_Y = h - 1;
-
-	for (unsigned int y = m_Y; y <= M_Y; y += 1) {
-		for (unsigned int x = FindLeftmostXGivenY(y, m_X); x <= M_X; x += 1) {
-			if (!IsInside(Point2(x, y))) break;
-			CharColor c = InterpolateColor(Point2(x, y));
-			DrawPixel(pixel_data, w, h, x, y, c);
-			
-		}
-	}
-}
-
-
-void Triangle::Draw_transparent(char* pixel_data, unsigned int w, unsigned int h) {
+void Triangle::Draw(unsigned char* pixel_data, unsigned int w, unsigned int h) {
 
 	unsigned int m_X = (unsigned int)MinX(), M_X = (unsigned int)MaxX(), m_Y = (unsigned int)MinY(), M_Y = (unsigned int)MaxY();
 
@@ -199,3 +184,59 @@ void Triangle::Draw_transparent(char* pixel_data, unsigned int w, unsigned int h
 	}
 }
 
+
+void Triangle::DrawTransparent(unsigned char* pixel_data, unsigned int w, unsigned int h) {
+
+	unsigned int m_X = (unsigned int)MinX(), M_X = (unsigned int)MaxX(), m_Y = (unsigned int)MinY(), M_Y = (unsigned int)MaxY();
+
+	if (m_X < 0) m_X = 0;
+	if (M_X >= w) M_X = w - 1;
+	if (m_Y < 0) m_Y = 0;
+	if (M_Y >= h) M_Y = h - 1;
+
+	for (unsigned int y = m_Y; y <= M_Y; y += 1) {
+		for (unsigned int x = FindLeftmostXGivenY(y, m_X); x <= M_X; x += 1) {
+			if (!IsInside(Point2(x, y))) break;
+			Color c = InterpolateColor(Point2(x, y));
+			CharColor pixel_char_c = GetPixelColor(pixel_data, w, h, x, y);
+			Color pixel_c = Color((double)pixel_char_c.r / 255, (double)pixel_char_c.g / 255, (double)pixel_char_c.b / 255, 1);
+			double alpha = c.a;
+			if (alpha > 1) alpha = 1;
+			else if (alpha < 0) alpha = 0;
+			double pixel_alpha = 1. - alpha;
+			//std::cout << pixel_alpha << "\n";
+			/*std::cout << pixel_c.r << "\n";
+			std::cout << pixel_c.g << "\n";
+			std::cout << pixel_c.b << "\n";*/
+			
+			
+			Color mix_c = Color(
+				(pixel_c.r * pixel_alpha + c.r * alpha),
+				(pixel_c.g * pixel_alpha + c.g * alpha),
+				(pixel_c.b * pixel_alpha + c.b * alpha),
+				1);
+			
+			//mix_c.a = std::clamp<double>(mix_c.a, 0, 1.);
+			//mix_c.g = std::clamp<double>(mix_c.g, 0, 1.);
+			//mix_c.b = std::clamp<double>(mix_c.b, 0, 1.);
+			
+		/*	std::cout << (unsigned int)test.r << "\n";
+			std::cout << (unsigned int)test.g << "\n";
+			std::cout << (unsigned int)test.b << "\n";
+			std::cout << mix_c.a << "!\n";
+			*/
+			DrawPixel(pixel_data, w, h, x, y, mix_c);
+			
+		}
+	}
+}
+
+
+
+void Triangle::AdjustSize(unsigned int w, unsigned int h, double dimension) {
+	for (int i = 0; i < 3; i++) {
+		points[i] /= dimension;
+		points[i].x *= w;
+		points[i].y *= h;
+	}
+}

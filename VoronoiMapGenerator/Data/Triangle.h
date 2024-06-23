@@ -17,8 +17,10 @@ public:
 
 	//Triangle(Point2* p1, Point2* p2, Point2* p3, Color* c1, Color* c2, Color* c3);
 
-	void Draw(char* pixel_data, unsigned int w, unsigned int h);
-	void Draw_transparent(char* pixel_data, unsigned int w, unsigned int h);
+	void Draw(unsigned char* pixel_data, unsigned int w, unsigned int h);
+	void DrawTransparent(unsigned char* pixel_data, unsigned int w, unsigned int h);
+
+	void AdjustSize(unsigned int w, unsigned int h, double dimension);
 
 private:
 	double MinX() const;
@@ -33,6 +35,6 @@ private:
 
 	bool IsInside(const Point2& p) const;
 	Color InterpolateColor(const Point2& p) const;
-	void DrawPixel(char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y, const CharColor& c) const;
-
+	void DrawPixel(unsigned char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y, const CharColor& c) const;
+	CharColor GetPixelColor(unsigned char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y) const;
 };
