@@ -24,8 +24,8 @@ void RiverEdge::Clear() {
 		delete e;
 	}
 	RIVER_EDGES.clear();
-	//while(!RIVER_DELETE_QUEUE.empty()) RIVER_DELETE_QUEUE.pop();
-	RIVER_DELETE_QUEUE = std::queue<RiverEdge*>();
+	while(!RIVER_DELETE_QUEUE.empty()) RIVER_DELETE_QUEUE.pop();
+	//RIVER_DELETE_QUEUE = std::queue<RiverEdge*>();
 	
 }
 void RiverEdge::Initialize(Cell* startCell, Cell* endCell, Cell* river_owner, RiverEdge* pre_edge, RiverEdge* next_edge, int distance) {
@@ -176,8 +176,11 @@ RiverEdge* RiverEdge::GetOwnerEdge() {
 
 
 
-const double RiverLine::matrix_2[3][3] = { {2.0f, -4.0f, 2.0f}, {-3.0f, 4.0f, -1.0f}, {1.0f, 0.0f, 0.0f} };
-const double RiverLine::matrix_3[4][4] = { {-1.0f, 3.0f, -3.0f, 1.0f},
+const double RiverTriangle::matrix_2[3][3] = { {2.0f, -4.0f, 2.0f}, {-3.0f, 4.0f, -1.0f}, {1.0f, 0.0f, 0.0f} };
+const double RiverTriangle::matrix_3[4][4] = { {-1.0f, 3.0f, -3.0f, 1.0f},
 						  {2.0f, -5.0f, 4.0f, -1.0f},
 						  {-1.0f, 0.0f, 1.0f, 0.0f},
 						  {0.0f, 2.0f, 0.0f, 0.0f} };
+
+std::vector<RiverLine*> RiverLine::RIVER_LINE_ARR = std::vector<RiverLine*>();
+unsigned int RiverLine::ADDED_COUNT = 0;

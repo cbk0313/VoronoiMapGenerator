@@ -7,6 +7,8 @@
 //class Color;
 //class CharColor;
 
+class Triangle;
+using Triangles = std::vector<Triangle>;
 
 class Triangle {
 public:
@@ -15,17 +17,22 @@ public:
 
 	//Triangle(Point2* p1, Point2* p2, Point2* p3, Color* c1, Color* c2, Color* c3);
 
-	void draw(char* pixel_data, unsigned int w, unsigned int h);
+	void Draw(char* pixel_data, unsigned int w, unsigned int h);
+	void Draw_transparent(char* pixel_data, unsigned int w, unsigned int h);
 
 private:
-	double minX() const;
-	double maxX() const;
-	double minY() const;
-	double maxY() const;
+	double MinX() const;
+	double MaxX() const;
+	double MinY() const;
+	double MaxY() const;
 
-	bool isInside(const Point2& p) const;
-	Color interpolateColor(const Point2& p) const;
-	void drawPixel(char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y, const CharColor& c) const;
+	double FindXGivenY(const Point2& p1, const Point2& p2, unsigned int y);
+	bool IsYBetweenPoints(const Point2& p1, const Point2& p2, double y);
+	unsigned int FindLeftmostXGivenY(unsigned int y, unsigned int min_x);
+	unsigned int FindRightmostXGivenY(unsigned int y, unsigned int max_x);
 
-	int FindStartX(int lowX, int highX, int y);
+	bool IsInside(const Point2& p) const;
+	Color InterpolateColor(const Point2& p) const;
+	void DrawPixel(char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y, const CharColor& c) const;
+
 };

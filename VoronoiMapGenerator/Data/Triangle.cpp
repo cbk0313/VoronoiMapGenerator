@@ -5,24 +5,24 @@
 
 
 
-double Triangle::minX() const {
+double Triangle::MinX() const {
 	return std::min({ points[0].x, points[1].x, points[2].x });
 }
 
-double Triangle::maxX() const {
+double Triangle::MaxX() const {
 	return std::max({ points[0].x, points[1].x, points[2].x });
 }
 
-double Triangle::minY() const {
+double Triangle::MinY() const {
 	return std::min({ points[0].y, points[1].y, points[2].y });
 }
 
-double Triangle::maxY() const {
+double Triangle::MaxY() const {
 	return std::max({ points[0].y, points[1].y, points[2].y });
 }
 
 
-bool Triangle::isInside(const Point2& p) const {
+bool Triangle::IsInside(const Point2& p) const {
 	double x0 = points[0].x, y0 = points[0].y;
 	double x1 = points[1].x, y1 = points[1].y;
 	double x2 = points[2].x, y2 = points[2].y;
@@ -34,7 +34,7 @@ bool Triangle::isInside(const Point2& p) const {
 	return alpha >= 0 && beta >= 0 && gamma >= 0;
 }
 
-Color Triangle::interpolateColor(const Point2& p) const {
+Color Triangle::InterpolateColor(const Point2& p) const {
 	double x0 = points[0].x, y0 = points[0].y;
 	double x1 = points[1].x, y1 = points[1].y;
 	double x2 = points[2].x, y2 = points[2].y;
@@ -52,7 +52,7 @@ Color Triangle::interpolateColor(const Point2& p) const {
 	);
 }
 
-void Triangle::drawPixel(char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y, const CharColor& c) const {
+void Triangle::DrawPixel(char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y, const CharColor& c) const {
 	int pos = x * 3 + w * 3 * (h - y - 1);
 	//std::cout << pos << "\n";
 	pixel_data[pos] = c.b;
@@ -61,24 +61,108 @@ void Triangle::drawPixel(char* pixel_data, unsigned int w, unsigned int h, unsig
 	//std::cout << (int)pixel_data[pos] << ", " << (int)pixel_data[pos + 1] << ", " << (int)pixel_data[pos + 2] << "\n";
 }
 
-int Triangle::FindStartX(int lowX, int highX, int y) {
-	while (lowX <= highX) {
-		int m = (lowX + highX) / 2;
 
-		if (isInside(Point2(m, y))) {
-			lowX = m + 1;
-		}
-		else {
-			highX = m - 1;
-		}
+double Triangle::FindXGivenY(const Point2& p1, const Point2& p2, unsigned int y) {
+	/*if (p1.y == p2.y) {
+		return std::min(p1.x, p2.x);
+	}*/
+	if (p1.x == p2.x) {
+		return p1.x;
 	}
 
-	return lowX;
+	double m = (p2.y - p1.y) / (p2.x - p1.x);
+	double b = p1.y - m * p1.x;
+	//std::cout << ((double)y - b) / m << "\n";
+	return ((double)y - b) / m;
 }
 
-void Triangle::draw(char* pixel_data, unsigned int w, unsigned int h) {
-	// 선형 보간을 사용하여 삼각형 내부를 채우기
-	unsigned int m_X = (unsigned int)minX(), M_X = (unsigned int)maxX(), m_Y = (unsigned int)minY(), M_Y = (unsigned int)maxY();
+bool Triangle::IsYBetweenPoints(const Point2& p1, const Point2& p2, double y) {
+	return y >= std::min(p1.y, p2.y) && y <= std::max(p1.y, p2.y);
+}
+unsigned int Triangle::FindLeftmostXGivenY(unsigned int y, unsigned int min_x) {
+	// 주어진 y 값이 삼각형의 범위 내에 있는지 확인
+	const Point2& p1 = points[0], &p2 = points[1], &p3 = points[2];
+
+	/*double MinY = std::min({ p1.y, p2.y, p3.y });
+	double MaxY = std::max({ p1.y, p2.y, p3.y });
+	if (y < MinY || y > MaxY) {
+		throw std::out_of_range("주어진 y 값이 삼각형의 범위를 벗어납니다.");
+	}*/
+
+	// 가장 좌측에 있는 x 값을 초기화
+	double mostX = std::numeric_limits<double>::max();
+	bool check = false;
+
+	if (IsYBetweenPoints(p1, p2, y)) {
+		mostX = std::min(mostX, FindXGivenY(p1, p2, y));
+		check = true;
+		//std::cout << (unsigned int)mostX << " A\n";
+	}
+	if (IsYBetweenPoints(p2, p3, y)) {
+		mostX = std::min(mostX, FindXGivenY(p2, p3, y));
+		check = true;
+		//std::cout << (unsigned int)mostX << " B\n";
+	}
+	if (IsYBetweenPoints(p1, p3, y)) {
+		mostX = std::min(mostX, FindXGivenY(p1, p3, y));
+		check = true;
+		//std::cout << (unsigned int)mostX << " C\n";
+	}
+
+	if (!check) return min_x;
+	else {
+		return (unsigned int)mostX + 1;
+	}
+
+
+	
+}
+
+
+unsigned int Triangle::FindRightmostXGivenY(unsigned int y, unsigned int max_x) {
+	// 주어진 y 값이 삼각형의 범위 내에 있는지 확인
+	const Point2& p1 = points[0], & p2 = points[1], & p3 = points[2];
+
+	/*double MinY = std::min({ p1.y, p2.y, p3.y });
+	double MaxY = std::max({ p1.y, p2.y, p3.y });
+	if (y < MinY || y > MaxY) {
+		throw std::out_of_range("주어진 y 값이 삼각형의 범위를 벗어납니다.");
+	}*/
+
+	// 가장 좌측에 있는 x 값을 초기화
+	double mostX = -1;
+	bool check = false;
+
+	if (IsYBetweenPoints(p1, p2, y)) {
+		mostX = std::max(mostX, FindXGivenY(p1, p2, y));
+		check = true;
+		//std::cout << (unsigned int)mostX << " A\n";
+	}
+	if (IsYBetweenPoints(p2, p3, y)) {
+		mostX = std::max(mostX, FindXGivenY(p2, p3, y));
+		check = true;
+		//std::cout << (unsigned int)mostX << " B\n";
+	}
+	if (IsYBetweenPoints(p1, p3, y)) {
+		mostX = std::max(mostX, FindXGivenY(p1, p3, y));
+		check = true;
+		//std::cout << (unsigned int)mostX << " C\n";
+	}
+
+	if (!check) return max_x;
+	else {
+		return (unsigned int)mostX;
+	}
+
+
+
+}
+
+
+
+void Triangle::Draw(char* pixel_data, unsigned int w, unsigned int h) {
+
+	unsigned int m_X = (unsigned int)MinX(), M_X = (unsigned int)MaxX(), m_Y = (unsigned int)MinY(), M_Y = (unsigned int)MaxY();
 
 	if (m_X < 0) m_X = 0;
 	if (M_X >= w) M_X = w - 1;
@@ -86,45 +170,32 @@ void Triangle::draw(char* pixel_data, unsigned int w, unsigned int h) {
 	if (M_Y >= h) M_Y = h - 1;
 
 	for (unsigned int y = m_Y; y <= M_Y; y += 1) {
-		bool drew = false;
-		//int find_x = FindStartX(m_X, M_X, y);
-		//bool state = !isInside(Point2(find_x - 1, y));
-		//if (state) {
-		//	for (int x = find_x - 1; x <= M_X; x += 1) {
-		//		//std::cout << FindStartX(m_X, M_X, y) << "\n";
-		//		if (x < 0 || y < 0 || x >= w || y >= h) break;
-		//		if (isInside(Point2(x, y))) {
-		//			drew = true;
-		//			CharColor c = interpolateColor(Point2(x, y));
-		//			drawPixel(pixel_data, w, h, x, y, c);
-		//		}
-		//		else if (drew) break;
-		//	}
-		//}
-		//else {
-		//	for (int x = find_x; x >= m_X; x -= 1) {
-		//		//std::cout << FindStartX(m_X, M_X, y) << "\n";
-		//		if (x < 0 || y < 0 || x >= w || y >= h) break;
-		//		if (isInside(Point2(x, y))) {
-		//			drew = true;
-		//			CharColor c = interpolateColor(Point2(x, y));
-		//			drawPixel(pixel_data, w, h, x, y, c);
-		//		}
-		//		else if (drew) break;
-		//	}
-		//}
-		
-
-	
-		for (unsigned int x = m_X; x <= M_X; x += 1) {
-			if (isInside(Point2(x, y))) {
-				drew = true;
-				CharColor c = interpolateColor(Point2(x, y));
-				drawPixel(pixel_data, w, h, x, y, c);
-			}
-			else if (drew) break;
+		for (unsigned int x = FindLeftmostXGivenY(y, m_X); x <= M_X; x += 1) {
+			if (!IsInside(Point2(x, y))) break;
+			CharColor c = InterpolateColor(Point2(x, y));
+			DrawPixel(pixel_data, w, h, x, y, c);
+			
 		}
-		
+	}
+}
+
+
+void Triangle::Draw_transparent(char* pixel_data, unsigned int w, unsigned int h) {
+
+	unsigned int m_X = (unsigned int)MinX(), M_X = (unsigned int)MaxX(), m_Y = (unsigned int)MinY(), M_Y = (unsigned int)MaxY();
+
+	if (m_X < 0) m_X = 0;
+	if (M_X >= w) M_X = w - 1;
+	if (m_Y < 0) m_Y = 0;
+	if (M_Y >= h) M_Y = h - 1;
+
+	for (unsigned int y = m_Y; y <= M_Y; y += 1) {
+		for (unsigned int x = FindLeftmostXGivenY(y, m_X); x <= M_X; x += 1) {
+			if (!IsInside(Point2(x, y))) break;
+			CharColor c = InterpolateColor(Point2(x, y));
+			DrawPixel(pixel_data, w, h, x, y, c);
+			
+		}
 	}
 }
 

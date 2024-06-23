@@ -96,6 +96,10 @@ double Point2::distanceFromOriginSquared() const {
     return x * x + y * y;
 }
 
+double Point2::GetAngle() const {
+    return atan2(y, x) * 180.0 / 3.1415926f;
+}
+
 Point2 Point2::Normailize() const {
     double dist = distanceFromOrigin();
     return Point2(x / dist, y / dist);

@@ -39,6 +39,8 @@ public:
     double distanceFromOrigin() const;
     double distanceFromOriginSquared() const;
 
+    double GetAngle() const;
+
     Point2 Normailize() const;
 
     bool operator==( const Point2 &p ) const;

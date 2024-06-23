@@ -1064,6 +1064,7 @@ void VoronoiDiagramGenerator::CreateRiver() {
 
 	RiverEdge::Clear();
 	RiverCrossing::Clear();
+	RiverLine::Clear();
 
 	for (auto item : diagram->islandUnion.unions) {
 		auto island = item.second;
@@ -1320,10 +1321,10 @@ void VoronoiDiagramGenerator::CreateRiver() {
 
 				auto river_pos = RiverEdge::GetPos(lake, lake);
 				//std::pair< RiverEdge*, std::vector<Cell*>>;
-				using Temp = std::pair< RiverEdge*, RiverLine>;
+				using Temp = std::pair< RiverEdge*, RiverLine*>;
 				std::stack<Temp> buf;
 				if (RiverEdge::GetRiverEdges().find(river_pos) != RiverEdge::GetRiverEdges().end()) {
-					buf.push(std::make_pair(RiverEdge::GetRiverEdges()[river_pos], RiverLine(setting.GetRiverRadius(), setting.GetRiverPowerScale())));
+					buf.push(std::make_pair(RiverEdge::GetRiverEdges()[river_pos], RiverLine::Create(setting.GetRiverRadius(), setting.GetRiverPowerScale())));
 				}
 
 
@@ -1331,13 +1332,13 @@ void VoronoiDiagramGenerator::CreateRiver() {
 					auto value = buf.top();
 					buf.pop();
 					RiverEdge* e = value.first;
-					RiverLine& c_arr = value.second;
+					RiverLine* c_arr = RiverLine::Create(*value.second);
 				
 					if (e == nullptr) continue;
 					if (e->GetRiverEnd()) continue;
 					//std::cout << "e->GetPower() " << e->GetPower() << "\n";
-					if (e->IsStart()) c_arr.AddPoint(RiverPoint(e->GetPower(), e->GetStart()));
-					else c_arr.AddPoint(RiverPoint(e->GetPower(), e->GetEnd()));
+					if (e->IsStart()) c_arr->AddPoint(RiverPoint(e->GetPower(), e->GetStart()));
+					else c_arr->AddPoint(RiverPoint(e->GetPower(), e->GetEnd()));
 
 					if (e->GetNexts().size() == 0) {
 						//diagram->river_edges.push_back(c_arr);
@@ -1354,10 +1355,10 @@ void VoronoiDiagramGenerator::CreateRiver() {
 							diagram->river_lines.AddLine(c_arr);
 							for (auto next_e : e->GetNexts()) {
 								
-								RiverLine temp(setting.GetRiverRadius(), setting.GetRiverPowerScale());
-								temp.AddPoint(RiverPoint(next_e->GetPower(), next_e->GetStart()));
+								RiverLine* new_line = RiverLine::Create(setting.GetRiverRadius(), setting.GetRiverPowerScale());
+								new_line->AddPoint(RiverPoint(next_e->GetPower(), next_e->GetStart()));
 								//temp.push_back(next_e->GetEnd());
-								buf.push(std::make_pair(next_e, temp));
+								buf.push(std::make_pair(next_e, new_line));
 							}
 						}
 
@@ -1394,8 +1395,8 @@ void VoronoiDiagramGenerator::CreateRiver() {
 	}
 
 
-
-	
+	RiverCrossing::CreateCrossingPointTriagle(setting.GetRiverRadius(), setting.GetRiverPowerScale(), 0.1);
+	RiverLine::ClearJunk();
 }
 
 void VoronoiDiagramGenerator::SetupBiome() {
@@ -1476,7 +1477,7 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 	has_set_color = true;
 
 	double elev_rate = 1.0 / (double)max_elevation;
-	std::cout << "elev_rate: " << elev_rate << "\n";
+	//std::cout << "elev_rate: " << elev_rate << "\n";
 
 	Color elev_rate_c = Color(elev_rate / 2, elev_rate / 2, elev_rate / 2);
 	for (Cell* c : diagram->cells) {
@@ -1804,7 +1805,8 @@ void VoronoiDiagramGenerator::SaveImage(const char* filename, double dimension, 
 		for (HalfEdge* hf : c->halfEdges) {
 			Edge* e = hf->edge;
 
-			Site* s = e->lSite->cell == c ? e->lSite : e->rSite;
+			Site* s = e->lSite->cell == c || e->rSite == nullptr ? e->lSite : e->rSite;
+			//if (s == nullptr) continue;
 			Site* opposite_s = e->rSite && e->lSite->cell == c ? e->rSite : e->lSite;
 
 			Point2 center = c->site.p / dimension;
@@ -1834,10 +1836,12 @@ void VoronoiDiagramGenerator::SaveImage(const char* filename, double dimension, 
 			Triangle triA = Triangle({ pA, center, edge_mp, colorA, center_c, edge_c });
 			Triangle triB = Triangle({ pB, center, edge_mp, colorB, center_c, edge_c });
 
-			triA.draw(pixel_data, w, h);
-			triB.draw(pixel_data, w, h);
+			triA.Draw(pixel_data, w, h);
+			triB.Draw(pixel_data, w, h);
 		}
 	}
+
+
 
 	//char pixel_data[IMAGE_WIDTH * IMAGE_HEIGHT * 300];
 	//glReadPixels(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT, GL_BGR_EXT, GL_UNSIGNED_BYTE, pixel_data);
