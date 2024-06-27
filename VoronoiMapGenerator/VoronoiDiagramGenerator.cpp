@@ -1366,8 +1366,6 @@ void VoronoiDiagramGenerator::CreateRiver() {
 								}
 							}
 							else {
-								std::cout << e->GetNexts().size() << " a\n";
-								std::cout << power << " b\n";
 								power /= 2;
 								e->SetPower(power);
 								//if (power < 1) power = 1;
