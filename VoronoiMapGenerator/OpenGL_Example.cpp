@@ -478,10 +478,91 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 		}
 
 		if (draw_special_dot) {
-
-
 			glPointSize(pointSize);
 			glBegin(GL_POINTS);
+			for (auto item : diagram->islandUnion.unions) {
+				auto island = item.second;
+				//break;
+
+				for (auto lake_union : island.lakeUnion.unions) {
+
+
+					for (auto lake : lake_union.second) {
+
+						//std::cout << (int)lake->GetDetail().GetTerrain() << "\n";
+						auto river_pos = RiverEdge::GetPos(lake, lake);
+						//std::pair< RiverEdge*, std::vector<Cell*>>;
+						using Temp = std::pair< RiverEdge*, int>;
+						std::stack<Temp> buf;
+						if (diagram->river_lines.GetRiverEdges().find(river_pos) != diagram->river_lines.GetRiverEdges().end()) {
+							buf.push(std::make_pair(diagram->river_lines.GetRiverEdges()[river_pos], lake_union.second.size()));
+						}
+
+
+						while (!buf.empty()) {
+							auto value = buf.top();
+							buf.pop();
+							RiverEdge* e = value.first;
+
+
+
+							if (e == nullptr) continue;
+							auto power = std::max<int>(e->GetPower(), value.second);
+							//std::cout << "power: " << power << "\n";
+							//std::cout << "power: " << e->GetStart()->GetUnique() << "\n";
+							e->SetPower(power);
+							if (!e->IsStart()) {
+								if (e->GetStart()->GetDetail().GetElevation() < e->GetEnd()->GetDetail().GetElevation()) {
+									power++;
+									e->SetPower(power);
+								}
+							}
+
+
+
+							if (e->GetEnd()->GetDetail().GetTerrain() != Terrain::LAKE || e->IsStart()) {
+
+								
+								//std::cout << e->GetNexts().size() << "\n";
+								if (e->GetNexts().size() == 1 || e->IsStart()) {
+									for (auto next_e : e->GetNexts()) {
+										if (!next_e->IsStart()) buf.push(std::make_pair(next_e, power));
+									}
+								}
+								else {
+									glColor4f((GLfloat)1, (GLfloat)0, (GLfloat)0, (GLfloat)1);
+									glVertex3d((GLfloat)normalize(e->GetStart()->site.p.x, dimension), -(GLfloat)normalize(e->GetStart()->site.p.y, dimension), 0.0);
+									glVertex3d((GLfloat)normalize(e->GetEnd()->site.p.x, dimension), -(GLfloat)normalize(e->GetEnd()->site.p.y, dimension), 0.0);
+									
+									unsigned int unique = 0;
+									int cnt = 0;
+									for (auto next_e : e->GetNexts()) {
+										//if (unique == next_e->GetStart()->GetUnique() && !next_e->IsStart()) {
+										if (e->GetNexts().size() > 1) {
+											std::cout << unique << ", " << ++cnt << "\n";
+
+											glColor4f((GLfloat)0, (GLfloat)1, (GLfloat)0, (GLfloat)1);
+											glVertex3d((GLfloat)normalize(next_e->GetStart()->site.p.x, dimension), -(GLfloat)normalize(next_e->GetStart()->site.p.y, dimension), 0.0);
+											glVertex3d((GLfloat)normalize(next_e->GetEnd()->site.p.x, dimension), -(GLfloat)normalize(next_e->GetEnd()->site.p.y, dimension), 0.0);
+										}
+										else {
+											//std::cout << next_e->GetStart()->GetUnique() << "\n";
+										}
+										unique = next_e->GetStart()->GetUnique();
+										if (!next_e->IsStart()) buf.push(std::make_pair(next_e, power));
+									}
+								}
+
+								
+							}
+
+						}
+
+					}
+
+				}
+			}
+			
 			for (auto item : diagram->islandUnion.unions) {
 				auto island = item.second;
 				for (auto lake_union : island.lakeUnion.unions) {

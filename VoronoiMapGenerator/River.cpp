@@ -61,11 +61,14 @@ void RiverLines::AddLinkRiverEdge(Cell* lakeA, Cell* lakeB) {
 bool RiverLines::CheckRiverEdgeLinked(Cell* lakeA, Cell* lakeB) {
 	lakeA = lakeA->GetDetail().UnionFindCell(Terrain::OCEAN);
 	lakeB = lakeB->GetDetail().UnionFindCell(Terrain::OCEAN);
-	for (auto c : LINKED_RIVER_EDGES[lakeA->GetUnique()]) {
-		if (c == lakeB) {
-			return true;
+	if (lakeA != lakeB) {
+		for (auto c : LINKED_RIVER_EDGES[lakeA->GetUnique()]) {
+			if (c == lakeB) {
+				return true;
+			}
 		}
 	}
+	
 	return false;
 }
 
@@ -901,6 +904,7 @@ Triangles RiverCrossing::GetTriangle() {
 
 void RiverLines::AddLine(RiverCrossing* corssing, RiverLine* line) {
 	//if (line.GetPointArray().size() > 0) {
+	if (line->GetPointArray().size() <= 1) return;
 	line->SetUsed();
 
 	RiverPointVector& vec = line->GetPointArray();
