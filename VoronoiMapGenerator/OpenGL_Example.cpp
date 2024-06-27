@@ -53,7 +53,7 @@ double normalize(double in, int dimension) {
 	return in / (float)dimension*1.8 - 0.9;
 }
 //globals for use in giving relaxation commands
-int relax = 0;
+int Relax = 0;
 bool startOver = true;
 bool relaxForever = false;
 bool oneSec = false;
@@ -86,9 +86,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GL_TRUE);
 	if (key == GLFW_KEY_R && action == GLFW_PRESS)
-		++relax;
+		++Relax;
 	if (key == GLFW_KEY_T && action == GLFW_PRESS)
-		relax += 10;
+		Relax += 10;
 	if (key == GLFW_KEY_X && action == GLFW_PRESS)
 		startOver = true;
 	if (key == GLFW_KEY_Y && action == GLFW_PRESS) {
@@ -355,6 +355,34 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 		}
 	}
 
+	for (RiverLine* line : diagram->river_lines.GetArray()) {
+		const double radius = vdg->GetSetting().GetRiverRadius();
+		const double river_scale = vdg->GetSetting().GetRiverPowerScale();
+
+		glBegin(GL_TRIANGLES);
+		for (Triangle& tri : line->GetTriangle()) {
+			for (int i = 0; i < 3; i++) {
+				glColor4f((GLfloat)tri.colors[i].r, (GLfloat)tri.colors[i].g, (GLfloat)tri.colors[i].b, (GLfloat)tri.colors[i].a);
+				glVertex2f((GLfloat)normalize(tri.points[i].x, dimension), -(GLfloat)normalize(tri.points[i].y, dimension));
+			}
+
+		}
+		glEnd();
+	}
+
+
+	glBegin(GL_TRIANGLES);
+	for (Triangle& tri : diagram->river_cross.GetTriangle()) {
+		for (int i = 0; i < 3; i++) {
+			//std::cout << "test\n";
+			glColor4f((GLfloat)tri.colors[i].r, (GLfloat)tri.colors[i].g, (GLfloat)tri.colors[i].b, (GLfloat)tri.colors[i].a);
+			glVertex2f((GLfloat)normalize(tri.points[i].x, dimension), -(GLfloat)normalize(tri.points[i].y, dimension));
+		}
+
+	}
+	glEnd();
+
+
 	if (false) {
 
 
@@ -390,32 +418,7 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 	if (draw_white_dot || draw_special_dot) {
 		
 		//glEnable(GL_DEPTH_TEST);
-		for (RiverLine* line : diagram->river_lines.GetArray()) {
-			const double radius = vdg->GetSetting().GetRiverRadius();
-			const double river_scale = vdg->GetSetting().GetRiverPowerScale();
-			
-			glBegin(GL_TRIANGLES);
-			for (Triangle& tri : line->GetTriangle()) {
-				for (int i = 0; i < 3; i++) {
-					glColor4f((GLfloat)tri.colors[i].r, (GLfloat)tri.colors[i].g, (GLfloat)tri.colors[i].b, (GLfloat)tri.colors[i].a);
-					glVertex2f((GLfloat)normalize(tri.points[i].x, dimension), -(GLfloat)normalize(tri.points[i].y, dimension));
-				}
 
-			}
-			glEnd();
-		}
-
-		
-		glBegin(GL_TRIANGLES);
-		for (Triangle& tri : RiverCrossing::GetTriangle()) {
-			for (int i = 0; i < 3; i++) {
-				//std::cout << "test\n";
-				glColor4f((GLfloat)tri.colors[i].r, (GLfloat)tri.colors[i].g, (GLfloat)tri.colors[i].b, (GLfloat)tri.colors[i].a);
-				glVertex2f((GLfloat)normalize(tri.points[i].x, dimension), -(GLfloat)normalize(tri.points[i].y, dimension));
-			}
-
-		}
-		glEnd();
 
 		//glDisable(GL_DEPTH_TEST);
 		for (Cell* c : diagram->cells) {
@@ -525,16 +528,15 @@ int main() {
 	unsigned int nPoints = 10000;
 	unsigned int dimension = 1000000;
 
-	int seed = 0;//18;
 	double radius = dimension / 2.1;
 
 	unsigned int loop_cnt = 3;
 
 	VoronoiDiagramGenerator vdg = VoronoiDiagramGenerator();
-	vdg.SetSetting(GenerateSetting(MapType::CONTINENT, seed, radius, 0.5, 0.5, 10, radius / 3, radius / 5, 50, radius / 15, radius / 20, 500.f, 0.2f));
+	vdg.SetSetting(GenerateSetting(MapType::CONTINENT, 0, 0.6666, radius, 0.5, 0.5, 10, radius / 3, radius / 5, 50, radius / 15, radius / 20, 500.f, 0.2f));
 	
-	std::vector<Point2>* sites = nullptr;
-	BoundingBox bbox;
+	//std::vector<Point2>* sites = nullptr;
+	//BoundingBox bbox;
 
 
 	// Init GLFW
@@ -579,16 +581,17 @@ int main() {
 				"\tPress 'Esc' to exit.\n\n";
 			startOver = false;
 			relaxForever = false;
-			relax = 0;
-			sites = new std::vector<Point2>();
+			Relax = 0;
+			//sites = new std::vector<Point2>();
 			//std::cout << "How many points? ";
 			//nPoints = 1000;
 			//std::cin >> nPoints;
-			genRandomSites(seed, *sites, bbox, dimension, nPoints);
-			start = std::clock();
-			vdg.compute(*sites, bbox);
+			//genRandomSites(seed, *sites, bbox, dimension, nPoints);
 
-			vdg.relaxLoop(loop_cnt);
+			vdg.CreateSite(dimension, nPoints);
+			start = std::clock();
+			vdg.Compute();
+			vdg.RelaxLoop(loop_cnt);
 			vdg.CreateWorld();
 
 			duration = 1000 * (std::clock() - start) / (double)CLOCKS_PER_SEC;
@@ -599,7 +602,7 @@ int main() {
 				lake_cnt += item.second.lakeUnion.unions.size();
 			}
 			std::cout << "lake_cnt: " << diagram->islandUnion.unions.size() << "\n";
-			delete sites;
+			//delete sites;
 		}
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -607,7 +610,7 @@ int main() {
 
 	
 
-		if (relax || relaxForever || startOneSec) {
+		if (Relax || relaxForever || startOneSec) {
 			vdg.GetSetting().SetSeed(vdg.GetSetting().GetSeed() + 1);
 			//vdg.GetSetting().SetLakeScale(vdg.GetSetting().GetLakeScale() + 0.01);
 			//std::cout << "vdg.GetSetting().GetLakeSize(): " << vdg.GetSetting().GetLakeScale() << "\n";
@@ -615,18 +618,14 @@ int main() {
 			//lakeDense += 0.01;
 			//std::cout << "lake size: " << lakeScale << ", lakeDense: " << lakeSize << "\n";
 
+			vdg.CreateSite(dimension, nPoints);
 			start = std::clock();
-			//diagram = vdg.relax();
-			//diagram = vdg.relax();
-			sites = new std::vector<Point2>();
-			genRandomSites(vdg.GetSetting().GetSeed(), *sites, bbox, dimension, nPoints);
-
-			vdg.compute(*sites, bbox);
-			vdg.relaxLoop(loop_cnt);
+			vdg.Compute();
+			vdg.RelaxLoop(loop_cnt);
 			vdg.CreateWorld();
 			duration = 1000 * (std::clock() - start) / (double)CLOCKS_PER_SEC;
 
-			delete sites;
+			//delete sites;
 			Diagram* diagram = vdg.GetDiagram();
 			size_t lake_cnt = 0;
 			for (auto item : diagram->islandUnion.unions) {
@@ -639,8 +638,8 @@ int main() {
 			if (diagram->cells.size() != 4) {
 				int x = 0;
 			}
-			--relax;
-			if (relax < 0) relax = 0;
+			--Relax;
+			if (Relax < 0) Relax = 0;
 
 			if (startOneSec) {
 				oneSecCnt++;

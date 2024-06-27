@@ -68,29 +68,39 @@ void CellDetail::AddElevation(int num) {
 }
 
 unsigned int CellDetail::GetMoisture() {
-	return GetAreaMoisture() / 36 + GetLocalMoisture();
-}
-unsigned int CellDetail::GetAreaMoisture() {
-	return  UnionFindCellDetail(Terrain::PEAK).areaMoisture;
-}
-unsigned int CellDetail::GetLocalMoisture() {
-	return localMoisture;
+	//return GetAreaMoisture() / 36 + GetLocalMoisture();
+	return moisture;
 }
 
-
-void CellDetail::SetAreaMoisture(unsigned int num) {
-	UnionFindCellDetail(Terrain::PEAK).areaMoisture = num;
-}
-void CellDetail::AddAreaMoisture(unsigned int num) {
-	UnionFindCellDetail(Terrain::PEAK).areaMoisture += num;
+void CellDetail::SetMoisture(unsigned int num) {
+	moisture = num;
 }
 
-void CellDetail::SetLocalMoisture(unsigned int num) {
-	localMoisture = num;
+void CellDetail::AddMoisture(unsigned int num) {
+	moisture += num;
 }
-void CellDetail::AddLocalMoisture(unsigned int num) {
-	localMoisture += num;
-}
+
+//unsigned int CellDetail::GetAreaMoisture() {
+//	return  UnionFindCellDetail(Terrain::PEAK).areaMoisture;
+//}
+//unsigned int CellDetail::GetLocalMoisture() {
+//	return localMoisture;
+//}
+//
+//
+//void CellDetail::SetAreaMoisture(unsigned int num) {
+//	UnionFindCellDetail(Terrain::PEAK).areaMoisture = num;
+//}
+//void CellDetail::AddAreaMoisture(unsigned int num) {
+//	UnionFindCellDetail(Terrain::PEAK).areaMoisture += num;
+//}
+//
+//void CellDetail::SetLocalMoisture(unsigned int num) {
+//	localMoisture = num;
+//}
+//void CellDetail::AddLocalMoisture(unsigned int num) {
+//	localMoisture += num;
+//}
 
 unsigned int CellDetail::GetBiome() {
 	return biome;

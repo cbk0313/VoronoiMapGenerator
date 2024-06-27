@@ -77,22 +77,35 @@ Point2 Point2::operator/(const double s) const {
     return Point2(x / s, y / s);
 }
 
+bool Point2::SitesOrdered(const Point2& s1, const Point2& s2) {
+    if (s1.y < s2.y)
+        return true;
+    if (s1.y == s2.y && s1.x < s2.x)
+        return true;
 
-double Point2::distanceTo(const Point2& p) const {
+    return false;
+}
+
+double Point2::Distance(const Point2& a, const Point2& b) {
+    return sqrt((a.x - b.x) * (a.x - b.x) +
+        (a.y - b.y) * (a.y - b.y));
+}
+
+double Point2::DistanceTo(const Point2& p) const {
     return sqrt((p[0] - x) * (p[0] - x) + 
                 (p[1] - y) * (p[1] - y));
 }
 
-double Point2::distanceToSquared(const Point2& p) const {
+double Point2::DistanceToSquared(const Point2& p) const {
     return ((p[0] - x) * (p[0] - x) +
             (p[1] - y) * (p[1] - y));
 }
 
-double Point2::distanceFromOrigin() const {
+double Point2::DistanceFromOrigin() const {
     return sqrt(x * x + y * y);
 }
 
-double Point2::distanceFromOriginSquared() const {
+double Point2::DistanceFromOriginSquared() const {
     return x * x + y * y;
 }
 
@@ -101,7 +114,7 @@ double Point2::GetAngle() const {
 }
 
 Point2 Point2::Normailize() const {
-    double dist = distanceFromOrigin();
+    double dist = DistanceFromOrigin();
     return Point2(x / dist, y / dist);
 }
 

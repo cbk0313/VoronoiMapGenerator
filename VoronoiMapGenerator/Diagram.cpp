@@ -3,6 +3,7 @@
 #include "Epsilon.h"
 #include <iostream>
 #include <algorithm>
+#include "Data/River.h"
 using std::cout;
 using std::endl;
 
@@ -28,7 +29,8 @@ Diagram::~Diagram() {
 	//MemoryPool<Edge> edgePool;
 	//MemoryPool<HalfEdge> halfEdgePool;
 	//MemoryPool<Vertex> vertexPool;
-
+	RiverEdge::Clear();
+	RiverLine::Clear();
 	Cell::ResetUnique();
 }
 

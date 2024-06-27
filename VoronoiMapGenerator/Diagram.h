@@ -20,8 +20,7 @@ public:
 	UnionArray<std::vector<Cell*>> oceanUnion;
 	UnionArray<IslandUnion> islandUnion;
 	RiverLines river_lines;
-
-
+	RiverCrossing river_cross;
 
 	~Diagram();
 	void printDiagram();

@@ -25,10 +25,11 @@ struct BoundingBox {
 };
 
 class GenerateSetting {
-	friend class VoronoiDiagramGenerator;
+	//friend class VoronoiDiagramGenerator;
 private:
 	MapType type;
 	int seed;
+	double site_range;
 	double radius; 
 	double lake_scale; 
 	double lake_size; 
@@ -44,9 +45,10 @@ private:
 	double river_radius;
 	double river_power_scale;
 public:
-	GenerateSetting() 
+	GenerateSetting()
 		: type(MapType::CONTINENT)
 		, seed(0)
+		, site_range(0.666)
 		, radius(500000) // radius, 0, 0.7, 10, radius / 3, radius / 5, 10, radius / 5, radius / 7)
 		, lake_scale(0)
 		, lake_size(0.7)
@@ -57,14 +59,15 @@ public:
 		, lake_radius_max(200000)
 		, lake_radius_min(142857.1428571429)
 		, river_radius(500)
-		, river_power_scale(0.2) 
-	{};
-	GenerateSetting(MapType _type, int _seed, double _radius, double _lake_scale,
+		, river_power_scale(0.2) {};
+
+	GenerateSetting(MapType _type, int _seed, double _site_range, double _radius, double _lake_scale,
 		double _lake_size, unsigned int _island_cnt, double _island_radius_max,
 		double _island_radius_min, unsigned int _lake_cnt, double _lake_radius_max,
 		double _lake_radius_min, double _river_radius, double _river_power_scale)
 		: type(_type)
 		, seed(_seed)
+		, site_range(std::clamp(_site_range, 0.0, 1.0))
 		, radius(_radius)
 		, lake_scale(_lake_scale)
 		, lake_size(_lake_size)
@@ -75,12 +78,12 @@ public:
 		, lake_radius_max(_lake_radius_max)
 		, lake_radius_min(_lake_radius_min)
 		, river_radius(_river_radius)
-		, river_power_scale(_river_power_scale)
-	{};
+		, river_power_scale(_river_power_scale) {};
 
 
 	inline void SetMapType(MapType new_type) { type = new_type; };
 	inline void SetSeed(int new_seed) { seed = new_seed; };
+	inline void SetSiteRange(int new_seed) { seed = new_seed; };
 	inline void SetRadius(double new_radius) { radius = new_radius; };
 	inline void SetLakeScale(double new_scale) { lake_scale = new_scale; };
 	inline void SetLakeSize(double new_size) { lake_size = new_size; };
@@ -95,6 +98,7 @@ public:
 
 	inline MapType GetMapType() { return type; };
 	inline int GetSeed() { return seed; };
+	inline double GetSiteRange() { return site_range; };
 	inline double GetRadius() { return radius; };
 	inline double GetLakeScale() { return lake_scale; };
 	inline double GetLakeSize() { return lake_size; };
@@ -106,6 +110,9 @@ public:
 	inline double GetLakeRadiusMin() { return lake_radius_min; };
 	inline double GetRiverRadius() { return river_radius; };
 	inline double GetRiverPowerScale() { return river_power_scale; };
+
+	inline double GetRandom() { return rand() / ((double)RAND_MAX); }
+	inline void Srand() { srand(seed); }
 
 };
 
@@ -135,33 +142,13 @@ private:
 	//;
 	CircleEventQueue* circleEventQueue;
 	//std::vector<Point2*>* siteEventQueue;
-
+	std::vector<Point2> sites;
 	BoundingBox	boundingBox;
 	GenerateSetting setting;
+	//BoundingBox bbox;
+
 
 	void SetupVertexColor(Vertex* v, Cell* c, Cell* opposite_c, Color& elev_rate_c);
-
-
-public:
-	VoronoiDiagramGenerator() : has_created_ocean(false), has_set_color(false), image_flag(ALL_IMAGE), max_elevation(0), max_moisture(0), diagram(nullptr), circleEventQueue(nullptr), boundingBox(BoundingBox()), beachLine(nullptr) {};
-	~VoronoiDiagramGenerator() {};
-
-	Diagram* GetDiagram();
-
-	unsigned int GetMaxElevation() { return max_elevation; }
-	unsigned int GetMaxMoisture() { return max_moisture; }
-
-	void compute(std::vector<Point2>& sites, BoundingBox bbox, bool reset = true);
-	void relax();
-
-	void relaxLoop(int num);
-
-	void CreateWorld();
-
-	inline void SetSetting(GenerateSetting newSetting) { setting = newSetting; };
-	inline GenerateSetting& GetSetting() { return setting; };
-
-	void printBeachLine();
 
 	//BeachLine
 	RBTree<BeachSection>* beachLine;
@@ -170,9 +157,6 @@ public:
 	void removeBeachSection(treeNode<BeachSection>* section);
 	double leftBreakpoint(treeNode<BeachSection>* section, double directrix);
 	double rightBreakpoint(treeNode<BeachSection>* section, double directrix);
-
-	inline double CalcDistance(const Point2& a, const Point2& b);
-	inline double GetRandom();
 
 	void SetupOcean();
 
@@ -192,6 +176,31 @@ public:
 	void SetupColor(int flag = ALL_IMAGE);
 	void SetupRiverTriangle(Color c);
 
+public:
+	VoronoiDiagramGenerator() : has_created_ocean(false), has_set_color(false), image_flag(ALL_IMAGE), max_elevation(0), max_moisture(0), diagram(nullptr), circleEventQueue(nullptr), boundingBox(BoundingBox()), beachLine(nullptr) {};
+	~VoronoiDiagramGenerator() {};
+
+	Diagram* GetDiagram();
+
+	unsigned int GetMaxElevation() { return max_elevation; }
+	unsigned int GetMaxMoisture() { return max_moisture; }
+
+	void CreateSite(unsigned int dimension, unsigned int numSites);
+
+	void Compute(bool reset = true);
+	void Relax();
+
+	void RelaxLoop(int num);
+
+	void CreateWorld();
+
+	inline void SetSetting(GenerateSetting newSetting) { setting = newSetting; };
+	inline GenerateSetting& GetSetting() { return setting; };
+
+	void printBeachLine();
+
+
+
 	void SaveAllImage(double dimension, unsigned int w, unsigned int h);
 	void SaveImage(const char* filename, double dimension, unsigned int w, unsigned int h);
 
@@ -200,18 +209,6 @@ public:
 };
 
 
-
-
-inline double VoronoiDiagramGenerator::CalcDistance(const Point2& a, const Point2& b) {
-	double x = (b.x - a.x);
-	double y = (b.y - a.y);
-	return sqrt((x * x) + (y * y));
-}
-
-// Returns a real number between 0 and 1
-inline double VoronoiDiagramGenerator::GetRandom() {
-	return rand() / ((double)RAND_MAX);
-}
 
 
 inline void VoronoiDiagramGenerator::detachBeachSection(treeNode<BeachSection>* section) {

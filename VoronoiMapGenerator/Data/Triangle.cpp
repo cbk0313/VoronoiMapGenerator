@@ -200,33 +200,19 @@ void Triangle::DrawTransparent(unsigned char* pixel_data, unsigned int w, unsign
 			Color c = InterpolateColor(Point2(x, y));
 			CharColor pixel_char_c = GetPixelColor(pixel_data, w, h, x, y);
 			Color pixel_c = Color((double)pixel_char_c.r / 255, (double)pixel_char_c.g / 255, (double)pixel_char_c.b / 255, 1);
+			
 			double alpha = c.a;
 			if (alpha > 1) alpha = 1;
 			else if (alpha < 0) alpha = 0;
 			double pixel_alpha = 1. - alpha;
-			//std::cout << pixel_alpha << "\n";
-			/*std::cout << pixel_c.r << "\n";
-			std::cout << pixel_c.g << "\n";
-			std::cout << pixel_c.b << "\n";*/
-			
 			
 			Color mix_c = Color(
 				(pixel_c.r * pixel_alpha + c.r * alpha),
 				(pixel_c.g * pixel_alpha + c.g * alpha),
 				(pixel_c.b * pixel_alpha + c.b * alpha),
 				1);
-			
-			//mix_c.a = std::clamp<double>(mix_c.a, 0, 1.);
-			//mix_c.g = std::clamp<double>(mix_c.g, 0, 1.);
-			//mix_c.b = std::clamp<double>(mix_c.b, 0, 1.);
-			
-		/*	std::cout << (unsigned int)test.r << "\n";
-			std::cout << (unsigned int)test.g << "\n";
-			std::cout << (unsigned int)test.b << "\n";
-			std::cout << mix_c.a << "!\n";
-			*/
+
 			DrawPixel(pixel_data, w, h, x, y, mix_c);
-			
 		}
 	}
 }

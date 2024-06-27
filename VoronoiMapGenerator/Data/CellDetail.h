@@ -51,8 +51,9 @@ private:
 	//Cell* unionCell;
 
 	int elevation;
-	unsigned int localMoisture;
-	unsigned int areaMoisture;
+	unsigned int moisture;
+	//unsigned int localMoisture;
+	//unsigned int areaMoisture;
 	unsigned int biome;
 
 	Cell* cell;
@@ -83,12 +84,14 @@ public:
 	void AddElevation(int num);
 
 	unsigned int GetMoisture();
-	unsigned int GetAreaMoisture();
-	unsigned int GetLocalMoisture();
-	void SetAreaMoisture(unsigned int num);
-	void AddAreaMoisture(unsigned int num);
-	void SetLocalMoisture(unsigned int num);
-	void AddLocalMoisture(unsigned int num);
+	void SetMoisture(unsigned int num);
+	void AddMoisture(unsigned int num);
+	//unsigned int GetAreaMoisture();
+	//unsigned int GetLocalMoisture();
+	//void SetAreaMoisture(unsigned int num);
+	//void AddAreaMoisture(unsigned int num);
+	//void SetLocalMoisture(unsigned int num);
+	//void AddLocalMoisture(unsigned int num);
 
 	unsigned int GetBiome();
 	void SetBiome(unsigned int num);
@@ -105,7 +108,7 @@ public:
 	void SetEdge(bool b);
 	void Reset(bool reset_edge = true, bool reset_terrain = true, bool reset_elev = true);
 
-	CellDetail() : b_edge(false), b_flat(false), b_peak(false), b_highest_peak(false), cell(nullptr), unionfind(UnionFind<Cell, TERRAIN_CNT>(nullptr)), elevation(0), localMoisture(0), areaMoisture(0), biome(0) { SetTerrain(Terrain::OCEAN); };
+	CellDetail() : b_edge(false), b_flat(false), b_peak(false), b_highest_peak(false), cell(nullptr), unionfind(UnionFind<Cell, TERRAIN_CNT>(nullptr)), elevation(0), moisture(0), biome(0) { SetTerrain(Terrain::OCEAN); };
 	CellDetail(Cell* c) : CellDetail() {
 		cell = c;
 		unionfind = UnionFind<Cell, TERRAIN_CNT>(c);

@@ -34,10 +34,13 @@ public:
     Point2 operator*(const double s) const;
     Point2 operator/(const double s) const;
 
-    double distanceTo(const Point2& p) const;
-    double distanceToSquared(const Point2& p) const;
-    double distanceFromOrigin() const;
-    double distanceFromOriginSquared() const;
+    static bool SitesOrdered(const Point2& s1, const Point2& s2);
+
+    static double Distance(const Point2& a, const Point2& b);
+    double DistanceTo(const Point2& p) const;
+    double DistanceToSquared(const Point2& p) const;
+    double DistanceFromOrigin() const;
+    double DistanceFromOriginSquared() const;
 
     double GetAngle() const;
 
