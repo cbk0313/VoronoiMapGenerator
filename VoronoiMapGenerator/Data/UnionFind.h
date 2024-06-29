@@ -1,6 +1,8 @@
 #pragma once
 #include <iostream>
 
+using CellUniuq = unsigned int;
+
 enum class Terrain : std::size_t;
 
 template<typename T, std::size_t N>
@@ -58,7 +60,7 @@ void UnionFind<T, N>::SetUnionCell(Terrain t, T* target) {
 template<typename T>
 struct UnionArray {
 
-	std::unordered_map<unsigned int, T> unions;
+	std::unordered_map<CellUniuq, T> unions;
 
 	UnionArray() {}
 	T* findUnion(unsigned int uniuqe) {

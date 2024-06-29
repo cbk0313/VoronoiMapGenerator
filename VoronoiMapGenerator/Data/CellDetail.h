@@ -118,10 +118,16 @@ public:
 	//void SetUnionCell(Cell* target);
 };
 
-
-struct IslandUnion {
+class VoronoiDiagramGenerator;
+class IslandUnion {
+	friend VoronoiDiagramGenerator;
 	std::vector<Cell*> land;
 	UnionArray<std::vector<Cell*>> highestPeakUnion;
 	UnionArray<std::vector<Cell*>> peakUnion;
 	UnionArray<std::vector<Cell*>> lakeUnion;
+public:
+	std::vector<Cell*>& GetLandCells() { return land; }
+	auto& GetHighestPeakUnion() { return highestPeakUnion.unions; }
+	auto& GetPeakUnion() { return peakUnion.unions; }
+	auto& GetLakeUnion() { return lakeUnion.unions; }
 };

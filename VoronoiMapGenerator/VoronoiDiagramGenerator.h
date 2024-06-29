@@ -8,10 +8,8 @@
 #include <vector>
 #include "Data/River.h"
 
-enum class MapType {
-	CONTINENT,
-	ISLAND
-};
+#include "Data/Setting.h"
+
 
 struct BoundingBox {
 	double xL;
@@ -24,97 +22,6 @@ struct BoundingBox {
 		xL(xmin), xR(xmax), yB(ymin), yT(ymax) {};
 };
 
-class GenerateSetting {
-	//friend class VoronoiDiagramGenerator;
-private:
-	MapType type;
-	int seed;
-	double site_range;
-	double radius; 
-	double lake_scale; 
-	double lake_size; 
-
-	unsigned int island_cnt; 
-	double island_radius_max;
-	double island_radius_min;
-
-	unsigned int lake_cnt;
-	double lake_radius_max;
-	double lake_radius_min;
-
-	double river_radius;
-	double river_power_scale;
-public:
-	GenerateSetting()
-		: type(MapType::CONTINENT)
-		, seed(0)
-		, site_range(0.666)
-		, radius(500000) // radius, 0, 0.7, 10, radius / 3, radius / 5, 10, radius / 5, radius / 7)
-		, lake_scale(0)
-		, lake_size(0.7)
-		, island_cnt(10)
-		, island_radius_max(333333)
-		, island_radius_min(200000)
-		, lake_cnt(10)
-		, lake_radius_max(200000)
-		, lake_radius_min(142857.1428571429)
-		, river_radius(500)
-		, river_power_scale(0.2) {};
-
-	GenerateSetting(MapType _type, int _seed, double _site_range, double _radius, double _lake_scale,
-		double _lake_size, unsigned int _island_cnt, double _island_radius_max,
-		double _island_radius_min, unsigned int _lake_cnt, double _lake_radius_max,
-		double _lake_radius_min, double _river_radius, double _river_power_scale)
-		: type(_type)
-		, seed(_seed)
-		, site_range(std::clamp(_site_range, 0.0, 1.0))
-		, radius(_radius)
-		, lake_scale(_lake_scale)
-		, lake_size(_lake_size)
-		, island_cnt(_island_cnt)
-		, island_radius_max(_island_radius_max)
-		, island_radius_min(_island_radius_min)
-		, lake_cnt(_lake_cnt)
-		, lake_radius_max(_lake_radius_max)
-		, lake_radius_min(_lake_radius_min)
-		, river_radius(_river_radius)
-		, river_power_scale(_river_power_scale) {};
-
-
-	inline void SetMapType(MapType new_type) { type = new_type; };
-	inline void SetSeed(int new_seed) { seed = new_seed; };
-	inline void SetSiteRange(int new_seed) { seed = new_seed; };
-	inline void SetRadius(double new_radius) { radius = new_radius; };
-	inline void SetLakeScale(double new_scale) { lake_scale = new_scale; };
-	inline void SetLakeSize(double new_size) { lake_size = new_size; };
-	inline void SetIslandCount(unsigned int new_cnt) { island_cnt = new_cnt; };
-	inline void SetIslandRadiusMax(double new_radius) { island_radius_max = new_radius; };
-	inline void SetIslandRadiusMin(double new_radius) { island_radius_min = new_radius; };
-	inline void SetLakeCount(unsigned int new_cnt) { lake_cnt = new_cnt; };
-	inline void SetLakeRadiusMax(double new_radius) { lake_radius_max = new_radius; };
-	inline void SetLakeRadiusMin(double new_radius) { lake_radius_min = new_radius; };
-	inline void SetRiverRadius(double new_radius) { river_radius = new_radius; };
-	inline void SetRiverPowerScale(double new_sacle) { river_power_scale = new_sacle; };
-
-	inline MapType GetMapType() { return type; };
-	inline int GetSeed() { return seed; };
-	inline double GetSiteRange() { return site_range; };
-	inline double GetRadius() { return radius; };
-	inline double GetLakeScale() { return lake_scale; };
-	inline double GetLakeSize() { return lake_size; };
-	inline unsigned int GetIslandCount() { return island_cnt; };
-	inline double GetIslandRadiusMax() { return island_radius_max; };
-	inline double GetIslandRadiusMin() { return island_radius_min; };
-	inline unsigned int GetLakeCount() { return lake_cnt; };
-	inline double GetLakeRadiusMax() { return lake_radius_max; };
-	inline double GetLakeRadiusMin() { return lake_radius_min; };
-	inline double GetRiverRadius() { return river_radius; };
-	inline double GetRiverPowerScale() { return river_power_scale; };
-
-	inline double GetRandom() { return rand() / ((double)RAND_MAX); }
-	inline void Srand() { srand(seed); }
-
-};
 
 #define ALL_IMAGE ((VoronoiDiagramGenerator::ISLAND | VoronoiDiagramGenerator::OCEAN | VoronoiDiagramGenerator::LAKE | VoronoiDiagramGenerator::COAST | VoronoiDiagramGenerator::RIVER))
 
@@ -175,6 +82,7 @@ private:
 	void SetupEdgePos();
 	void SetupColor(int flag = ALL_IMAGE);
 	void SetupRiverTriangle(Color c);
+	void CreateTriangle();
 
 public:
 	VoronoiDiagramGenerator() : has_created_ocean(false), has_set_color(false), image_flag(ALL_IMAGE), max_elevation(0), max_moisture(0), diagram(nullptr), circleEventQueue(nullptr), boundingBox(BoundingBox()), beachLine(nullptr) {};
@@ -192,7 +100,7 @@ public:
 
 	void RelaxLoop(int num);
 
-	void CreateWorld();
+	void CreateWorld(bool create_tri = true);
 
 	inline void SetSetting(GenerateSetting newSetting) { setting = newSetting; };
 	inline GenerateSetting& GetSetting() { return setting; };

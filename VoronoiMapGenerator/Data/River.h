@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "Data/Buffer.h"
+#include "Buffer.h"
 #include "../Cell.h"
 #include "Triangle.h"
 
@@ -11,6 +11,8 @@ template<template<typename> class Q, typename T, typename ...args>
 class UniqueBuffer;
 
 struct RiverPoint;
+
+class GenerateSetting;
 
 namespace River {
 	struct pair_hash {
@@ -193,28 +195,29 @@ class RiverLine {
 	static std::vector<RiverLine*> RIVER_LINE_ARR;
 	static unsigned int ADDED_COUNT;
 
+	bool used;
 	RiverPointVector points;
 	Triangles tris;
-	double radius;
-	double power_sacle;
-	double curv_spacing;
+	//double radius;
+	//double power_sacle;
+	//double curv_spacing;
 
-	bool used;
+	GenerateSetting& main_setting;
 
-	RiverLine(double _radius, double _power_sacle)
-		: radius(_radius)
-		, power_sacle(_power_sacle)
-		, curv_spacing(0.02f)
-		, used(false)
+	RiverLine(GenerateSetting& setting)
+		: used(false)
+		, main_setting(setting)
+		//, radius(_radius)
+		//, power_sacle(_power_sacle)
+		//, curv_spacing(0.02f)
+		
 	{};
 
 	RiverLine(const RiverLine& other) 
-		: points(other.points)
+		: used(false)
+		, points(other.points)
 		, tris(other.tris)
-		, radius(other.radius)
-		, power_sacle(other.power_sacle)
-		, curv_spacing(other.curv_spacing)
-		, used(false)
+		, main_setting(other.main_setting)
 	{
 		//std::cout << "복사 생성자 호출 " << points.size() << std::endl;
 	}
@@ -227,7 +230,7 @@ public:
 	// Delete all unused objects.
 	static void ClearJunk();
 	// Create new RiverLine.
-	static RiverLine* Create(double _radius, double _power_sacle);
+	static RiverLine* Create(GenerateSetting& setting);
 	// Copy other.
 	static RiverLine* Create(const RiverLine& other);
 	// Sets that it has been used
@@ -272,9 +275,10 @@ public:
 };
 
 
-
 class RiverLines {
 	friend class RiverEdge;
+
+	GenerateSetting& main_setting;
 	std::vector<RiverLine*> lines;
 
 	RiverEdgeMap RIVER_EDGES_MAP;
@@ -282,9 +286,11 @@ class RiverLines {
 	RiverLinkMap LINKED_RIVER_EDGES;
 	RiverLinkMap LINKED_RIVERS;
 	RiverCntMap RIVER_CNT;
-
+	
 public:
-	RiverLines() {
+	RiverLines(GenerateSetting& setting)
+	: main_setting(setting)
+	{
 		RIVER_EDGES_MAP = RiverEdgeMap();
 		RIVER_OUT_MAP = RiverOutMap();
 		LINKED_RIVER_EDGES = RiverLinkMap();

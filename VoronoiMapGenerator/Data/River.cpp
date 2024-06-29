@@ -1,6 +1,7 @@
-#include "Data/River.h"
-
-
+#include "River.h"
+#include "Setting.h"
+#include <queue>
+#include "../Edge.h"
 
 
 //RiverCrossingMap RiverCrossing::RIVER_CROSSING_MAP = RiverCrossingMap();
@@ -413,7 +414,7 @@ void RiverTriangle::CreateCardinalTri(Triangles& tris, RiverPointVector& point, 
 
 
 	if (fade_out) {
-		RiverTriangle::DrawCircle(tris, point[point.size() - 1].point, 100, pre_norm.GetAngle() - 90, 50, radius, river_scale, point[2].power, color);
+		RiverTriangle::DrawCircle(tris, point[2].point, 100, pre_norm.GetAngle() - 90, 50, radius, river_scale, point[2].power, color);
 
 		/*	double scale = radius * (point[point.size() - 1].power * river_scale + 1);
 			Point2 norm = GetCardinalDirection(result, 1, 1 + spacing);
@@ -698,8 +699,8 @@ void RiverLine::ClearJunk() {
 	RIVER_LINE_ARR = temp;
 }
 
-RiverLine* RiverLine::Create(double _radius, double _power_sacle) {
-	RiverLine* item = new RiverLine(_radius, _power_sacle);
+RiverLine* RiverLine::Create(GenerateSetting& setting) {
+	RiverLine* item = new RiverLine(setting);
 	RIVER_LINE_ARR.push_back(item);
 	return item;
 }
@@ -724,9 +725,6 @@ Triangles& RiverLine::GetTriangle() {
 void RiverLine::AddPoint(RiverPoint p) {
 	points.push_back(p);
 
-	if (points.size() >= 2) {
-
-	}
 }
 
 RiverPointVector& RiverLine::GetPointArray() {
@@ -749,8 +747,8 @@ RiverPoint& RiverLine::GetEndPoint() {
 void RiverLine::AdjustPoint() {
 	RiverPoint& f_p = GetFirstPoint();
 	RiverPoint& e_p = GetEndPoint();
-	double f_scale = radius * (power_sacle * f_p.power + 1) / 2;
-	double e_scale = radius * (power_sacle * e_p.power + 1) / 2;
+	double f_scale = main_setting.GetRiverRadius() * (main_setting.GetRiverPowerScale() * f_p.power + 1) / 2;
+	double e_scale = main_setting.GetRiverRadius() * (main_setting.GetRiverPowerScale() * e_p.power + 1) / 2;
 	if (points.size() > 2) {
 
 		double start_result[3][2];
@@ -758,9 +756,9 @@ void RiverLine::AdjustPoint() {
 		RiverTriangle::CalcCardinal(points, start_result, 0);
 		RiverTriangle::CalcCardinal(points, end_result, (int)points.size() - 3);
 
-		f_p.point = f_p.point + RiverTriangle::GetCardinalDirection(start_result, 0, curv_spacing) * f_scale;
+		f_p.point = f_p.point + RiverTriangle::GetCardinalDirection(start_result, 0, main_setting.GetRiverCurvSpacing()) * f_scale;
 
-		e_p.point = e_p.point + RiverTriangle::GetCardinalDirection(end_result, 1, 1 - curv_spacing) * e_scale;
+		e_p.point = e_p.point + RiverTriangle::GetCardinalDirection(end_result, 1, 1 - main_setting.GetRiverCurvSpacing()) * e_scale;
 	}
 	else {
 		Point2 dir = (e_p.point - f_p.point).Normailize();
@@ -779,13 +777,14 @@ void RiverLine::CreateTriangle(Color c) {
 			memset(end_result, 0, sizeof(end_result));
 			CalcCardinal(start_result, 0);
 			CalcCardinal(end_result, (int)points.size() - 3);*/
-		RiverTriangle::CreateSplineTri(tris, points, c, radius, power_sacle, curv_spacing, true, true);
+
+		RiverTriangle::CreateSplineTri(tris, points, c, main_setting.GetRiverRadius(), main_setting.GetRiverPowerScale(), main_setting.GetRiverCurvSpacing(), true, true);
 	}
 	else if (points.size() == 3) {
-		RiverTriangle::CreateCardinalTri(tris, points, c, radius, power_sacle, curv_spacing, true, true);
+		RiverTriangle::CreateCardinalTri(tris, points, c, main_setting.GetRiverRadius(), main_setting.GetRiverPowerScale(), main_setting.GetRiverCurvSpacing(), true, true);
 	}
 	else {
-		RiverTriangle::CreateLineTri(tris, points, c, radius, power_sacle, curv_spacing, true, true);
+		RiverTriangle::CreateLineTri(tris, points, c, main_setting.GetRiverRadius(), main_setting.GetRiverPowerScale(), main_setting.GetRiverCurvSpacing(), true, true);
 	}
 
 }
@@ -906,10 +905,52 @@ void RiverLines::AddLine(RiverCrossing* corssing, RiverLine* line) {
 	//if (line.GetPointArray().size() > 0) {
 	if (line->GetPointArray().size() <= 1) return;
 	line->SetUsed();
-
 	RiverPointVector& vec = line->GetPointArray();
-	if (vec.size() >= 2) {
-		
+	auto cnt = vec.size();
+	if (cnt == 2) {
+		double chance = 1 - main_setting.GetRiverAdditionalCurveChance();
+		double dist = main_setting.GetRiverAdditionalCurveDistance();
+		int chance_cnt = 0;
+		std::vector<bool> list = std::vector<bool>(cnt - 1, false);
+		for (int i = 0, loop_cnt = cnt - 1; i < loop_cnt; i++) {
+			list[i] = main_setting.GetRandom() >= chance;
+			chance_cnt++;
+		}
+
+		RiverPointVector temp;
+		temp.reserve(cnt + chance_cnt);
+		temp.push_back(vec[0]);
+		for (int i = 1; i < cnt; i++) {
+			if (list[i - 1]) {
+				Point2 p = (vec[i].point + vec[i - 1].point) / 2;
+				//Point2 norm = (vec[i].point - vec[i - 1].point).Normailize();
+				double power = (vec[i - 1].power + vec[i].power) / 2;
+				Edge* e = nullptr;
+				for (auto hf : vec[i - 1].GetCell()->halfEdges) {
+					if (hf->edge->lSite->cell == vec[i].GetCell() ||
+						(hf->edge->rSite && hf->edge->rSite->cell == vec[i].GetCell())) {
+						e = hf->edge;
+					}
+				}
+				double p_dist;
+				if (e == nullptr) {
+					p_dist = vec[i - 1].point.DistanceTo(vec[i].point);
+				}
+				else {
+					p_dist = e->vertA->point.DistanceTo(e->vertB->point);
+				}
+				double dist = p_dist * main_setting.GetRiverAdditionalCurveDistance();
+				double theta = 2.0f * 3.1415926f * (main_setting.GetRandom() * 360.0  / 360);
+				double x = dist * cosf((float)theta);
+				double y = dist * sinf((float)theta);
+				//Point2 p = (vec[i - 1].point + vec[i].point) / 2 + Point2(main_setting.GetRandom(), main_setting.GetRandom()) * p_dist * main_setting.GetRiverAdditionalCurveDistance();
+				RiverPoint rp = RiverPoint(power, nullptr, p + Point2(x, y));
+				temp.push_back(rp);
+			}
+			temp.push_back(vec[i]);
+		}
+		//std::cout << temp.size() << "\n";
+		line->GetPointArray() = temp;
 	}
 
 	corssing->AddRiver(line);

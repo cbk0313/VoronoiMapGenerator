@@ -12,8 +12,10 @@ struct UnionArray;
 
 
 struct BoundingBox;
+class GenerateSetting;
 class Diagram {
-public:
+	friend class VoronoiDiagramGenerator;
+	Diagram(GenerateSetting& setting) : river_lines(RiverLines(setting)) {}
 	std::vector<Cell*> cells;
 	std::vector<Edge*> edges;
 	std::vector<Vertex*> vertices;
@@ -21,11 +23,19 @@ public:
 	UnionArray<IslandUnion> islandUnion;
 	RiverLines river_lines;
 	RiverCrossing river_cross;
+	std::vector<Triangle> triangles;
+public:
+	std::vector<Cell*>& GetCells() { return cells; }
+	std::vector<Edge*>& GetEdges() { return edges; }
+	UnionArray<std::vector<Cell*>>& GetOceanUnion() { return oceanUnion; }
+	UnionArray<IslandUnion>& GetIslandUnion() { return islandUnion; }
+	RiverLines& GetRiverLines() { return river_lines; }
+	RiverCrossing& GetRiverCrossing() { return river_cross; }
+	std::vector<Triangle>& GetTriangles() { return triangles; }
 
 	~Diagram();
 	void printDiagram();
 private:
-	friend class VoronoiDiagramGenerator;
 
 	//std::vector<Cell*> tmpCells;
 	//std::vector<Edge*> tmpEdges;

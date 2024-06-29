@@ -75,6 +75,9 @@
     <ClInclude Include="Data\River.h">
       <Filter>Header Files\Data</Filter>
     </ClInclude>
+    <ClInclude Include="Data\Setting.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BeachLine.cpp">
@@ -116,8 +119,14 @@
     <ClCompile Include="Data\Triangle.cpp">
       <Filter>Source Files\Data</Filter>
     </ClCompile>
-    <ClCompile Include="River.cpp">
+    <ClCompile Include="Data\Setting.cpp">
       <Filter>Source Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="Data\River.cpp">
+      <Filter>Source Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateWorld.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
