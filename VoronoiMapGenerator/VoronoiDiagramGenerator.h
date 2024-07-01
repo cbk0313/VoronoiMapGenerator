@@ -1,5 +1,4 @@
-#ifndef _VORONOI_DIAGRAM_GENERATOR_H_
-#define _VORONOI_DIAGRAM_GENERATOR_H_
+#pragma once
 
 #include "RBTree.h"
 #include "CircleEventQueue.h"
@@ -105,7 +104,7 @@ public:
 	inline void SetSetting(GenerateSetting newSetting) { setting = newSetting; };
 	inline GenerateSetting& GetSetting() { return setting; };
 
-	void printBeachLine();
+	//void printBeachLine();
 
 
 
@@ -124,4 +123,3 @@ inline void VoronoiDiagramGenerator::detachBeachSection(treeNode<BeachSection>* 
 	beachLine->removeNode(section);
 }
 
-#endif

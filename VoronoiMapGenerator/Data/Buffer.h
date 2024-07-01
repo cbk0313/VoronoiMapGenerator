@@ -7,9 +7,9 @@
 
 template <typename T>
 using ReturnType = typename std::conditional<
-	std::is_pointer<T>::value, // 조건: T가 포인터 타입인지 확인
-	T,                         // T가 포인터 타입이면 그대로 T
-	T&                         // T가 포인터 타입이 아니면 레퍼런스 타입
+	std::is_pointer<T>::value,
+	T,                        
+	T&                        
 >::type;
 
 template<template<typename> class Q, typename T, typename ...args>

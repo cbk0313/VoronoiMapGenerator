@@ -42,9 +42,7 @@ Color Triangle::InterpolateColor(const Point2& p) const {
 	double alpha = ((y1 - y2) * (p.x - x2) + (x2 - x1) * (p.y - y2)) / ((y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2));
 	double beta = ((y2 - y0) * (p.x - x2) + (x0 - x2) * (p.y - y2)) / ((y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2));
 	double gamma = 1.0f - alpha - beta;
-	//std::cout << alpha + beta + gamma << "\n";
 	const Color& c0 = colors[0], &c1 = colors[1], &c2 = colors[2];
-	//return Color::lerp(c0, c1, alpha) + Color::lerp(c1, c2, beta) + Color::lerp(c2, c0, gamma);
 	return Color(
 		c0.r * alpha + c1.r * beta + c2.r * gamma,
 		c0.g * alpha + c1.g * beta + c2.g * gamma,
@@ -69,16 +67,13 @@ CharColor Triangle::GetPixelColor(unsigned char* pixel_data, unsigned int w, uns
 
 
 double Triangle::FindXGivenY(const Point2& p1, const Point2& p2, unsigned int y) {
-	/*if (p1.y == p2.y) {
-		return std::min(p1.x, p2.x);
-	}*/
+
 	if (p1.x == p2.x) {
 		return p1.x;
 	}
 
 	double m = (p2.y - p1.y) / (p2.x - p1.x);
 	double b = p1.y - m * p1.x;
-	//std::cout << ((double)y - b) / m << "\n";
 	return ((double)y - b) / m;
 }
 
@@ -86,33 +81,22 @@ bool Triangle::IsYBetweenPoints(const Point2& p1, const Point2& p2, double y) {
 	return y >= std::min(p1.y, p2.y) && y <= std::max(p1.y, p2.y);
 }
 unsigned int Triangle::FindLeftmostXGivenY(unsigned int y, unsigned int min_x) {
-	// 주어진 y 값이 삼각형의 범위 내에 있는지 확인
 	const Point2& p1 = points[0], &p2 = points[1], &p3 = points[2];
 
-	/*double MinY = std::min({ p1.y, p2.y, p3.y });
-	double MaxY = std::max({ p1.y, p2.y, p3.y });
-	if (y < MinY || y > MaxY) {
-		throw std::out_of_range("주어진 y 값이 삼각형의 범위를 벗어납니다.");
-	}*/
-
-	// 가장 좌측에 있는 x 값을 초기화
 	double mostX = std::numeric_limits<double>::max();
 	bool check = false;
 
 	if (IsYBetweenPoints(p1, p2, y)) {
 		mostX = std::min(mostX, FindXGivenY(p1, p2, y));
 		check = true;
-		//std::cout << (unsigned int)mostX << " A\n";
 	}
 	if (IsYBetweenPoints(p2, p3, y)) {
 		mostX = std::min(mostX, FindXGivenY(p2, p3, y));
 		check = true;
-		//std::cout << (unsigned int)mostX << " B\n";
 	}
 	if (IsYBetweenPoints(p1, p3, y)) {
 		mostX = std::min(mostX, FindXGivenY(p1, p3, y));
 		check = true;
-		//std::cout << (unsigned int)mostX << " C\n";
 	}
 
 	if (!check) return min_x;
@@ -120,39 +104,28 @@ unsigned int Triangle::FindLeftmostXGivenY(unsigned int y, unsigned int min_x) {
 		return (unsigned int)mostX + 1;
 	}
 
-
 	
 }
 
 
 unsigned int Triangle::FindRightmostXGivenY(unsigned int y, unsigned int max_x) {
-	// 주어진 y 값이 삼각형의 범위 내에 있는지 확인
+
 	const Point2& p1 = points[0], & p2 = points[1], & p3 = points[2];
 
-	/*double MinY = std::min({ p1.y, p2.y, p3.y });
-	double MaxY = std::max({ p1.y, p2.y, p3.y });
-	if (y < MinY || y > MaxY) {
-		throw std::out_of_range("주어진 y 값이 삼각형의 범위를 벗어납니다.");
-	}*/
-
-	// 가장 좌측에 있는 x 값을 초기화
 	double mostX = -1;
 	bool check = false;
 
 	if (IsYBetweenPoints(p1, p2, y)) {
 		mostX = std::max(mostX, FindXGivenY(p1, p2, y));
 		check = true;
-		//std::cout << (unsigned int)mostX << " A\n";
 	}
 	if (IsYBetweenPoints(p2, p3, y)) {
 		mostX = std::max(mostX, FindXGivenY(p2, p3, y));
 		check = true;
-		//std::cout << (unsigned int)mostX << " B\n";
 	}
 	if (IsYBetweenPoints(p1, p3, y)) {
 		mostX = std::max(mostX, FindXGivenY(p1, p3, y));
 		check = true;
-		//std::cout << (unsigned int)mostX << " C\n";
 	}
 
 	if (!check) return max_x;

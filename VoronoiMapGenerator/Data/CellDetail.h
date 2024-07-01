@@ -35,11 +35,8 @@ enum class Terrain : std::size_t {
 #define OCEAN_ELEVATION -2
 #define LAND_MIN_ELEVATION 1
 
-//typedef UnionFind<Cell, TERRAIN_CNT> UF;
-
 struct CellDetail {
 
-	//friend class VoronoiDiagramGenerator;
 	friend struct UnionFind<Cell, TERRAIN_CNT>;
 private:
 
@@ -48,12 +45,8 @@ private:
 	bool b_peak;
 	bool b_highest_peak;
 
-	//Cell* unionCell;
-
 	int elevation;
 	unsigned int moisture;
-	//unsigned int localMoisture;
-	//unsigned int areaMoisture;
 	unsigned int biome;
 
 	Cell* cell;
@@ -86,12 +79,6 @@ public:
 	unsigned int GetMoisture();
 	void SetMoisture(unsigned int num);
 	void AddMoisture(unsigned int num);
-	//unsigned int GetAreaMoisture();
-	//unsigned int GetLocalMoisture();
-	//void SetAreaMoisture(unsigned int num);
-	//void AddAreaMoisture(unsigned int num);
-	//void SetLocalMoisture(unsigned int num);
-	//void AddLocalMoisture(unsigned int num);
 
 	unsigned int GetBiome();
 	void SetBiome(unsigned int num);
@@ -101,9 +88,6 @@ public:
 	Cell* UnionFindCell(Terrain t);
 	CellDetail& UnionFindCellDetail(Terrain t);
 	void SetUnionCell(Terrain t, Cell* c);
-	/*Cell* getUnionCell() {
-		return unionCell;
-	}*/
 	void SetTerrain(Terrain t);
 	void SetEdge(bool b);
 	void Reset(bool reset_edge = true, bool reset_terrain = true, bool reset_elev = true);
@@ -114,8 +98,6 @@ public:
 		unionfind = UnionFind<Cell, TERRAIN_CNT>(c);
 	};
 	bool CheckSurroundRising();
-	//Cell* UnionFindCell();
-	//void SetUnionCell(Cell* target);
 };
 
 class VoronoiDiagramGenerator;

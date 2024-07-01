@@ -651,14 +651,14 @@ void RiverTriangle::DrawCircle(Triangles& tris, Point2 center, const int num_seg
 	//const int num_segments = 100;
 	//return;
 	Color t_c = Color(color.r, color.g, color.b, 0);
-	//glVertex2f(cx, cy); // ¿øÀÇ Áß½É
+	//glVertex2f(cx, cy); 
 	for (int i = 0; i < end; i++) {
-		double theta = 2.0f * 3.1415926f * (double(i) / double(num_segments) + start / 360); // ÇöÀç °¢µµ
-		double x_ = radius * (river_scale * power + 1) * cosf((float)theta); // x ÁÂÇ¥
-		double y_ = radius * (river_scale * power + 1) * sinf((float)theta); // y ÁÂÇ¥
-		theta = 2.0f * 3.1415926f * (double(i + 1) / double(num_segments) + start / 360); // ÇöÀç °¢µµ
-		double x_2 = radius * (river_scale * power + 1) * cosf((float)theta); // x ÁÂÇ¥
-		double y_2 = radius * (river_scale * power + 1) * sinf((float)theta); // y ÁÂÇ¥
+		double theta = 2.0f * 3.1415926f * (double(i) / double(num_segments) + start / 360);
+		double x_ = radius * (river_scale * power + 1) * cosf((float)theta);
+		double y_ = radius * (river_scale * power + 1) * sinf((float)theta); 
+		theta = 2.0f * 3.1415926f * (double(i + 1) / double(num_segments) + start / 360); 
+		double x_2 = radius * (river_scale * power + 1) * cosf((float)theta); 
+		double y_2 = radius * (river_scale * power + 1) * sinf((float)theta); 
 		tris.push_back(Triangle({
 			Point2(x_ + center.x, y_ + center.y),
 			Point2(x_2 + center.x, y_2 + center.y),
@@ -867,16 +867,16 @@ void RiverCrossing::CreateCrossingPointTriagle(Color color, double radius, doubl
 			const int num_segments = 100;
 
 
-			//glVertex2f(cx, cy); // ¿øÀÇ Áß½É
+			//glVertex2f(cx, cy);
 			color.a = 1;
 			Color trans_c = Color(color.r, color.g, color.b, 0);
 			for (int i = 0; i < num_segments; i++) {
-				double theta = 2.0f * 3.1415926f * double(i) / double(num_segments); // ÇöÀç °¢µµ
-				double x_ = radius * (river_scale * power + 1) * cosf((float)theta); // x ÁÂÇ¥
-				double y_ = radius * (river_scale * power + 1) * sinf((float)theta); // y ÁÂÇ¥
-				theta = 2.0f * 3.1415926f * double(i - 1) / double(num_segments); // ÇöÀç °¢µµ
-				double x_2 = radius * (river_scale * power + 1) * cosf((float)theta); // x ÁÂÇ¥
-				double y_2 = radius * (river_scale * power + 1) * sinf((float)theta); // y ÁÂÇ¥
+				double theta = 2.0f * 3.1415926f * double(i) / double(num_segments); 
+				double x_ = radius * (river_scale * power + 1) * cosf((float)theta); 
+				double y_ = radius * (river_scale * power + 1) * sinf((float)theta); 
+				theta = 2.0f * 3.1415926f * double(i - 1) / double(num_segments);
+				double x_2 = radius * (river_scale * power + 1) * cosf((float)theta);
+				double y_2 = radius * (river_scale * power + 1) * sinf((float)theta); 
 				rc.tris.push_back(Triangle({
 					Point2(x_ + rc.GetCell()->site.p.x, y_ + rc.GetCell()->site.p.y),
 					Point2(x_2 + rc.GetCell()->site.p.x, y_2 + rc.GetCell()->site.p.y),

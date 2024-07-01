@@ -3,28 +3,20 @@
 #include <iostream>
 #include <Windows.h>
 
-using std::cout;
-using std::cin;
-using std::endl;
-
-using DistRadius = std::pair<double, double>; // fisrt: distance, second: radius
-using PointDist = std::pair<Point2, double>; // first: point, second: radius
-
-
 Diagram* VoronoiDiagramGenerator::GetDiagram() {
 	return diagram;
 }
 
-void VoronoiDiagramGenerator::printBeachLine() {
-	treeNode<BeachSection>* section = beachLine->getFirst(beachLine->getRoot());
-
-	while (section) {
-		cout << section->data.site->p << endl;
-		section = section->next;
-	}
-	if (section) cout << section->data.site->p << endl;
-	cout << endl << endl;
-}
+//void VoronoiDiagramGenerator::printBeachLine() {
+//	treeNode<BeachSection>* section = beachLine->getFirst(beachLine->getRoot());
+//
+//	while (section) {
+//		cout << section->data.site->p << endl;
+//		section = section->next;
+//	}
+//	if (section) cout << section->data.site->p << endl;
+//	cout << endl << endl;
+//}
 
 bool pointComparator(Point2* a, Point2* b) {
 	double r = b->y - a->y;

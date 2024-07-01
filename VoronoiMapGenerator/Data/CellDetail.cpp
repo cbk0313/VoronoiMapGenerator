@@ -80,27 +80,6 @@ void CellDetail::AddMoisture(unsigned int num) {
 	moisture += num;
 }
 
-//unsigned int CellDetail::GetAreaMoisture() {
-//	return  UnionFindCellDetail(Terrain::PEAK).areaMoisture;
-//}
-//unsigned int CellDetail::GetLocalMoisture() {
-//	return localMoisture;
-//}
-//
-//
-//void CellDetail::SetAreaMoisture(unsigned int num) {
-//	UnionFindCellDetail(Terrain::PEAK).areaMoisture = num;
-//}
-//void CellDetail::AddAreaMoisture(unsigned int num) {
-//	UnionFindCellDetail(Terrain::PEAK).areaMoisture += num;
-//}
-//
-//void CellDetail::SetLocalMoisture(unsigned int num) {
-//	localMoisture = num;
-//}
-//void CellDetail::AddLocalMoisture(unsigned int num) {
-//	localMoisture += num;
-//}
 
 unsigned int CellDetail::GetBiome() {
 	return biome;
@@ -154,12 +133,10 @@ void CellDetail::Reset(bool reset_edge, bool reset_terrain, bool reset_elev) {
 
 
 bool CellDetail::CheckSurroundRising() {
-	//int aroundUpper = 0;
 	CellDetail& cd = cell->GetDetail();
 	for (HalfEdge* he : cell->halfEdges) {
 		Edge* e = he->edge;
 		Cell* targetCell = (e->lSite->cell == cell && e->rSite) ? e->rSite->cell : e->lSite->cell;
-		//if (targetCell->GetDetail().GetElevation() < c->GetDetail().GetElevation()) {
 		CellDetail& tcd = targetCell->GetDetail();
 
 		if (cd.GetTerrain() == Terrain::LAND && tcd.GetTerrain() == Terrain::LAND) {
@@ -170,23 +147,3 @@ bool CellDetail::CheckSurroundRising() {
 	}
 	return false;
 }
-//
-//
-//Cell* CellDetail::UnionFindCell() {
-//	if (unionCell == unionCell->GetDetail().unionCell) {
-//		return unionCell;
-//	}
-//	else {
-//		return unionCell = unionCell->GetDetail().UnionFindCell();
-//	}
-//}
-//
-//void CellDetail::SetUnionCell(Cell* target) {
-//	auto vim_d = UnionFindCell()->detail;
-//	target = target->GetDetail().UnionFindCell();
-//	if (vim_d.b_edge) target->GetDetail().unionCell = vim_d.unionCell;
-//	else {
-//		UnionFindCell()->GetDetail().unionCell = target;
-//	}
-//	
-//}
