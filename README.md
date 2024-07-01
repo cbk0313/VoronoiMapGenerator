@@ -12,6 +12,8 @@ Fortune's algorithm implementation used the source code at the address below.
 // 해당 소스코드를 개선한 포크(https://github.com/cbk0313/Voronoi)  
 // Fork with performance issues resolved (https://github.com/cbk0313/Voronoi)  
 
+// PS) 언리얼엔진용 플러그인 제작하기 전 프로토타입 프로그램입니다.  
+// PS) This is a prototype program before creating a plugin for Unreal Engine.  
 # Overview
 강, 해안가, 강물, 평지가 구현되어 있습니다.  
 lakes, coasts, rivers, flats are implemented.  
