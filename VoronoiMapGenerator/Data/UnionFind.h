@@ -59,7 +59,7 @@ void UnionFind<T, N>::SetUnionCell(Terrain t, T* target) {
 
 template<typename T>
 struct UnionArray {
-
+	// First is Unique number of representative cell, Second is the list of cells.
 	std::unordered_map<CellUniuq, T> unions;
 
 	UnionArray() {}

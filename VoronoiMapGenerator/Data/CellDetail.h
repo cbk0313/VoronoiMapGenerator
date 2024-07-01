@@ -127,7 +127,10 @@ class IslandUnion {
 	UnionArray<std::vector<Cell*>> lakeUnion;
 public:
 	std::vector<Cell*>& GetLandCells() { return land; }
+	// First is Unique number of representative cell, Second is the list of cells.
 	auto& GetHighestPeakUnion() { return highestPeakUnion.unions; }
+	// First is Unique number of representative cell, Second is the list of cells.
 	auto& GetPeakUnion() { return peakUnion.unions; }
+	// First is Unique number of representative cell, Second is the list of cells.
 	auto& GetLakeUnion() { return lakeUnion.unions; }
 };

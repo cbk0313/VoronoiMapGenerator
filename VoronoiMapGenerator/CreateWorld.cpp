@@ -36,8 +36,8 @@ void VoronoiDiagramGenerator::CreateWorld(bool create_tri) {
 		SetupMoisture();
 		SetupBiome();
 		CreateRiver();
-		SetupColor();
 		SetupEdgePos();
+		SetupColor();
 		if (create_tri) {
 			CreateTriangle();
 		}
@@ -1075,7 +1075,7 @@ void VoronoiDiagramGenerator::CreateRiver() {
 					}
 				}
 				if (cell_cnt == 0) {
-					pre_e->DeleteLine(buf.GetCalculating());
+					pre_e->DeleteLine(/*buf.GetCalculating()*/);
 
 				}
 

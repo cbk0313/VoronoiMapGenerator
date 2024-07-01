@@ -159,7 +159,7 @@ void RiverEdge::SetDist(int num) {
 }
 
 
-void RiverEdge::DeleteLine(std::vector<bool>& buf) {
+void RiverEdge::DeleteLine(/*std::vector<bool>& buf*/) {
 	
 	if (nexts.size() == 0) {
 		for (auto pre_e : prevs) {
@@ -172,10 +172,10 @@ void RiverEdge::DeleteLine(std::vector<bool>& buf) {
 			pre_e->nexts = tmp;
 		}
 		for (auto pre_e : prevs) {
-			pre_e->DeleteLine(buf);
+			pre_e->DeleteLine(/*buf*/);
 		}
 		//if(pre_e != nullptr) pre_e->DeleteLine(map, buf);
-		buf[end->GetUnique()] = false;
+		//buf[end->GetUnique()] = false;
 		//buf[start->GetUnique()] = false;
 		if (river_lines->RIVER_OUT_MAP.find(start->GetUnique()) != river_lines->RIVER_OUT_MAP.end()) {
 			auto& arr = river_lines->RIVER_OUT_MAP[start->GetUnique()];

@@ -52,8 +52,6 @@ bool save_image = false;
 Point2 cur_pos = Point2(0, 0);
 double cur_scale = 0;
 
-std::clock_t startOneSec = NULL;
-unsigned int oneSecCnt = 0;
 
 bool mouse_left_down = false;
 
@@ -76,16 +74,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		++Relax;
 	if (key == GLFW_KEY_T && action == GLFW_PRESS)
 		Relax += 10;
-	if (key == GLFW_KEY_X && action == GLFW_PRESS)
-		startOver = true;
 	if (key == GLFW_KEY_Y && action == GLFW_PRESS) {
 		if (relaxForever) relaxForever = false;
 		else relaxForever = true;
-	}
-	if (key == GLFW_KEY_O && action == GLFW_PRESS) {
-		startOneSec = std::clock();
-		oneSec = true;
-		oneSecCnt = 0;
 	}
 	if (key == GLFW_KEY_L && action == GLFW_PRESS) {
 		draw_line = !draw_line;
@@ -366,6 +357,14 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 				glEnd();
 			}
 
+			/*if (c->GetDetail().IsFlat()) {
+				glPointSize(whitePointSize * 2);
+				glBegin(GL_POINTS);
+				glColor4f((GLfloat)(0), (GLfloat)(1.0), 0.f, 1.f);
+				glVertex3d((GLfloat)normalize(p.x, dimension), -(GLfloat)normalize(p.y, dimension), 0.0);
+				glEnd();
+			}*/
+
 			
 
 		}
@@ -474,41 +473,25 @@ int main() {
 				"\tPress 'R' to perform Lloyd's relaxation once.\n"
 				"\tPress 'T' to perform Lloyd's relaxation ten times.\n"
 				"\tPress 'Y' to toggle continuous Lloyd's relaxation.\n"
-				"\tPress 'X' to generate a new diagram with a different number of sites.\n"
+				"\tPress 'S' Save the generated image.\n"
+				"\tPress 'D' Shows or hides the dot of cells.\n"
+				"\tPress 'SHIFT + D' Shows or hides the special dot of cells..\n"
 				"\tPress 'Esc' to exit.\n\n";
-			startOver = false;
 			relaxForever = false;
 			Relax = 0;
+		}
 			//sites = new std::vector<Point2>();
 			//std::cout << "How many points? ";
 			//nPoints = 1000;
 			//std::cin >> nPoints;
 			//genRandomSites(seed, *sites, bbox, dimension, nPoints);
-
-			vdg.CreateSite(dimension, nPoints);
-			start = std::clock();
-			vdg.Compute();
-			vdg.RelaxLoop(loop_cnt);
-			vdg.CreateWorld();
-
-			duration = 1000 * (std::clock() - start) / (double)CLOCKS_PER_SEC;
-			std::cout << "Computing a diagram of " << nPoints << " points took " << duration << "ms.\n";
-			Diagram* diagram = vdg.GetDiagram();
-			/*size_t lake_cnt = 0;
-			for (auto item : diagram->GetIslandUnion().unions) {
-				lake_cnt += item.second.GetLakeUnion().size();
-			}
-			std::cout << "lake_cnt: " << diagram->GetIslandUnion().unions.size() << "\n";*/
-			//delete sites;
-		}
-
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
 	
 
-		if (Relax || relaxForever || startOneSec) {
-			vdg.GetSetting().SetSeed(vdg.GetSetting().GetSeed() + 1);
+		if (Relax || relaxForever || startOver) {
+			startOver = false;
 			//vdg.GetSetting().SetLakeScale(vdg.GetSetting().GetLakeScale() + 0.01);
 			//std::cout << "vdg.GetSetting().GetLakeSize(): " << vdg.GetSetting().GetLakeScale() << "\n";
 			//lakeScale += 0.01;
@@ -538,13 +521,7 @@ int main() {
 			--Relax;
 			if (Relax < 0) Relax = 0;
 
-			if (startOneSec) {
-				oneSecCnt++;
-				if (std::clock() - startOneSec >= 1000) {
-					startOneSec = false;
-					std::cout << "1 sec: " << oneSecCnt << "\n";
-				}
-			}
+			vdg.GetSetting().SetSeed(vdg.GetSetting().GetSeed() + 1);
 		}
 		
 		// Swap the screen buffers

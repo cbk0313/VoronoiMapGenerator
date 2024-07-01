@@ -131,7 +131,7 @@ public:
 	void ChangeDist(int num);
 	void SetDistAndNextAll(int num, Cell* river_owner);
 	void SetDist(int num);
-	void DeleteLine(std::vector<bool>& buf);
+	void DeleteLine(/*std::vector<bool>& buf*/);
 	static RiverEdge* Create(RiverLines* lines, Cell* startCell, Cell* endCell, Cell* river_owner, RiverEdge* pre_edge, RiverEdge* next_edge, int distance);
 	static RiverEdge* CreateStartPoint(RiverLines* lines, Cell* c);
 	static RiverPos GetPos(Cell* start, Cell* end);

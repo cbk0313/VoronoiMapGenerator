@@ -53,8 +53,7 @@ void VoronoiDiagramGenerator::CreateSite(unsigned int dimension, unsigned int nu
 
 	double step = dimension / numSites;
 	int half_step = (int)(step * setting.GetSiteRange());
-
-	srand(setting.GetSeed());
+	setting.Srand();
 	for (unsigned int i = 0; i < numSites; ++i) {
 		for (unsigned int j = 0; j < numSites; ++j) {
 
@@ -214,13 +213,16 @@ void  VoronoiDiagramGenerator::RelaxLoop(int num) {
 }
 
 void VoronoiDiagramGenerator::SaveAllImage(double dimension, unsigned int w, unsigned int h) {
-	SetupColor(ALL_IMAGE);
+	//SetupColor(ALL_IMAGE);
+	//CreateTriangle();
 	SaveImage("voronoi_map_all.bmp", dimension, w, h);
 
 	SetupColor(ISLAND);
+	CreateTriangle();
 	SaveImage("voronoi_map_islnad.bmp", dimension, w, h);
 
 	SetupColor(LAKE);
+	CreateTriangle();
 	SaveImage("voronoi_map_lake.bmp", dimension, w, h);
 
 	SetupColor(RIVER);
@@ -229,6 +231,7 @@ void VoronoiDiagramGenerator::SaveAllImage(double dimension, unsigned int w, uns
 
 	SetupRiverTriangle(Color::lake);
 	SetupColor(ALL_IMAGE);
+	CreateTriangle();
 }
 
 void VoronoiDiagramGenerator::SaveImage(const char* filename, double dimension, unsigned int w, unsigned int h) {
