@@ -473,6 +473,7 @@ int main() {
 				"\tPress 'Y' to toggle continuous Lloyd's relaxation.\n"
 				"\tPress 'S' Save the generated image.\n"
 				"\tPress 'D' Shows or hides the dot of cells.\n"
+				"\tPress 'L' Shows or hides the edge line of cells.\n"
 				"\tPress 'SHIFT + D' Shows or hides the special dot of cells..\n"
 				"\tPress 'Esc' to exit.\n\n";
 			relaxForever = false;
