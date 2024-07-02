@@ -115,7 +115,7 @@ public:
 
 	void SaveAllImage(unsigned int w, unsigned int h);
 	void SaveImage(const char* filename, unsigned int w, unsigned int h);
-	Heightmap* CreateHeightmap(unsigned int w, unsigned int h);
+	Heightmap* CreateHeightmap(int flag, unsigned int w, unsigned int h);
 };
 
 

@@ -495,9 +495,7 @@ int main() {
 			vdg.RepeatRelax(3);
 			vdg.CreateWorld();
 			
-
-			//Diagram* diagram = vdg.GetDiagram();
-			//Heightmap* map = vdg.CreateHeightmap(IMAGE_WIDTH, IMAGE_HEIGHT);
+			//Heightmap* map = vdg.CreateHeightmap(ALL_IMAGE, IMAGE_WIDTH, IMAGE_HEIGHT);
 			//delete map;
 
 			duration = 1000 * (std::clock() - start) / (double)CLOCKS_PER_SEC;

@@ -308,7 +308,18 @@ void VoronoiDiagramGenerator::SaveImage(const char* filename, unsigned int w, un
 }
 
 
-Heightmap* VoronoiDiagramGenerator::CreateHeightmap(unsigned int w, unsigned int h) {
+Heightmap* VoronoiDiagramGenerator::CreateHeightmap(int flag, unsigned int w, unsigned int h) {
+
+	SetupColor(flag);
+	CreateTriangle();
+	if (image_flag == RIVER) {
+		SetupRiverTriangle(Color::lake);
+	}
+	else {
+		SetupRiverTriangle(Color(1, 1, 1));
+	}
+	
+
 	Heightmap* pixel_data = new Heightmap(w, h, true);
 	if (image_flag != RIVER) {
 		for (Triangle tri : diagram->triangles) {
