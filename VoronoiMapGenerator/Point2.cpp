@@ -1,5 +1,5 @@
 #include "Point2.h"
-
+#include "Epsilon.h"
 #include <math.h>
 
 Point2::Point2() : x(0), y(0) {}
@@ -107,6 +107,11 @@ double Point2::DistanceFromOrigin() const {
 
 double Point2::DistanceFromOriginSquared() const {
     return x * x + y * y;
+}
+
+void Point2::Epsilon() {
+    x = round(x / EPSILON) * EPSILON;
+    y = round(y / EPSILON) * EPSILON;
 }
 
 double Point2::GetAngle() const {

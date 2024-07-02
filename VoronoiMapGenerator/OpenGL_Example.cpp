@@ -10,6 +10,7 @@
 
 #include "Data/River.h"
 #include "Data/Setting.h"
+#include "Data/Heightmap.h"
 
 #include "FastNoise/FastNoiseLite.h"
 
@@ -423,16 +424,13 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 int main() {
 	unsigned int nPoints = 10000;
 	unsigned int dimension = 1000000;
-
 	double radius = dimension / 2.1;
-
-	unsigned int loop_cnt = 3;
 
 	VoronoiDiagramGenerator vdg = VoronoiDiagramGenerator();
 	vdg.SetSetting(GenerateSetting(MapType::CONTINENT, 0, 0.6666, radius, 0.5, 0.5, 10, radius / 3, radius / 5, 50, radius / 15, radius / 20, 500.f, 0.2f, 0.02f, 1, 0.1));
 	
-	//std::vector<Point2>* sites = nullptr;
-	//BoundingBox bbox;
+
+
 
 
 	// Init GLFW
@@ -461,7 +459,7 @@ int main() {
 
 	while (!glfwWindowShouldClose(window)) {
 		auto fame_start = std::clock();
-
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		// Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
 		glfwPollEvents();
 
@@ -480,51 +478,37 @@ int main() {
 			relaxForever = false;
 			Relax = 0;
 		}
-			//sites = new std::vector<Point2>();
-			//std::cout << "How many points? ";
-			//nPoints = 1000;
-			//std::cin >> nPoints;
-			//genRandomSites(seed, *sites, bbox, dimension, nPoints);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		
 
 
 	
 
 		if (Relax || relaxForever || startOver) {
 			startOver = false;
-			//vdg.GetSetting().SetLakeScale(vdg.GetSetting().GetLakeScale() + 0.01);
-			//std::cout << "vdg.GetSetting().GetLakeSize(): " << vdg.GetSetting().GetLakeScale() << "\n";
-			//lakeScale += 0.01;
-			//lakeDense += 0.01;
-			//std::cout << "lake size: " << lakeScale << ", lakeDense: " << lakeSize << "\n";
 
+			GenerateSetting& setting = vdg.GetSetting();
 			vdg.CreateSite(dimension, nPoints);
+
 			start = std::clock();
+
 			vdg.Compute();
-			vdg.RelaxLoop(loop_cnt);
+			vdg.RepeatRelax(3);
 			vdg.CreateWorld();
+			
+
+			//Diagram* diagram = vdg.GetDiagram();
+			//Heightmap* map = vdg.CreateHeightmap(IMAGE_WIDTH, IMAGE_HEIGHT);
+			//delete map;
+
 			duration = 1000 * (std::clock() - start) / (double)CLOCKS_PER_SEC;
+			std::cout << "Computing a diagram of " << nPoints << " points(seed=" << setting.GetSeed() <<") took " << duration << "ms.\n";
 
-			//delete sites;
-			Diagram* diagram = vdg.GetDiagram();
-		/*	size_t lake_cnt = 0;
-			for (auto item : diagram->GetIslandUnion().unions) {
-				lake_cnt += item.second.GetLakeUnion().size();
-			}*/
-
-			std::cout << "Computing a diagram of " << nPoints << " points took " << duration << "ms.\n";
-			//std::cout << "lake_cnt: " << lake_cnt << "\n";
-			std::cout << "seed: " << vdg.GetSetting().GetSeed() << "\n";
-			if (diagram->GetCells().size() != 4) {
-				int x = 0;
-			}
 			--Relax;
 			if (Relax < 0) Relax = 0;
-
-			vdg.GetSetting().SetSeed(vdg.GetSetting().GetSeed() + 1);
+			setting.SetSeed(setting.GetSeed() + 1);
 		}
 		
-		// Swap the screen buffers
+		
 		
 		if (save_image) {
 			save_image = false;
@@ -547,13 +531,12 @@ int main() {
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 			screen_dump();
-			vdg.SaveAllImage(dimension, IMAGE_WIDTH, IMAGE_HEIGHT);
+			vdg.SaveAllImage(IMAGE_WIDTH, IMAGE_HEIGHT);
 		}
 		else {
 			
 			//glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 			glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-			
 			draw_image(&vdg, dimension);
 			
 		}

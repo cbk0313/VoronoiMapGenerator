@@ -25,6 +25,7 @@
     <ClInclude Include="Data\Buffer.h" />
     <ClInclude Include="Data\CellDetail.h" />
     <ClInclude Include="Data\Color.h" />
+    <ClInclude Include="Data\Heightmap.h" />
     <ClInclude Include="Data\River.h" />
     <ClInclude Include="Data\Setting.h" />
     <ClInclude Include="Data\Triangle.h" />
@@ -46,6 +47,7 @@
     <ClCompile Include="Data\Buffer.cpp" />
     <ClCompile Include="Data\CellDetail.cpp" />
     <ClCompile Include="Data\Color.cpp" />
+    <ClCompile Include="Data\Heightmap.cpp" />
     <ClCompile Include="Data\River.cpp" />
     <ClCompile Include="Data\Setting.cpp" />
     <ClCompile Include="Data\Triangle.cpp" />

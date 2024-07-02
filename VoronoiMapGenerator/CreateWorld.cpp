@@ -19,7 +19,7 @@ using DistRadius = std::pair<double, double>; // fisrt: distance, second: radius
 using PointDist = std::pair<Point2, double>; // first: point, second: radius
 
 
-void VoronoiDiagramGenerator::CreateWorld(bool create_tri) {
+void VoronoiDiagramGenerator::CreateWorld(bool trans_edge, bool create_tri) {
 	if (diagram) {
 		setting.Srand();
 		CreateLand();
@@ -36,7 +36,7 @@ void VoronoiDiagramGenerator::CreateWorld(bool create_tri) {
 		SetupMoisture();
 		SetupBiome();
 		CreateRiver();
-		SetupEdgePos();
+		SetupEdgePos(trans_edge);
 		SetupColor();
 		if (create_tri) {
 			CreateTriangle();
@@ -682,6 +682,7 @@ void VoronoiDiagramGenerator::SetupMoisture() {
 								}
 							}
 							tcd.AddMoisture(1 + nonPeakBonus);
+							max_moisture = std::max<unsigned int>(max_moisture, tcd.GetMoisture());
 						}
 						else if (cd.GetElevation() == tcd.GetElevation()) {
 
@@ -694,6 +695,7 @@ void VoronoiDiagramGenerator::SetupMoisture() {
 							}
 							else {
 								tcd.AddMoisture(1 + nonPeakBonus);
+								max_moisture = std::max<unsigned int>(max_moisture, tcd.GetMoisture());
 							}
 						}
 					}
@@ -1415,7 +1417,7 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 }
 
 
-void VoronoiDiagramGenerator::SetupEdgePos() {
+void VoronoiDiagramGenerator::SetupEdgePos(bool trans_edge) {
 	for (Edge* e : diagram->edges) {
 		if (e->rSite) {
 			double dist = e->vertA->point.DistanceTo(e->vertB->point);
@@ -1424,11 +1426,17 @@ void VoronoiDiagramGenerator::SetupEdgePos() {
 			norm = Point2(-norm.y, norm.x);
 			double step = 3;
 			double perp_step = 3;
-			double scale1 = (0.5 - ((1 / step) / 2)) + setting.GetRandom() / step;
-			double perp_len = (dist / perp_step);
-			double scale2 = (perp_len / 2) - setting.GetRandom() * perp_len;
+		
 
-			e->p = e->vertA->point * scale1 + e->vertB->point * (1 - scale1) + norm * scale2;
+			if (trans_edge) {
+				double scale1 = (0.5 - ((1 / step) / 2)) + setting.GetRandom() / step;
+				double perp_len = (dist / perp_step);
+				double scale2 = (perp_len / 2) - setting.GetRandom() * perp_len;
+				e->p = e->vertA->point * scale1 + e->vertB->point * (1 - scale1) + norm * scale2;
+			}
+			else {
+				e->p = (e->vertA->point + e->vertB->point) / 2;
+			}
 		}
 		else {
 			e->p = (e->vertA->point + e->vertB->point) / 2;

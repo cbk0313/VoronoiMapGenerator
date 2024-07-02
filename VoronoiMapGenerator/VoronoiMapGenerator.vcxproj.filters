@@ -78,6 +78,9 @@
     <ClInclude Include="Data\Setting.h">
       <Filter>Header Files\Data</Filter>
     </ClInclude>
+    <ClInclude Include="Data\Heightmap.h">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BeachLine.cpp">
@@ -127,6 +130,9 @@
     </ClCompile>
     <ClCompile Include="CreateWorld.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Data\Heightmap.cpp">
+      <Filter>Source Files\Data</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

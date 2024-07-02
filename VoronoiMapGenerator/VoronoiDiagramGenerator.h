@@ -24,6 +24,7 @@ struct BoundingBox {
 
 #define ALL_IMAGE ((VoronoiDiagramGenerator::ISLAND | VoronoiDiagramGenerator::OCEAN | VoronoiDiagramGenerator::LAKE | VoronoiDiagramGenerator::COAST | VoronoiDiagramGenerator::RIVER))
 
+class Heightmap;
 struct CellVector;
 class VoronoiDiagramGenerator {
 public:
@@ -44,6 +45,7 @@ private:
 
 	int max_elevation;
 	unsigned int max_moisture;
+	double image_dim;
 	Diagram* diagram;
 	//;
 	CircleEventQueue* circleEventQueue;
@@ -78,13 +80,15 @@ private:
 	void SetupBiome();
 	void CreateRiver();
 	void SetupMoisture();
-	void SetupEdgePos();
+	void SetupEdgePos(bool trans_edge);
 	void SetupColor(int flag = ALL_IMAGE);
 	void SetupRiverTriangle(Color c);
 	void CreateTriangle();
 
+	std::pair<double, double> GetMinDist(std::vector<std::pair<Point2, double>>& points, Point2& center, double radius);
+
 public:
-	VoronoiDiagramGenerator() : has_created_ocean(false), has_set_color(false), image_flag(ALL_IMAGE), max_elevation(0), max_moisture(0), diagram(nullptr), circleEventQueue(nullptr), boundingBox(BoundingBox()), beachLine(nullptr) {};
+	VoronoiDiagramGenerator() : has_created_ocean(false), has_set_color(false), image_flag(ALL_IMAGE), max_elevation(0), max_moisture(0), image_dim(0), diagram(nullptr), circleEventQueue(nullptr), boundingBox(BoundingBox()), beachLine(nullptr) {};
 	~VoronoiDiagramGenerator() {};
 
 	Diagram* GetDiagram();
@@ -92,14 +96,16 @@ public:
 	unsigned int GetMaxElevation() { return max_elevation; }
 	unsigned int GetMaxMoisture() { return max_moisture; }
 
+	// Create a site. Must be run first
 	void CreateSite(unsigned int dimension, unsigned int numSites);
-
-	void Compute(bool reset = true);
+	// Create cells according to the created site
+	void Compute();
+	// Makes cells uniform in size. The more run it, the more even it becomes.
 	void Relax();
+	// Repeat 'Relax()' num times
+	void RepeatRelax(int num);
 
-	void RelaxLoop(int num);
-
-	void CreateWorld(bool create_tri = true);
+	void CreateWorld(bool trans_edge = true, bool create_tri = true);
 
 	inline void SetSetting(GenerateSetting newSetting) { setting = newSetting; };
 	inline GenerateSetting& GetSetting() { return setting; };
@@ -107,12 +113,9 @@ public:
 	//void printBeachLine();
 
 
-
-	void SaveAllImage(double dimension, unsigned int w, unsigned int h);
-	void SaveImage(const char* filename, double dimension, unsigned int w, unsigned int h);
-
-	std::pair<double, double> GetMinDist(std::vector<std::pair<Point2, double>>& points, Point2& center, double radius);
-	
+	void SaveAllImage(unsigned int w, unsigned int h);
+	void SaveImage(const char* filename, unsigned int w, unsigned int h);
+	Heightmap* CreateHeightmap(unsigned int w, unsigned int h);
 };
 
 

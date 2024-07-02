@@ -41,6 +41,7 @@ public:
     double DistanceToSquared(const Point2& p) const;
     double DistanceFromOrigin() const;
     double DistanceFromOriginSquared() const;
+    void Epsilon();
 
     double GetAngle() const;
 
