@@ -36,7 +36,7 @@ Below are the generated heightmap images and other example.
 
 # Performance
 CPU: 5800X3D  
-Points: 10000
+Points: 10000  
 Repeat Relax -> 3 times  
 ![스크린샷 2024-07-02 140042](https://github.com/cbk0313/VoronoiMapGenerator/assets/66576971/b5cdab98-aeac-4913-9559-9e736e2b5a04)  
 
