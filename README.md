@@ -12,6 +12,8 @@ Fortune's algorithm implementation used the source code at the address below.
 // 해당 소스코드를 개선한 포크(https://github.com/cbk0313/Voronoi)  
 // Fork with performance issues resolved (https://github.com/cbk0313/Voronoi)  
 
+FastNoiseLite was used to generate the terrain (https://github.com/Auburn/FastNoiseLite?tab=readme-ov-file)  
+
 // PS) 언리얼엔진용 플러그인 제작하기 전 프로토타입 프로그램입니다.  
 // PS) This is a prototype program before creating a plugin for Unreal Engine.  
 # Overview
@@ -31,3 +33,20 @@ Below are the generated heightmap images and other example.
 ![voronoi_map_all](https://github.com/cbk0313/VoronoiMapGenerator/assets/66576971/43ec84c3-09f9-4270-b5ab-b7d51cb62e60)
 ![island_example1](https://github.com/cbk0313/VoronoiMapGenerator/assets/66576971/610d0cba-da1e-491f-bb0b-a24a215e80ef)
 ![island_example2](https://github.com/cbk0313/VoronoiMapGenerator/assets/66576971/4b1edd51-d859-4da3-9258-7dedb3a22ed4)
+
+# Performance
+CPU: 5800X3D  
+Points: 10000  
+Repeat Relax -> 3 times  
+![스크린샷 2024-07-02 140042](https://github.com/cbk0313/VoronoiMapGenerator/assets/66576971/b5cdab98-aeac-4913-9559-9e736e2b5a04)  
+
+# How to use  
+VoronoiDiagramGenerator vdg = VoronoiDiagramGenerator();  
+vdg.SetSetting(GenerateSetting(MapType::CONTINENT, 0, 0.6666, radius, 0.5, 0.5, 10, radius / 3, radius / 5, 50, radius / 15, radius / 20, 500.f, 0.2f, 0.02f, 1, 0.1));  
+  
+vdg.CreateSite(dimension, nPoints);  
+vdg.Compute();  
+vdg.RepeatRelax(3);  
+vdg.CreateWorld();  
+  
+.... You can check the details in the draw_image() function in the OpenGL_Example.cpp file.
