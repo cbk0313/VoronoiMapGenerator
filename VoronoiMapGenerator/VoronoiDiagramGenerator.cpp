@@ -3,6 +3,8 @@
 #include <Windows.h>
 #include "Data/Heightmap.h"
 
+#include "png.h"
+
 Diagram* VoronoiDiagramGenerator::GetDiagram() {
 	return diagram;
 }
@@ -305,6 +307,11 @@ void VoronoiDiagramGenerator::SaveImage(const char* filename, unsigned int w, un
 	auto duration2 = 1000 * (std::clock() - start) / (double)CLOCKS_PER_SEC;
 	std::cout << "file saved: " << filename << ", create time: " << duration << "ms, save time: " << duration2 - duration << ", result: " << duration2 << "ms \n";
 
+}
+
+
+void VoronoiDiagramGenerator::Save16BitGrayscalePNG(const char* filename, int width, int height) {
+	
 }
 
 
