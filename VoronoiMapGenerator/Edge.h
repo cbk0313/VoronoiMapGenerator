@@ -10,7 +10,7 @@ struct Cell;
 
 struct Vertex {
 	Point2 point;
-	Color color;
+	VertexColor color;
 	int elev = 0;
 	std::vector<Cell*> cells;
 	bool is_short = false;
@@ -21,12 +21,12 @@ struct Vertex {
 		cells.clear();
 		is_short = false;
 		elev = 0;
-		color = Color();
+		color = VertexColor();
 	}
 };
 
 struct Edge {
-	Color color;
+	VertexColor color;
 	Point2 p;
 	Site* lSite;
 	Site* rSite;

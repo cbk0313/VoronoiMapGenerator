@@ -268,7 +268,7 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 	glBegin(GL_TRIANGLES);
 	for (Triangle& tri : diagram->GetTriangles()) {
 		for (int i = 0; i < 3; i++) {
-			glColor4f((GLfloat)tri.colors[i].r, (GLfloat)tri.colors[i].g, (GLfloat)tri.colors[i].b, (GLfloat)tri.colors[i].a);
+			glColor4f((GLfloat)tri.colors[i].rgb.r, (GLfloat)tri.colors[i].rgb.g, (GLfloat)tri.colors[i].rgb.b, (GLfloat)tri.colors[i].rgb.a);
 			glVertex3d((GLfloat)normalize(tri.points[i].x, dimension), -(GLfloat)normalize(tri.points[i].y, dimension), 0.0);
 		}
 	}
@@ -304,7 +304,7 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 		
 		for (Triangle& tri : line->GetTriangle()) {
 			for (int i = 0; i < 3; i++) {
-				glColor4f((GLfloat)tri.colors[i].r, (GLfloat)tri.colors[i].g, (GLfloat)tri.colors[i].b, (GLfloat)tri.colors[i].a);
+				glColor4f((GLfloat)tri.colors[i].rgb.r, (GLfloat)tri.colors[i].rgb.g, (GLfloat)tri.colors[i].rgb.b, (GLfloat)tri.colors[i].rgb.a);
 				glVertex2f((GLfloat)normalize(tri.points[i].x, dimension), -(GLfloat)normalize(tri.points[i].y, dimension));
 			}
 
@@ -318,7 +318,7 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 	for (Triangle& tri : diagram->GetRiverCrossing().GetTriangle()) {
 		for (int i = 0; i < 3; i++) {
 			//std::cout << "test\n";
-			glColor4f((GLfloat)tri.colors[i].r, (GLfloat)tri.colors[i].g, (GLfloat)tri.colors[i].b, (GLfloat)tri.colors[i].a);
+			glColor4f((GLfloat)tri.colors[i].rgb.r, (GLfloat)tri.colors[i].rgb.g, (GLfloat)tri.colors[i].rgb.b, (GLfloat)tri.colors[i].rgb.a);
 			glVertex2f((GLfloat)normalize(tri.points[i].x, dimension), -(GLfloat)normalize(tri.points[i].y, dimension));
 		}
 

@@ -224,6 +224,9 @@ void VoronoiDiagramGenerator::SaveAllImage(unsigned int w, unsigned int h) {
 	SaveImage("voronoi_map_all.bmp", w, h);
 
 	SetupColor(ISLAND);
+	Save16BitGrayscalePNG("Test!!!.png", w, h);
+
+	SetupColor(ISLAND);
 	CreateTriangle();
 	SaveImage("voronoi_map_islnad.bmp", w, h);
 
@@ -311,7 +314,71 @@ void VoronoiDiagramGenerator::SaveImage(const char* filename, unsigned int w, un
 
 
 void VoronoiDiagramGenerator::Save16BitGrayscalePNG(const char* filename, int width, int height) {
+	FILE* fp = nullptr;
+	errno_t err = fopen_s(&fp, filename, "wb");
+	if (err != 0) {
+		std::cout << "File write error!!\n";
+		return;
+	}
+	if (!fp) {
+		std::cerr << "Error: Cannot open file " << filename << std::endl;
+		return;
+	}
+
 	
+	png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
+	if (!png) {
+		std::cerr << "Error: png_create_write_struct failed" << std::endl;
+		fclose(fp);
+		return;
+	}
+
+	// PNG info struct
+	png_infop info = png_create_info_struct(png);
+	if (!info) {
+		std::cerr << "Error: png_create_info_struct failed" << std::endl;
+		png_destroy_write_struct(&png, nullptr);
+		fclose(fp);
+		return;
+	}
+
+	if (setjmp(png_jmpbuf(png))) {
+		std::cerr << "Error: png error during init_io" << std::endl;
+		png_destroy_write_struct(&png, &info);
+		fclose(fp);
+		return;
+	}
+
+	png_init_io(png, fp);
+
+	// PNG header
+	png_set_IHDR(
+		png,
+		info,
+		width,
+		height,
+		16, // bit depth
+		PNG_COLOR_TYPE_GRAY,
+		PNG_INTERLACE_NONE,
+		PNG_COMPRESSION_TYPE_DEFAULT,
+		PNG_FILTER_TYPE_DEFAULT
+	);
+	png_write_info(png, info);
+	png_set_swap(png);
+	Heightmap* map = CreateHeightmap(ISLAND, width, height);
+	// PNG 파일에 데이터 작성
+	std::vector<png_bytep> rows(height);
+	for (int y = 0; y < height; ++y) {
+		rows[y] = reinterpret_cast<png_bytep>(&map->GetArray()[y * width]);
+	}
+	png_write_image(png, rows.data());
+
+	// PNG 파일 종료
+	png_write_end(png, nullptr);
+	png_destroy_write_struct(&png, &info);
+	fclose(fp);
+	delete map;
+	std::cout << "File " << filename << " saved successfully." << std::endl;
 }
 
 
@@ -331,7 +398,7 @@ Heightmap* VoronoiDiagramGenerator::CreateHeightmap(int flag, unsigned int w, un
 	if (image_flag != RIVER) {
 		for (Triangle tri : diagram->triangles) {
 			tri.AdjustSize(w, h, image_dim);
-			tri.Draw(pixel_data->GetArray(), w, h, true);
+			tri.DrawGrayscale(pixel_data->GetArray(), w, h);
 		}
 	}
 
@@ -341,12 +408,12 @@ Heightmap* VoronoiDiagramGenerator::CreateHeightmap(int flag, unsigned int w, un
 		for (RiverLine* line : diagram->river_lines.GetArray()) {
 			for (Triangle tri : line->GetTriangle()) {
 				tri.AdjustSize(w, h, image_dim);
-				tri.DrawTransparent(pixel_data->GetArray(), w, h, true);
+				tri.DrawTransparentGrayscale(pixel_data->GetArray(), w, h);
 			}
 		}
 		for (Triangle tri : diagram->river_cross.GetTriangle()) {
 			tri.AdjustSize(w, h, image_dim);
-			tri.DrawTransparent(pixel_data->GetArray(), w, h, true);
+			tri.DrawTransparentGrayscale(pixel_data->GetArray(), w, h);
 		}
 	}
 

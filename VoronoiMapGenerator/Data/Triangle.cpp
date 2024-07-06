@@ -42,7 +42,7 @@ Color Triangle::InterpolateColor(const Point2& p) const {
 	double alpha = ((y1 - y2) * (p.x - x2) + (x2 - x1) * (p.y - y2)) / ((y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2));
 	double beta = ((y2 - y0) * (p.x - x2) + (x0 - x2) * (p.y - y2)) / ((y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2));
 	double gamma = 1.0f - alpha - beta;
-	const Color& c0 = colors[0], &c1 = colors[1], &c2 = colors[2];
+	const Color& c0 = colors[0].rgb, &c1 = colors[1].rgb, &c2 = colors[2].rgb;
 	return Color(
 		c0.r * alpha + c1.r * beta + c2.r * gamma,
 		c0.g * alpha + c1.g * beta + c2.g * gamma,
@@ -51,15 +51,30 @@ Color Triangle::InterpolateColor(const Point2& p) const {
 	);
 }
 
+uint16_t Triangle::InterpolateGray(const Point2& p) const {
+	double x0 = points[0].x, y0 = points[0].y;
+	double x1 = points[1].x, y1 = points[1].y;
+	double x2 = points[2].x, y2 = points[2].y;
+
+	double alpha = ((y1 - y2) * (p.x - x2) + (x2 - x1) * (p.y - y2)) / ((y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2));
+	double beta = ((y2 - y0) * (p.x - x2) + (x0 - x2) * (p.y - y2)) / ((y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2));
+	double gamma = 1.0f - alpha - beta;
+	const uint16_t & c0 = colors[0].gray, & c1 = colors[1].gray, & c2 = colors[2].gray;
+	unsigned int c = static_cast<unsigned int>((double)c0 * alpha + (double)c1 * beta + (double)c2 * gamma);
+
+	
+	return static_cast<uint16_t>(c);
+}
+
 void Triangle::DrawPixel(unsigned char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y, const CharColor& c) const {
 	int pos = x * 3 + w * 3 * (h - y - 1);
 	pixel_data[pos] = c.b;
 	pixel_data[pos + 1] = c.g;
 	pixel_data[pos + 2] = c.r;
 }
-void Triangle::DrawGrayscalePixel(unsigned char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y, const CharColor& c) const {
+void Triangle::DrawGrayscalePixel(uint16_t* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y, const uint16_t& c) const {
 	int pos = x + w * (h - y - 1);
-	pixel_data[pos] = (unsigned char)((c.r + c.g + c.b) / 3);
+	pixel_data[pos] = c;
 }
 
 CharColor Triangle::GetPixelColor(unsigned char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y) const {
@@ -67,7 +82,7 @@ CharColor Triangle::GetPixelColor(unsigned char* pixel_data, unsigned int w, uns
 	return CharColor(pixel_data[pos + 2], pixel_data[pos + 1], pixel_data[pos]);
 }
 
-unsigned char Triangle::GetGrayscalePixelColor(unsigned char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y) const {
+uint16_t Triangle::GetGrayscalePixelColor(uint16_t* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y) const {
 	int pos = x + w * (h - y - 1);
 	return pixel_data[pos];
 }
@@ -145,7 +160,7 @@ unsigned int Triangle::FindRightmostXGivenY(unsigned int y, unsigned int max_x) 
 }
 
 
-void Triangle::Draw(unsigned char* pixel_data, unsigned int w, unsigned int h, bool grayscale) {
+void Triangle::Draw(unsigned char* pixel_data, unsigned int w, unsigned int h) {
 
 	unsigned int m_X = (unsigned int)MinX(), M_X = (unsigned int)MaxX(), m_Y = (unsigned int)MinY(), M_Y = (unsigned int)MaxY();
 
@@ -154,30 +169,37 @@ void Triangle::Draw(unsigned char* pixel_data, unsigned int w, unsigned int h, b
 	if (m_Y < 0) m_Y = 0;
 	if (M_Y >= h) M_Y = h - 1;
 
-	if (grayscale) {
-		for (unsigned int y = m_Y; y <= M_Y; y += 1) {
-			for (unsigned int x = FindLeftmostXGivenY(y, m_X); x <= M_X; x += 1) {
-				if (!IsInside(Point2(x, y))) break;
-				CharColor c = InterpolateColor(Point2(x, y));
-				DrawGrayscalePixel(pixel_data, w, h, x, y, c);
-			}
-		}
-	}
-	else {
-		for (unsigned int y = m_Y; y <= M_Y; y += 1) {
-			for (unsigned int x = FindLeftmostXGivenY(y, m_X); x <= M_X; x += 1) {
-				if (!IsInside(Point2(x, y))) break;
-				CharColor c = InterpolateColor(Point2(x, y));
-				DrawPixel(pixel_data, w, h, x, y, c);
+	for (unsigned int y = m_Y; y <= M_Y; y += 1) {
+		for (unsigned int x = FindLeftmostXGivenY(y, m_X); x <= M_X; x += 1) {
+			if (!IsInside(Point2(x, y))) break;
+			CharColor c = InterpolateColor(Point2(x, y));
+			DrawPixel(pixel_data, w, h, x, y, c);
 
-			}
 		}
 	}
-	
+}
+
+void Triangle::DrawGrayscale(uint16_t* pixel_data, unsigned int w, unsigned int h) {
+
+	unsigned int m_X = (unsigned int)MinX(), M_X = (unsigned int)MaxX(), m_Y = (unsigned int)MinY(), M_Y = (unsigned int)MaxY();
+
+	if (m_X < 0) m_X = 0;
+	if (M_X >= w) M_X = w - 1;
+	if (m_Y < 0) m_Y = 0;
+	if (M_Y >= h) M_Y = h - 1;
+
+	for (unsigned int y = m_Y; y <= M_Y; y += 1) {
+		for (unsigned int x = FindLeftmostXGivenY(y, m_X); x <= M_X; x += 1) {
+			if (!IsInside(Point2(x, y))) break;
+			uint16_t c = InterpolateGray(Point2(x, y));
+			DrawGrayscalePixel(pixel_data, w, h, x, y, c);
+
+		}
+	}
 }
 
 
-void Triangle::DrawTransparent(unsigned char* pixel_data, unsigned int w, unsigned int h, bool grayscale) {
+void Triangle::DrawTransparent(unsigned char* pixel_data, unsigned int w, unsigned int h) {
 
 	unsigned int m_X = (unsigned int)MinX(), M_X = (unsigned int)MaxX(), m_Y = (unsigned int)MinY(), M_Y = (unsigned int)MaxY();
 
@@ -185,48 +207,56 @@ void Triangle::DrawTransparent(unsigned char* pixel_data, unsigned int w, unsign
 	if (M_X >= w) M_X = w - 1;
 	if (m_Y < 0) m_Y = 0;
 	if (M_Y >= h) M_Y = h - 1;
-	if (grayscale) {
-		for (unsigned int y = m_Y; y <= M_Y; y += 1) {
-			for (unsigned int x = FindLeftmostXGivenY(y, m_X); x <= M_X; x += 1) {
-				if (!IsInside(Point2(x, y))) break;
-				Color c = InterpolateColor(Point2(x, y));
 
-				unsigned char pixel_char_c = GetGrayscalePixelColor(pixel_data, w, h, x, y);
-				
-				double alpha = std::clamp<double>(c.a, 0.0, 1.0);
-				double pixel_alpha = 1. - alpha;
 
-				Color mix_c = Color(
-					(pixel_char_c * pixel_alpha + c.r * alpha),
-					(pixel_char_c * pixel_alpha + c.g * alpha),
-					(pixel_char_c * pixel_alpha + c.b * alpha),
-					1);
+	for (unsigned int y = m_Y; y <= M_Y; y += 1) {
+		for (unsigned int x = FindLeftmostXGivenY(y, m_X); x <= M_X; x += 1) {
+			if (!IsInside(Point2(x, y))) break;
+			Color c = InterpolateColor(Point2(x, y));
+			CharColor pixel_char_c = GetPixelColor(pixel_data, w, h, x, y);
+			Color pixel_c = Color((double)pixel_char_c.r / 255, (double)pixel_char_c.g / 255, (double)pixel_char_c.b / 255, 1);
 
-				DrawGrayscalePixel(pixel_data, w, h, x, y, mix_c);
-			}
+			double alpha = std::clamp<double>(c.a, 0.0, 1.0);
+			double pixel_alpha = 1. - alpha;
+
+			Color mix_c = Color(
+				(pixel_c.r * pixel_alpha + c.r * alpha),
+				(pixel_c.g * pixel_alpha + c.g * alpha),
+				(pixel_c.b * pixel_alpha + c.b * alpha),
+				1);
+
+			DrawPixel(pixel_data, w, h, x, y, mix_c);
 		}
 	}
-	else {
-		for (unsigned int y = m_Y; y <= M_Y; y += 1) {
-			for (unsigned int x = FindLeftmostXGivenY(y, m_X); x <= M_X; x += 1) {
-				if (!IsInside(Point2(x, y))) break;
-				Color c = InterpolateColor(Point2(x, y));
-				CharColor pixel_char_c = GetPixelColor(pixel_data, w, h, x, y);
-				Color pixel_c = Color((double)pixel_char_c.r / 255, (double)pixel_char_c.g / 255, (double)pixel_char_c.b / 255, 1);
+}
 
-				double alpha = std::clamp<double>(c.a, 0.0, 1.0);
-				double pixel_alpha = 1. - alpha;
 
-				Color mix_c = Color(
-					(pixel_c.r * pixel_alpha + c.r * alpha),
-					(pixel_c.g * pixel_alpha + c.g * alpha),
-					(pixel_c.b * pixel_alpha + c.b * alpha),
-					1);
+void Triangle::DrawTransparentGrayscale(uint16_t* pixel_data, unsigned int w, unsigned int h) {
 
-				DrawPixel(pixel_data, w, h, x, y, mix_c);
-			}
+	unsigned int m_X = (unsigned int)MinX(), M_X = (unsigned int)MaxX(), m_Y = (unsigned int)MinY(), M_Y = (unsigned int)MaxY();
+
+	if (m_X < 0) m_X = 0;
+	if (M_X >= w) M_X = w - 1;
+	if (m_Y < 0) m_Y = 0;
+	if (M_Y >= h) M_Y = h - 1;
+
+	for (unsigned int y = m_Y; y <= M_Y; y += 1) {
+		for (unsigned int x = FindLeftmostXGivenY(y, m_X); x <= M_X; x += 1) {
+			if (!IsInside(Point2(x, y))) break;
+			Color c = InterpolateColor(Point2(x, y));
+			uint16_t c_gray = InterpolateGray(Point2(x, y));
+
+			uint16_t pixel_char_c = GetGrayscalePixelColor(pixel_data, w, h, x, y);
+
+			double alpha = std::clamp<double>(c.a, 0.0, 1.0);
+			double pixel_alpha = 1. - alpha;
+
+			uint16_t mix_c = (pixel_char_c * pixel_alpha + c_gray * alpha);
+
+			DrawGrayscalePixel(pixel_data, w, h, x, y, mix_c);
 		}
 	}
+	
 	
 }
 

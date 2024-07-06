@@ -35,6 +35,9 @@ enum class Terrain : std::size_t {
 #define OCEAN_ELEVATION -2
 #define LAND_MIN_ELEVATION 1
 
+
+
+
 struct CellDetail {
 
 	friend struct UnionFind<Cell, TERRAIN_CNT>;
@@ -52,12 +55,12 @@ private:
 	Cell* cell;
 
 	Terrain terrain;
-	Color color;
+	VertexColor color;
 	UnionFind<Cell, TERRAIN_CNT> unionfind;
 
 public:
 	Terrain GetTerrain();
-	Color& GetColor();
+	VertexColor& GetColor();
 	bool IsEdge();
 	bool GetEdge();
 

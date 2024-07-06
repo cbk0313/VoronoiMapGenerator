@@ -56,7 +56,7 @@ private:
 	//BoundingBox bbox;
 
 
-	void SetupVertexColor(Vertex* v, Cell* c, Cell* opposite_c, Color& elev_rate_c);
+	void SetupVertexColor(Vertex* v, Cell* c, Cell* opposite_c, VertexColor& elev_rate_c);
 
 	//BeachLine
 	RBTree<BeachSection>* beachLine;

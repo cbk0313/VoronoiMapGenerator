@@ -1,6 +1,8 @@
 #pragma once
 #include <vector>
 
+#define MAX_GRAY 65535
+
 class CharColor;
 
 class Color
@@ -34,6 +36,8 @@ public:
 	static Color MixColor(Color& c1, Color& c2);
 	static Color lerp(const Color& a, const Color& b, double t);
 	operator CharColor() const;
+
+	uint16_t Graysacle() const;
 
 	static const Color black;
 	static const Color lake;
@@ -94,4 +98,17 @@ public:
 	int GetNum() {
 		return num;
 	}
+};
+
+
+struct VertexColor {
+	uint16_t gray;
+	Color rgb;
+
+	VertexColor() : rgb(Color()), gray(0) {};
+	VertexColor(Color c, uint16_t g) : rgb(c), gray(g) {};
+	VertexColor(Color c) : rgb(c), gray(c.Graysacle()) {};
+
+	VertexColor operator -(const VertexColor& c);
+	static VertexColor MixColor(VertexColor& c1, VertexColor& c2);
 };

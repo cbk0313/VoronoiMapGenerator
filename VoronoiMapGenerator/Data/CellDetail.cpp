@@ -48,7 +48,7 @@ Terrain CellDetail::GetTerrain() {
 	return terrain;
 }
 
-Color& CellDetail::GetColor() {
+VertexColor& CellDetail::GetColor() {
 	return color;
 }
 

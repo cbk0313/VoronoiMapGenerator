@@ -13,12 +13,14 @@ using Triangles = std::vector<Triangle>;
 class Triangle {
 public:
 	Point2 points[3];
-	Color colors[3];
+	VertexColor colors[3];
 
 	//Triangle(Point2* p1, Point2* p2, Point2* p3, Color* c1, Color* c2, Color* c3);
 
-	void Draw(unsigned char* pixel_data, unsigned int w, unsigned int h, bool grayscale = false);
-	void DrawTransparent(unsigned char* pixel_data, unsigned int w, unsigned int h, bool grayscale = false);
+	void Draw(unsigned char* pixel_data, unsigned int w, unsigned int h);
+	void DrawGrayscale(uint16_t* pixel_data, unsigned int w, unsigned int h);
+	void DrawTransparent(unsigned char* pixel_data, unsigned int w, unsigned int h);
+	void DrawTransparentGrayscale(uint16_t* pixel_data, unsigned int w, unsigned int h);
 
 	void AdjustSize(unsigned int w, unsigned int h, double dimension);
 
@@ -35,8 +37,9 @@ private:
 
 	bool IsInside(const Point2& p) const;
 	Color InterpolateColor(const Point2& p) const;
+	uint16_t InterpolateGray(const Point2& p) const;
 	void DrawPixel(unsigned char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y, const CharColor& c) const;
-	void DrawGrayscalePixel(unsigned char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y, const CharColor& c) const;
+	void DrawGrayscalePixel(uint16_t* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y, const uint16_t& c) const;
 	CharColor GetPixelColor(unsigned char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y) const;
-	unsigned char GetGrayscalePixelColor(unsigned char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y) const;
+	uint16_t GetGrayscalePixelColor(uint16_t* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y) const;
 };

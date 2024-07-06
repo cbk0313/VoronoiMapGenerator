@@ -114,6 +114,11 @@ Color ::operator CharColor() const {
 		(unsigned char)(std::clamp(b * 255.0, 0.0, 255.0)));
 }
 
+uint16_t Color::Graysacle() const {
+	double c = ((r + g + b) / 3);
+	unsigned g = c * MAX_GRAY;
+	return static_cast<uint16_t>(std::clamp<unsigned int>(g, 0, MAX_GRAY));
+}
 
 CharColor& CharColor::operator =(const Color& a) {
 	r = (unsigned char)(a.r >= 1.0 ? 255.0 : a.r * 255.0);
@@ -129,3 +134,14 @@ CharColor& CharColor::operator =(const Color* a) {
 }
 
 
+VertexColor VertexColor::operator -(const VertexColor& c) {
+
+	return VertexColor(rgb - c.rgb, gray < c.gray ? 0 : gray - c.gray);
+}
+
+
+VertexColor VertexColor::MixColor(VertexColor& c1, VertexColor& c2) {
+	unsigned int g = (unsigned int)((c1.gray + c2.gray) / 2);
+	g = std::clamp<unsigned int>(g, 0, MAX_GRAY);
+	return VertexColor(Color::MixColor(c1.rgb, c2.rgb), static_cast<uint16_t>(g));
+}
