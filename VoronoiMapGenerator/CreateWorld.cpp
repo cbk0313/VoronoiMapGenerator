@@ -1074,11 +1074,11 @@ void VoronoiDiagramGenerator::CreateRiver() {
 	}
 
 	diagram->river_lines.AdjustPoint();
-	SetupRiverTriangle(Color::lake);
+	SetupRiverTriangle(VertexColor(Color::lake));
 	RiverLine::ClearJunk();
 }
 
-void VoronoiDiagramGenerator::SetupRiverTriangle(Color c) {
+void VoronoiDiagramGenerator::SetupRiverTriangle(VertexColor c) {
 	diagram->river_lines.CreateTriagle(c);
 	diagram->river_cross.CreateCrossingPointTriagle(c, setting.GetRiverRadius(), setting.GetRiverPowerScale(), 0.1);
 

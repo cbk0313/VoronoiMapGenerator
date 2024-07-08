@@ -182,10 +182,10 @@ public:
 	static Point2 GetCardinalPoint(double result[][2], double t);
 	static Point2 GetCardinalDirection(double result[][2], double prev, double next);
 
-	static void CreateLineTri(Triangles& tris, RiverPointVector& point, Color color, double radius, double river_scale, double spacing, bool fade_in = false, bool fade_out = false);
-	static void CreateCardinalTri(Triangles& tris, RiverPointVector& point, Color color, double radius, double river_scale, double spacing, bool fade_in = false, bool fade_out = false);
-	static void CreateSplineTri(Triangles& tris, RiverPointVector& point, Color color, double radius, double river_scale, double spacing, bool fade_in = false, bool fade_out = false);
-	static void DrawCircle(Triangles& tris, Point2 center, const int num_segments, const double start, const int end, double radius, double river_scale, double power, Color color);
+	static void CreateLineTri(Triangles& tris, RiverPointVector& point, VertexColor& color, double radius, double river_scale, double spacing, bool fade_in = false, bool fade_out = false);
+	static void CreateCardinalTri(Triangles& tris, RiverPointVector& point, VertexColor& color, double radius, double river_scale, double spacing, bool fade_in = false, bool fade_out = false);
+	static void CreateSplineTri(Triangles& tris, RiverPointVector& point, VertexColor& color, double radius, double river_scale, double spacing, bool fade_in = false, bool fade_out = false);
+	static void DrawCircle(Triangles& tris, Point2 center, const int num_segments, const double start, const int end, double radius, double river_scale, double power, VertexColor color);
 
 };
 
@@ -236,7 +236,7 @@ public:
 	// Sets that it has been used
 	void SetUsed();
 
-	void CreateTriangle(Color c);
+	void CreateTriangle(VertexColor& c);
 	// If no triangle was created, get an empty vector.
 	Triangles& GetTriangle();
 	// Add a point where a river flows. 
@@ -270,7 +270,7 @@ public:
 	Cell* GetCell();
 	RiverCrossing* Get(unsigned int cell_unique);
 	void AddRiver(RiverLine* river);
-	void CreateCrossingPointTriagle(Color color, double radius, double river_scale, double spacing);
+	void CreateCrossingPointTriagle(VertexColor& color, double radius, double river_scale, double spacing);
 	Triangles GetTriangle();
 };
 
@@ -318,5 +318,5 @@ public:
 	void AddLine(RiverCrossing* corssing, RiverLine* line);
 	std::vector<RiverLine*>& GetArray();
 	void AdjustPoint();
-	void CreateTriagle(Color c);
+	void CreateTriagle(VertexColor& c);
 };

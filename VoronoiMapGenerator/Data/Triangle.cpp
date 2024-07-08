@@ -3,6 +3,7 @@
 #include "../Point2.h"
 #include "Color.h"
 #include <algorithm>
+#include "Heightmap.h"
 
 
 double Triangle::MinX() const {
@@ -72,9 +73,9 @@ void Triangle::DrawPixel(unsigned char* pixel_data, unsigned int w, unsigned int
 	pixel_data[pos + 1] = c.g;
 	pixel_data[pos + 2] = c.r;
 }
-void Triangle::DrawGrayscalePixel(uint16_t* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y, const uint16_t& c) const {
+void Triangle::DrawGrayscalePixel(Heightmap* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y, const uint16_t c) const {
 	int pos = x + w * (h - y - 1);
-	pixel_data[pos] = c;
+	(*pixel_data)[pos] = c;
 }
 
 CharColor Triangle::GetPixelColor(unsigned char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y) const {
@@ -82,9 +83,9 @@ CharColor Triangle::GetPixelColor(unsigned char* pixel_data, unsigned int w, uns
 	return CharColor(pixel_data[pos + 2], pixel_data[pos + 1], pixel_data[pos]);
 }
 
-uint16_t Triangle::GetGrayscalePixelColor(uint16_t* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y) const {
+uint16_t Triangle::GetGrayscalePixelColor(Heightmap* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y) const {
 	int pos = x + w * (h - y - 1);
-	return pixel_data[pos];
+	return (*pixel_data)[pos];
 }
 
 
@@ -179,7 +180,7 @@ void Triangle::Draw(unsigned char* pixel_data, unsigned int w, unsigned int h) {
 	}
 }
 
-void Triangle::DrawGrayscale(uint16_t* pixel_data, unsigned int w, unsigned int h) {
+void Triangle::DrawGrayscale(Heightmap* pixel_data, unsigned int w, unsigned int h) {
 
 	unsigned int m_X = (unsigned int)MinX(), M_X = (unsigned int)MaxX(), m_Y = (unsigned int)MinY(), M_Y = (unsigned int)MaxY();
 
@@ -231,7 +232,7 @@ void Triangle::DrawTransparent(unsigned char* pixel_data, unsigned int w, unsign
 }
 
 
-void Triangle::DrawTransparentGrayscale(uint16_t* pixel_data, unsigned int w, unsigned int h) {
+void Triangle::DrawTransparentGrayscale(Heightmap* pixel_data, unsigned int w, unsigned int h) {
 
 	unsigned int m_X = (unsigned int)MinX(), M_X = (unsigned int)MaxX(), m_Y = (unsigned int)MinY(), M_Y = (unsigned int)MaxY();
 
@@ -239,6 +240,8 @@ void Triangle::DrawTransparentGrayscale(uint16_t* pixel_data, unsigned int w, un
 	if (M_X >= w) M_X = w - 1;
 	if (m_Y < 0) m_Y = 0;
 	if (M_Y >= h) M_Y = h - 1;
+	
+	
 
 	for (unsigned int y = m_Y; y <= M_Y; y += 1) {
 		for (unsigned int x = FindLeftmostXGivenY(y, m_X); x <= M_X; x += 1) {
@@ -246,14 +249,16 @@ void Triangle::DrawTransparentGrayscale(uint16_t* pixel_data, unsigned int w, un
 			Color c = InterpolateColor(Point2(x, y));
 			uint16_t c_gray = InterpolateGray(Point2(x, y));
 
-			uint16_t pixel_char_c = GetGrayscalePixelColor(pixel_data, w, h, x, y);
+			uint16_t pixel_c = GetGrayscalePixelColor(pixel_data, w, h, x, y);
 
 			double alpha = std::clamp<double>(c.a, 0.0, 1.0);
 			double pixel_alpha = 1. - alpha;
 
-			uint16_t mix_c = (pixel_char_c * pixel_alpha + c_gray * alpha);
-
-			DrawGrayscalePixel(pixel_data, w, h, x, y, mix_c);
+			//unsigned int mix_c = (unsigned int)(pixel_c * pixel_alpha + c_gray * alpha);
+			unsigned int mix_c = std::max((unsigned int)pixel_c, (unsigned int)(c_gray * alpha));
+			uint16_t cast_c = (uint16_t)std::clamp<unsigned int>(mix_c, 0, MAX_GRAY);
+			//std::cout << alpha << ", " << cast_c << "\n";
+			DrawGrayscalePixel(pixel_data, w, h, x, y, cast_c);
 		}
 	}
 	

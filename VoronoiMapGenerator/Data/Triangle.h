@@ -9,6 +9,7 @@
 
 class Triangle;
 using Triangles = std::vector<Triangle>;
+class Heightmap;
 
 class Triangle {
 public:
@@ -18,9 +19,9 @@ public:
 	//Triangle(Point2* p1, Point2* p2, Point2* p3, Color* c1, Color* c2, Color* c3);
 
 	void Draw(unsigned char* pixel_data, unsigned int w, unsigned int h);
-	void DrawGrayscale(uint16_t* pixel_data, unsigned int w, unsigned int h);
+	void DrawGrayscale(Heightmap* pixel_data, unsigned int w, unsigned int h);
 	void DrawTransparent(unsigned char* pixel_data, unsigned int w, unsigned int h);
-	void DrawTransparentGrayscale(uint16_t* pixel_data, unsigned int w, unsigned int h);
+	void DrawTransparentGrayscale(Heightmap* pixel_data, unsigned int w, unsigned int h);
 
 	void AdjustSize(unsigned int w, unsigned int h, double dimension);
 
@@ -39,7 +40,7 @@ private:
 	Color InterpolateColor(const Point2& p) const;
 	uint16_t InterpolateGray(const Point2& p) const;
 	void DrawPixel(unsigned char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y, const CharColor& c) const;
-	void DrawGrayscalePixel(uint16_t* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y, const uint16_t& c) const;
+	void DrawGrayscalePixel(Heightmap* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y, const uint16_t c) const;
 	CharColor GetPixelColor(unsigned char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y) const;
-	uint16_t GetGrayscalePixelColor(uint16_t* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y) const;
+	uint16_t GetGrayscalePixelColor(Heightmap* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y) const;
 };

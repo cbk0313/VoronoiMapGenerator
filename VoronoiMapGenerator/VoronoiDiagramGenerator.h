@@ -82,7 +82,7 @@ private:
 	void SetupMoisture();
 	void SetupEdgePos(bool trans_edge);
 	void SetupColor(int flag = ALL_IMAGE);
-	void SetupRiverTriangle(Color c);
+	void SetupRiverTriangle(VertexColor c);
 	void CreateTriangle();
 
 	std::pair<double, double> GetMinDist(std::vector<std::pair<Point2, double>>& points, Point2& center, double radius);
@@ -115,7 +115,7 @@ public:
 
 	void SaveAllImage(unsigned int w, unsigned int h);
 	void SaveImage(const char* filename, unsigned int w, unsigned int h);
-	void Save16BitGrayscalePNG(const char* filename, int width, int height);
+	void Save16BitGrayscalePNG(int flag, const char* filename, int width, int height);
 	Heightmap* CreateHeightmap(int flag, unsigned int w, unsigned int h);
 };
 

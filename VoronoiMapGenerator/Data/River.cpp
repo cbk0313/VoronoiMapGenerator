@@ -297,7 +297,7 @@ Point2 RiverTriangle::GetCardinalDirection(double result[][2], double prev, doub
 }
 
 
-void RiverTriangle::CreateLineTri(Triangles& tris, RiverPointVector& point, Color color, double radius, double river_scale, double spacing, bool fade_in, bool fade_out) {
+void RiverTriangle::CreateLineTri(Triangles& tris, RiverPointVector& point, VertexColor& color, double radius, double river_scale, double spacing, bool fade_in, bool fade_out) {
 
 
 	RiverPoint& pre_c = point[0];
@@ -305,8 +305,9 @@ void RiverTriangle::CreateLineTri(Triangles& tris, RiverPointVector& point, Colo
 	Point2 p1 = pre_c.point;
 	RiverPoint& c = point[1];
 	Point2 p2 = c.point;
-	color.a = 1;
-	Color c_trans = Color(color.r, color.g, color.b, 0);
+
+	color.rgb.a = 1;
+	VertexColor c_trans = VertexColor(Color(color.rgb.r, color.rgb.g, color.rgb.b, 0), color.gray);
 
 
 
@@ -333,7 +334,7 @@ void RiverTriangle::CreateLineTri(Triangles& tris, RiverPointVector& point, Colo
 
 }
 
-void RiverTriangle::CreateCardinalTri(Triangles& tris, RiverPointVector& point, Color color, double radius, double river_scale, double spacing, bool fade_in, bool fade_out) {
+void RiverTriangle::CreateCardinalTri(Triangles& tris, RiverPointVector& point, VertexColor& color, double radius, double river_scale, double spacing, bool fade_in, bool fade_out) {
 	double result[3][2];
 	//memset(result, 0, sizeof(result));
 	CalcCardinal(point, result, 0);
@@ -347,8 +348,8 @@ void RiverTriangle::CreateCardinalTri(Triangles& tris, RiverPointVector& point, 
 	Point2 pre_norm = point[0].point;
 
 	//glBegin(GL_TRIANGLES);
-	color.a = 1;
-	Color c_trans = Color(color.r, color.g, color.b, 0);
+	color.rgb.a = 1;
+	VertexColor c_trans = VertexColor(Color(color.rgb.r, color.rgb.g, color.rgb.b, 0), color.gray);
 	while (t < 1) {
 
 		x = result[2][0] + t * (result[1][0] + result[0][0] * t);
@@ -429,7 +430,7 @@ void RiverTriangle::CreateCardinalTri(Triangles& tris, RiverPointVector& point, 
 	}
 }
 
-void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Color color, double radius, double river_scale, double spacing, bool fade_in, bool fade_out) {
+void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, VertexColor& color, double radius, double river_scale, double spacing, bool fade_in, bool fade_out) {
 
 	double result[4][2];
 
@@ -450,8 +451,8 @@ void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Co
 		}*/
 
 
-	color.a = 1;
-	Color c_trans = Color(color.r, color.g, color.b, 0);
+	color.rgb.a = 1;
+	VertexColor c_trans = VertexColor(Color(color.rgb.r, color.rgb.g, color.rgb.b, 0), color.gray);
 	t = spacing;
 	Point2 pre_p = point[0].point;
 	Point2 pre_norm = point[0].point;
@@ -647,10 +648,10 @@ void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Co
 	//glEnd();
 };
 
-void RiverTriangle::DrawCircle(Triangles& tris, Point2 center, const int num_segments, const double start, const int end, double radius, double river_scale, double power, Color color) {
+void RiverTriangle::DrawCircle(Triangles& tris, Point2 center, const int num_segments, const double start, const int end, double radius, double river_scale, double power, VertexColor color) {
 	//const int num_segments = 100;
 	//return;
-	Color t_c = Color(color.r, color.g, color.b, 0);
+	VertexColor t_c = VertexColor(Color(color.rgb.r, color.rgb.g, color.rgb.b, 0), color.gray);
 	//glVertex2f(cx, cy); 
 	for (int i = 0; i < end; i++) {
 		double theta = 2.0f * 3.1415926f * (double(i) / double(num_segments) + start / 360);
@@ -768,7 +769,7 @@ void RiverLine::AdjustPoint() {
 	}
 
 }
-void RiverLine::CreateTriangle(Color c) {
+void RiverLine::CreateTriangle(VertexColor& c) {
 	tris.clear();
 	if (points.size() > 3) {
 		/*	double start_result[3][2];
@@ -837,7 +838,7 @@ void RiverCrossing::AddRiver(RiverLine* river) {
 }
 
 
-void RiverCrossing::CreateCrossingPointTriagle(Color color, double radius, double river_scale, double spacing) {
+void RiverCrossing::CreateCrossingPointTriagle(VertexColor& color, double radius, double river_scale, double spacing) {
 	//return;
 	//radius *= std::sqrt(2);
 
@@ -846,8 +847,8 @@ void RiverCrossing::CreateCrossingPointTriagle(Color color, double radius, doubl
 		rc.tris.clear();
 		if (rc.inputs.size() > 0 && rc.outputs.size() > 0) {
 			RiverPointVector points;
-			RiverPoint& input_point = rc.inputs[0]->GetEndPoint();
-			RiverPoint& ouput_point = rc.outputs[0]->GetFirstPoint();
+			//RiverPoint& input_point = rc.inputs[0]->GetEndPoint();
+			//RiverPoint& ouput_point = rc.outputs[0]->GetFirstPoint();
 			double power = 0;
 			for (auto& p : rc.inputs) {
 				power += p->GetEndPoint().power;
@@ -857,10 +858,10 @@ void RiverCrossing::CreateCrossingPointTriagle(Color color, double radius, doubl
 			}
 			power /= (rc.inputs.size() + rc.outputs.size());
 
-			RiverPoint middle_point = RiverPoint((input_point.power + ouput_point.power) / 2, rc.GetCell());
-			points.push_back(input_point);
-			points.push_back(middle_point);
-			points.push_back(ouput_point);
+			//RiverPoint middle_point = RiverPoint((input_point.power + ouput_point.power) / 2, rc.GetCell());
+			//points.push_back(input_point);
+			//points.push_back(middle_point);
+			//points.push_back(ouput_point);
 
 			//RiverTriangle::CreateCardinalTri(rc.tris, points, radius, river_scale, spacing);
 			//continue;
@@ -868,8 +869,8 @@ void RiverCrossing::CreateCrossingPointTriagle(Color color, double radius, doubl
 
 
 			//glVertex2f(cx, cy);
-			color.a = 1;
-			Color trans_c = Color(color.r, color.g, color.b, 0);
+			color.rgb.a = 1;
+			VertexColor trans_c = VertexColor(Color(color.rgb.r, color.rgb.g, color.rgb.b, 0), color.gray);
 			for (int i = 0; i < num_segments; i++) {
 				double theta = 2.0f * 3.1415926f * double(i) / double(num_segments); 
 				double x_ = radius * (river_scale * power + 1) * cosf((float)theta); 
@@ -912,7 +913,7 @@ void RiverLines::AddLine(RiverCrossing* corssing, RiverLine* line) {
 		double dist = main_setting.GetRiverAdditionalCurveDistance();
 		int chance_cnt = 0;
 		std::vector<bool> list = std::vector<bool>(cnt - 1, false);
-		for (int i = 0, loop_cnt = cnt - 1; i < loop_cnt; i++) {
+		for (unsigned int i = 0, loop_cnt = cnt - 1; i < loop_cnt; i++) {
 			list[i] = main_setting.GetRandom() >= chance;
 			chance_cnt++;
 		}
@@ -944,7 +945,7 @@ void RiverLines::AddLine(RiverCrossing* corssing, RiverLine* line) {
 				double x = dist * cosf((float)theta);
 				double y = dist * sinf((float)theta);
 				//Point2 p = (vec[i - 1].point + vec[i].point) / 2 + Point2(main_setting.GetRandom(), main_setting.GetRandom()) * p_dist * main_setting.GetRiverAdditionalCurveDistance();
-				RiverPoint rp = RiverPoint(power, nullptr, p + Point2(x, y));
+				RiverPoint rp = RiverPoint((unsigned int)power, nullptr, p + Point2(x, y));
 				temp.push_back(rp);
 			}
 			temp.push_back(vec[i]);
@@ -970,7 +971,7 @@ void RiverLines::AdjustPoint() {
 	}
 }
 
-void RiverLines::CreateTriagle(Color c) {
+void RiverLines::CreateTriagle(VertexColor& c) {
 	for (auto river : lines) {
 		river->CreateTriangle(c);
 	}

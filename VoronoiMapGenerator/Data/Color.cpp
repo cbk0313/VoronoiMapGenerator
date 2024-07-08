@@ -115,8 +115,8 @@ Color ::operator CharColor() const {
 }
 
 uint16_t Color::Graysacle() const {
-	double c = ((r + g + b) / 3);
-	unsigned g = c * MAX_GRAY;
+	double c = ((r + g + b) / 3) * a;
+	unsigned int g = (unsigned int)(c * MAX_GRAY);
 	return static_cast<uint16_t>(std::clamp<unsigned int>(g, 0, MAX_GRAY));
 }
 

@@ -3,12 +3,11 @@
 #include <iostream>
 
 class Heightmap {
-	bool is_grayscale;
 	unsigned int width;
 	unsigned int height;
 	uint16_t* data;
 public:
-	Heightmap(unsigned int w, unsigned int h, bool grayscale = false);
+	Heightmap(unsigned int w, unsigned int h);
 	~Heightmap();
 
 	void Dispose();
