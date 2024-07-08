@@ -311,7 +311,7 @@ void VoronoiDiagramGenerator::SaveImage(const char* filename, unsigned int w, un
 }
 
 
-void VoronoiDiagramGenerator::Save16BitGrayscalePNG(int flag, const char* filename, int width, int height) {
+void VoronoiDiagramGenerator::SaveGrayscaleImage(int flag, const char* filename, int width, int height) {
 
 	auto start = std::clock();
 	FILE* fp = nullptr;
