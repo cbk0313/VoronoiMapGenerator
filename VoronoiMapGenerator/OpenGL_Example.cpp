@@ -533,8 +533,8 @@ int main() {
 			screen_dump();
 			vdg.SaveAllImage(IMAGE_WIDTH, IMAGE_HEIGHT);
 
-			vdg.SaveGrayscaleImage(VoronoiDiagramGenerator::ISLAND, "voronoi_map_island_grayscale.png", IMAGE_WIDTH, IMAGE_HEIGHT);
-			vdg.SaveGrayscaleImage(VoronoiDiagramGenerator::LAKE, "voronoi_map_lake_grayscale.png", IMAGE_WIDTH, IMAGE_HEIGHT);
+			vdg.SaveGrayscaleImage(VoronoiDiagramGenerator::ISLAND, "voronoi_map_island_grayscale.png", IMAGE_WIDTH, IMAGE_HEIGHT, false);
+			vdg.SaveGrayscaleImage(VoronoiDiagramGenerator::LAKE, "voronoi_map_lake_grayscale.png", IMAGE_WIDTH, IMAGE_HEIGHT, false);
 			vdg.SaveGrayscaleImage(VoronoiDiagramGenerator::RIVER, "voronoi_map_river_grayscale.png", IMAGE_WIDTH, IMAGE_HEIGHT);
 		}
 		else {
