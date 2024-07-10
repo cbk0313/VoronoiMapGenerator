@@ -34,7 +34,7 @@
 // Function prototypes
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 // Window dimensions
-const GLuint WINDOW_WIDTH = 1080 * 1, WINDOW_HEIGHT = 1080 * 1;
+const GLuint WINDOW_WIDTH = 1024 * 1, WINDOW_HEIGHT = 1024 * 1;
 const int IMAGE_SCALE = 4;
 const GLuint IMAGE_WIDTH = WINDOW_WIDTH * IMAGE_SCALE, IMAGE_HEIGHT = WINDOW_HEIGHT * IMAGE_SCALE;
 
