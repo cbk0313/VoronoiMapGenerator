@@ -73,9 +73,9 @@ void Triangle::DrawPixel(unsigned char* pixel_data, unsigned int w, unsigned int
 	pixel_data[pos + 1] = c.g;
 	pixel_data[pos + 2] = c.r;
 }
-void Triangle::DrawGrayscalePixel(Heightmap* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y, const uint16_t c) const {
+void Triangle::DrawGrayscalePixel(Heightmap& pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y, const uint16_t c) const {
 	int pos = x + w * (h - y - 1);
-	(*pixel_data)[pos] = c;
+	pixel_data[pos] = c;
 }
 
 CharColor Triangle::GetPixelColor(unsigned char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y) const {
@@ -83,9 +83,9 @@ CharColor Triangle::GetPixelColor(unsigned char* pixel_data, unsigned int w, uns
 	return CharColor(pixel_data[pos + 2], pixel_data[pos + 1], pixel_data[pos]);
 }
 
-uint16_t Triangle::GetGrayscalePixelColor(Heightmap* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y) const {
+uint16_t Triangle::GetGrayscalePixelColor(Heightmap& pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y) const {
 	int pos = x + w * (h - y - 1);
-	return (*pixel_data)[pos];
+	return pixel_data[pos];
 }
 
 
@@ -180,7 +180,7 @@ void Triangle::Draw(unsigned char* pixel_data, unsigned int w, unsigned int h) {
 	}
 }
 
-void Triangle::DrawGrayscale(Heightmap* pixel_data, unsigned int w, unsigned int h) {
+void Triangle::DrawGrayscale(Heightmap& pixel_data, unsigned int w, unsigned int h) {
 
 	unsigned int m_X = (unsigned int)MinX(), M_X = (unsigned int)MaxX(), m_Y = (unsigned int)MinY(), M_Y = (unsigned int)MaxY();
 
@@ -232,7 +232,7 @@ void Triangle::DrawTransparent(unsigned char* pixel_data, unsigned int w, unsign
 }
 
 
-void Triangle::DrawTransparentGrayscale(Heightmap* pixel_data, unsigned int w, unsigned int h) {
+void Triangle::DrawTransparentGrayscale(Heightmap& pixel_data, unsigned int w, unsigned int h) {
 
 	unsigned int m_X = (unsigned int)MinX(), M_X = (unsigned int)MaxX(), m_Y = (unsigned int)MinY(), M_Y = (unsigned int)MaxY();
 
