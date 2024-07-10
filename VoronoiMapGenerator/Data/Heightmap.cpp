@@ -11,12 +11,12 @@ Heightmap::Heightmap(unsigned int w, unsigned int h) : Width(w), Height(h) {
 }
 
 Heightmap::~Heightmap() {
-	Dispose();
+	//Dispose();
 }
 
-void Heightmap::Dispose() {
-	//delete[] data;
-}
+//void Heightmap::Dispose() {
+//	//delete[] data;
+//}
 
 uint16_t& Heightmap::operator[](size_t index) {
 	return Data[index];
@@ -31,10 +31,10 @@ uint16_t& Heightmap::Get(unsigned int x, unsigned int y) {
 uint16_t* Heightmap::GetArray() {
 	return Data.data();
 }
-
-std::vector<uint16_t>& Heightmap::GetData() {
-	return Data;
-}
+//
+//std::vector<uint16_t>& Heightmap::GetData() {
+//	return Data;
+//}
 
 
 
@@ -67,7 +67,7 @@ void Heightmap::BoxBlur(int blurSize) {
 	}
 }
 
-// 샤프닝 함수
+
 void Heightmap::Sharpen() {
 
 	int kernel[3][3] = {
@@ -94,8 +94,8 @@ void Heightmap::Sharpen() {
 		}
 	}
 }
-//
-//// 엣지 검출 함수 (Sobel 필터)
+
+
 //void Heightmap::EdgeDetection() {
 //    int sobelX[3][3] = {
 //        {-1, 0, 1},
@@ -128,7 +128,7 @@ void Heightmap::Sharpen() {
 //}
 
 void Heightmap::GaussianBlur(int size, float sigma) {
-	// 3x3 가우시안 커널
+
 	int halfSize = size / 2;
 	std::vector<std::vector<float>> kernel(size, std::vector<float>(size));
 	float sum = 0.0;
@@ -141,7 +141,6 @@ void Heightmap::GaussianBlur(int size, float sigma) {
 		}
 	}
 
-	// 커널 정규화
 	for (int y = 0; y < size; ++y) {
 		for (int x = 0; x < size; ++x) {
 			kernel[y][x] /= sum;
@@ -152,12 +151,11 @@ void Heightmap::GaussianBlur(int size, float sigma) {
 	const int width = (int)Width;
 	const int height = (int)Width;
 
-	// 이미지 가장자리를 처리하지 않기 위해 1 픽셀 패딩
+
 	for (int y = 1; y < height - 1; ++y) {
 		for (int x = 1; x < width - 1; ++x) {
 			float sum = 0.0;
 
-			// 가우시안 커널을 적용
 			for (int ky = -1; ky <= 1; ++ky) {
 				for (int kx = -1; kx <= 1; ++kx) {
 					sum += inputImage[(y + ky) * width + (x + kx)] * kernel[ky + 1][kx + 1];
@@ -228,28 +226,7 @@ void Heightmap::SaveImage(const char* filename) {
 	png_write_info(png, info);
 	png_set_swap(png);
 
-	
-	//for (int i = 0; i < 10; i++) {
 
-
-	//	for (unsigned int x = 1; x < width - 1; x++) {
-	//		for (unsigned int y = 1; y < height - 1; y++) {
-	//			unsigned int temp = 0;
-	//			int cnt = 0;
-	//			for (int x_ = -1; x_ < 2; x_++) {
-	//				for (int y_ = -1; y_ < 2; y_++) {
-	//					//std::cout << y_ << "\n";
-	//					temp += map->Get(x + x_, y + y_);
-	//					cnt++;
-	//				}
-	//			}
-	//			temp /= cnt;
-	//			map->Get(x, y) = std::clamp<uint16_t>(temp, 0, MAX_GRAY);
-	//		}
-	//	}
-	//}
-
-	// PNG 파일에 데이터 작성
 	std::vector<png_bytep> rows(Height);
 	for (int y = 0; y < Height; ++y) {
 		rows[y] = reinterpret_cast<png_bytep>(&Data[(Height - y - 1) * Width]);

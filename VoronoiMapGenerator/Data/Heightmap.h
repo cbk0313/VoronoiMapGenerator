@@ -14,12 +14,12 @@ public:
 	Heightmap(unsigned int w, unsigned int h);
 	~Heightmap();
 
-	void Dispose();
+	//void Dispose();
 
 	uint16_t& operator[](size_t index);
 	uint16_t& Get(unsigned int x, unsigned int y);
 	uint16_t* GetArray();
-	std::vector<uint16_t>& GetData();
+	//std::vector<uint16_t>& GetData();
 
 	void BoxBlur(int blurSize);
 	void Sharpen();
