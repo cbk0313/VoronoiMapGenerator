@@ -910,7 +910,7 @@ void RiverLines::AddLine(RiverCrossing* corssing, RiverLine* line) {
 	auto cnt = vec.size();
 	if (cnt == 2) {
 		double chance = 1 - main_setting.GetRiverAdditionalCurveChance();
-		double dist = main_setting.GetRiverAdditionalCurveDistance();
+		//double dist = main_setting.GetRiverAdditionalCurveDistance();
 		int chance_cnt = 0;
 		std::vector<bool> list = std::vector<bool>(cnt - 1, false);
 		for (unsigned int i = 0, loop_cnt = cnt - 1; i < loop_cnt; i++) {

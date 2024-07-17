@@ -115,6 +115,7 @@ public:
 
 	void SaveAllImage(unsigned int w, unsigned int h);
 	void SaveImage(int flag, const char* filename, unsigned int w, unsigned int h, bool restore = true);
+	unsigned char* GetImage(int flag, unsigned int w, unsigned int h, bool restore = true);
 	//void SaveGrayscaleImage(Heightmap& map, const char* filename, int width, int height);
 	void CreateHeightmap(Heightmap& out_map, bool clear_image, int flag, unsigned int w, unsigned int h, bool restore = true);
 };

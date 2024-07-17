@@ -311,6 +311,49 @@ void VoronoiDiagramGenerator::SaveImage(int flag, const char* filename, unsigned
 
 
 
+unsigned char* VoronoiDiagramGenerator::GetImage(int flag, unsigned int w, unsigned int h, bool restore) {
+	unsigned char* pixel_data = new unsigned char[w * h * 3];
+
+	SetupColor(flag);
+	CreateTriangle();
+	if (flag == RIVER) {
+		SetupRiverTriangle(Color(1, 1, 1));
+	}
+	else {
+		SetupRiverTriangle(Color::lake);
+	}
+
+	if (image_flag != RIVER) {
+		for (Triangle tri : diagram->triangles) {
+			tri.AdjustSize(w, h, image_dim);
+			tri.Draw(pixel_data, w, h);
+		}
+	}
+
+
+	if (image_flag & RIVER) {
+
+		for (RiverLine* line : diagram->river_lines.GetArray()) {
+			for (Triangle tri : line->GetTriangle()) {
+				tri.AdjustSize(w, h, image_dim);
+				tri.DrawTransparent(pixel_data, w, h);
+			}
+		}
+		for (Triangle tri : diagram->river_cross.GetTriangle()) {
+			tri.AdjustSize(w, h, image_dim);
+			tri.DrawTransparent(pixel_data, w, h);
+		}
+	}
+
+	if (restore) {
+		SetupRiverTriangle(Color::lake);
+		SetupColor(ALL_IMAGE);
+		CreateTriangle();
+	}
+	return pixel_data;
+}
+
+
 void VoronoiDiagramGenerator::CreateHeightmap(Heightmap& out_map, bool clear_image, int flag, unsigned int w, unsigned int h, bool restore) {
 	
 	auto start = std::clock();

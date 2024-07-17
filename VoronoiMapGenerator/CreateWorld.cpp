@@ -750,9 +750,9 @@ void VoronoiDiagramGenerator::SetupMoisture() {
 }
 
 
-using Container = std::tuple<Cell*, std::vector<Cell*>>;
+using Container_CC = std::tuple<Cell*, std::vector<Cell*>>;
 struct LakeComp {
-	bool operator() (Container& A, Container& B) {
+	bool operator() (Container_CC& A, Container_CC& B) {
 		CellDetail& ad = get<0>(A)->GetDetail();
 		CellDetail& bd = get<0>(B)->GetDetail();
 		if (get<1>(A).size() < get<1>(B).size()) {
