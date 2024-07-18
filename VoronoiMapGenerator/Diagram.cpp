@@ -34,6 +34,11 @@ Diagram::~Diagram() {
 	Cell::ResetUnique();
 }
 
+void Diagram::Initialize(GenerateSetting& setting) {
+	river_lines.Initialize(setting);
+}
+
+
 Vertex* Diagram::createVertex(double x, double y) {
 	Vertex* vert = vertexPool.newElement(Point2(x, y));
 	vertices.push_back(vert);

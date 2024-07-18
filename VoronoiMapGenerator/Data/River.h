@@ -278,7 +278,9 @@ public:
 class RiverLines {
 	friend class RiverEdge;
 
-	GenerateSetting& main_setting;
+	double CurveChance;
+	double CurveDistance;
+
 	std::vector<RiverLine*> lines;
 
 	RiverEdgeMap RIVER_EDGES_MAP;
@@ -288,8 +290,9 @@ class RiverLines {
 	RiverCntMap RIVER_CNT;
 	
 public:
-	RiverLines(GenerateSetting& setting)
-	: main_setting(setting)
+	RiverLines()
+		: CurveChance(0)
+		, CurveDistance(0)
 	{
 		RIVER_EDGES_MAP = RiverEdgeMap();
 		RIVER_OUT_MAP = RiverOutMap();
@@ -298,6 +301,7 @@ public:
 		RIVER_CNT = RiverCntMap();
 	}
 
+	void Initialize(GenerateSetting& setting);
 
 	void AddOceanConnect(Cell* c);
 	int GetOceanConnect(Cell* c);

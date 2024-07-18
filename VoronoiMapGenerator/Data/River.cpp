@@ -101,6 +101,7 @@ void RiverEdge::Initialize(RiverLines* lines, Cell* startCell, Cell* endCell, Ce
 	nexts.clear();
 	links.clear();
 	is_start = false;
+	power = 0;
 	start = startCell;
 	end = endCell;
 	owner = river_owner;
@@ -196,7 +197,6 @@ void RiverEdge::DeleteLine(/*std::vector<bool>& buf*/) {
 		for (auto pre_e : prevs) {
 			if (pre_e->GetRiverEnd() && pre_e->GetNexts().size() <= 1) {
 				pre_e->SetRiverEnd(false);
-				//std::cout << "test\n";
 			}
 		}
 
@@ -243,6 +243,11 @@ RiverEdge* RiverEdge::GetOwnerEdge() {
 	return river_lines->RIVER_EDGES_MAP[RiverEdge::GetPos(GetOnwer(), GetOnwer())];
 }
 
+
+void RiverLines::Initialize(GenerateSetting& setting) {
+	CurveChance = setting.GetRiverAdditionalCurveChance();
+	CurveDistance = setting.GetRiverAdditionalCurveDistance();
+}
 
 void RiverLines::AddOceanConnect(Cell* c) {
 	int num = c->GetDetail().UnionFindCell(Terrain::OCEAN)->GetUnique();
@@ -346,7 +351,6 @@ void RiverTriangle::CreateCardinalTri(Triangles& tris, RiverPointVector& point, 
 	t = spacing;
 	Point2 pre_p = point[0].point;
 	Point2 pre_norm = point[0].point;
-
 	//glBegin(GL_TRIANGLES);
 	color.rgb.a = 1;
 	VertexColor c_trans = VertexColor(Color(color.rgb.r, color.rgb.g, color.rgb.b, 0), color.gray);
@@ -365,8 +369,6 @@ void RiverTriangle::CreateCardinalTri(Triangles& tris, RiverPointVector& point, 
 			c = Color(1, 0, 0);
 		}*/
 
-		/*	std::cout << point[0].power << "\n";
-			std::cout << point[2].power << "\n";*/
 		Point2 new_p = Point2(x, y);
 		Point2 next_p = Point2(x2, y2);
 		Point2 norm = (new_p - pre_p);
@@ -689,7 +691,6 @@ void RiverLine::ClearJunk() {
 	std::vector<RiverLine*> temp(ADDED_COUNT);
 	for (RiverLine* item : RIVER_LINE_ARR) {
 		if (item->used) {
-			//std::cout << cnt << "\n";
 			temp[cnt++] = item;
 		}
 		else {
@@ -750,6 +751,7 @@ void RiverLine::AdjustPoint() {
 	RiverPoint& e_p = GetEndPoint();
 	double f_scale = main_setting.GetRiverRadius() * (main_setting.GetRiverPowerScale() * f_p.power + 1) / 2;
 	double e_scale = main_setting.GetRiverRadius() * (main_setting.GetRiverPowerScale() * e_p.power + 1) / 2;
+
 	if (points.size() > 2) {
 
 		double start_result[3][2];
@@ -909,12 +911,12 @@ void RiverLines::AddLine(RiverCrossing* corssing, RiverLine* line) {
 	RiverPointVector& vec = line->GetPointArray();
 	auto cnt = vec.size();
 	if (cnt == 2) {
-		double chance = 1 - main_setting.GetRiverAdditionalCurveChance();
+		double chance = 1 - CurveChance;
 		//double dist = main_setting.GetRiverAdditionalCurveDistance();
 		int chance_cnt = 0;
 		std::vector<bool> list = std::vector<bool>(cnt - 1, false);
 		for (unsigned int i = 0, loop_cnt = cnt - 1; i < loop_cnt; i++) {
-			list[i] = main_setting.GetRandom() >= chance;
+			list[i] = GenerateSetting::GetRandom() >= chance;
 			chance_cnt++;
 		}
 
@@ -940,8 +942,8 @@ void RiverLines::AddLine(RiverCrossing* corssing, RiverLine* line) {
 				else {
 					p_dist = e->vertA->point.DistanceTo(e->vertB->point);
 				}
-				double dist = p_dist * main_setting.GetRiverAdditionalCurveDistance();
-				double theta = 2.0f * 3.1415926f * (main_setting.GetRandom() * 360.0  / 360);
+				double dist = p_dist * CurveDistance;
+				double theta = 2.0f * 3.1415926f * (GenerateSetting::GetRandom() * 360.0  / 360);
 				double x = dist * cosf((float)theta);
 				double y = dist * sinf((float)theta);
 				//Point2 p = (vec[i - 1].point + vec[i].point) / 2 + Point2(main_setting.GetRandom(), main_setting.GetRandom()) * p_dist * main_setting.GetRiverAdditionalCurveDistance();
@@ -950,15 +952,11 @@ void RiverLines::AddLine(RiverCrossing* corssing, RiverLine* line) {
 			}
 			temp.push_back(vec[i]);
 		}
-		//std::cout << temp.size() << "\n";
 		line->GetPointArray() = temp;
 	}
 
 	corssing->AddRiver(line);
 	lines.push_back(line);
-	//std::cout << (*(lines.end() - 1)).GetPointArray().size() << "ADF\n";
-	//std::cout << &lines[lines.size() - 1] << "ADF\n";
-	//}
 }
 
 std::vector<RiverLine*>& RiverLines::GetArray() {

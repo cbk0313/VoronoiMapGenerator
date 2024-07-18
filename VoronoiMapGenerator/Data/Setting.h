@@ -92,7 +92,7 @@ public:
 	inline double GetRiverAdditionalCurveChance() { return river_additional_curve_chance; };
 	inline double GetRiverAdditionalCurveDistance() { return river_additional_curve_distance; };
 
-	inline double GetRandom() {
+	static inline double GetRandom() {
 		return rand() / ((double)0x7fff); // RAND_MAX 
 	}
 

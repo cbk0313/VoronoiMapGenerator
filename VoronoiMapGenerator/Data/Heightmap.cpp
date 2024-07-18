@@ -31,10 +31,10 @@ uint16_t& Heightmap::Get(unsigned int x, unsigned int y) {
 uint16_t* Heightmap::GetArray() {
 	return Data.data();
 }
-//
-//std::vector<uint16_t>& Heightmap::GetData() {
-//	return Data;
-//}
+
+std::vector<uint16_t>& Heightmap::GetData() {
+	return Data;
+}
 
 
 

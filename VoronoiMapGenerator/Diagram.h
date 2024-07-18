@@ -15,7 +15,8 @@ struct BoundingBox;
 class GenerateSetting;
 class Diagram {
 	friend class VoronoiDiagramGenerator;
-	Diagram(GenerateSetting& setting) : river_lines(RiverLines(setting)) {}
+	Diagram() {}
+	void Initialize(GenerateSetting& setting);
 	std::vector<Cell*> cells;
 	std::vector<Edge*> edges;
 	std::vector<Vertex*> vertices;

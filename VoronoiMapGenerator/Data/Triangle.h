@@ -33,7 +33,7 @@ private:
 
 	double FindXGivenY(const Point2& p1, const Point2& p2, unsigned int y);
 	bool IsYBetweenPoints(const Point2& p1, const Point2& p2, double y);
-	unsigned int FindLeftmostXGivenY(unsigned int y, unsigned int min_x);
+	unsigned int FindLeftmostXGivenY(unsigned int y, unsigned int max_x);
 	unsigned int FindRightmostXGivenY(unsigned int y, unsigned int max_x);
 
 	bool IsInside(const Point2& p) const;

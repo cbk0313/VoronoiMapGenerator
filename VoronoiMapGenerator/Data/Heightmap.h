@@ -19,6 +19,7 @@ public:
 	uint16_t& operator[](size_t index);
 	uint16_t& Get(unsigned int x, unsigned int y);
 	uint16_t* GetArray();
+	std::vector<uint16_t>& GetData();
 	//std::vector<uint16_t>& GetData();
 
 	void BoxBlur(int blurSize);

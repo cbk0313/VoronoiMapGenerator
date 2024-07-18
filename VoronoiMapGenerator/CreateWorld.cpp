@@ -143,7 +143,6 @@ void VoronoiDiagramGenerator::CreateLand() {
 
 		double dist = Point2::Distance(c->site.p, center);
 		DistRadius p_dist = GetMinDist(islands, c->site.p, setting.GetRadius());
-		//std::cout << p_dist << endl;
 
 		double dist_scale = (1 - pow(dist / setting.GetRadius(), 1));
 		double island_dist_scale = (1 - pow(p_dist.first / p_dist.second, 2)) * 3;
@@ -506,7 +505,6 @@ void VoronoiDiagramGenerator::SetupPeak(CellVector& coastBuffer) {
 
 		if (IS_LAND(cd.GetTerrain())) {
 			avg_elev /= (c->halfEdges.size() + 1);
-			//std::cout << avg_elev << " | " << cd.GetElevation() << "\n";
 			if (avg_elev < cd.GetElevation()) {
 				cd.SetPeak(true);
 			}
@@ -925,11 +923,11 @@ void VoronoiDiagramGenerator::CreateRiver() {
 		}
 
 	}
-
+	
 	for (auto item : diagram->islandUnion.unions) {
 		auto island = item.second;
 		//break;
-
+		
 		for (auto lake_union : island.lakeUnion.unions) {
 
 
@@ -940,7 +938,6 @@ void VoronoiDiagramGenerator::CreateRiver() {
 				if (diagram->river_lines.GetRiverEdges().find(river_pos) != diagram->river_lines.GetRiverEdges().end()) {
 					buf.push(std::make_pair(diagram->river_lines.GetRiverEdges()[river_pos], lake_union.second.size()));
 				}
-
 
 				while (!buf.empty()) {
 					auto value = buf.top();
@@ -1140,7 +1137,6 @@ void VoronoiDiagramGenerator::SetupVertexColor(Vertex* v, Cell* c, Cell* opposit
 					v->elev = cd.GetElevation();
 				}
 				else {
-					//std::cout << cd.GetElevation() << "\n";
 					//v->color = Color(1, 0, 0);
 				}
 				//v->color = Color(1, 0, 0);
@@ -1343,8 +1339,6 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 				}
 			}
 			else {
-				//if(cd.GetElevation() <= COAST_ELEVATION) std::cout << cd.GetElevation() << "\n";
-
 				if (IS_OCEAN(tcd.GetTerrain())) {
 					if (avg / 5 > dist) {
 						if (tcd.GetElevation() <= COAST_ELEVATION) {

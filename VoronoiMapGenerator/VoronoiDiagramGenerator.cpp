@@ -98,7 +98,8 @@ void VoronoiDiagramGenerator::Compute() {
 		siteEventQueue.back()->Epsilon();
 	}
 
-	diagram = new Diagram(setting);
+	diagram = new Diagram();
+	diagram->Initialize(setting);
 	circleEventQueue = new CircleEventQueue();
 	beachLine = new RBTree<BeachSection>();
 
@@ -225,14 +226,7 @@ void VoronoiDiagramGenerator::SaveAllImage(unsigned int w, unsigned int h) {
 }
 
 void VoronoiDiagramGenerator::SaveImage(int flag, const char* filename, unsigned int w, unsigned int h, bool restore) {
-	SetupColor(flag);
-	CreateTriangle();
-	if (flag == RIVER) {
-		SetupRiverTriangle(Color(1, 1, 1));
-	}
-	else {
-		SetupRiverTriangle(Color::lake);
-	}
+
 
 	FILE* out = nullptr;
 	errno_t err = fopen_s(&out, filename, "wb");
@@ -242,31 +236,7 @@ void VoronoiDiagramGenerator::SaveImage(int flag, const char* filename, unsigned
 	}
 
 	auto start = std::clock();
-	unsigned char* pixel_data = new unsigned char[w * h * 3];
-	
-
-	if (image_flag != RIVER) {
-		for (Triangle tri : diagram->triangles) {
-			tri.AdjustSize(w, h, image_dim);
-			tri.Draw(pixel_data, w, h);
-		}
-	}
-	
-
-	if (image_flag & RIVER) {
-
-		for (RiverLine* line : diagram->river_lines.GetArray()) {
-			for (Triangle tri : line->GetTriangle()) {
-				tri.AdjustSize(w, h, image_dim);
-				tri.DrawTransparent(pixel_data, w, h);
-			}
-		}
-		for (Triangle tri : diagram->river_cross.GetTriangle()) {
-			tri.AdjustSize(w, h, image_dim);
-			tri.DrawTransparent(pixel_data, w, h);
-		}
-	}
-
+	unsigned char* pixel_data = GetImage(flag, w, h, restore);
 
 
 	//char pixel_data[IMAGE_WIDTH * IMAGE_HEIGHT * 300];
@@ -313,6 +283,7 @@ void VoronoiDiagramGenerator::SaveImage(int flag, const char* filename, unsigned
 
 unsigned char* VoronoiDiagramGenerator::GetImage(int flag, unsigned int w, unsigned int h, bool restore) {
 	unsigned char* pixel_data = new unsigned char[w * h * 3];
+	std::fill(pixel_data, pixel_data + w * h * 3, 0);
 
 	SetupColor(flag);
 	CreateTriangle();
