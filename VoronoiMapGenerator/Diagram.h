@@ -13,10 +13,23 @@ struct UnionArray;
 
 struct BoundingBox;
 class GenerateSetting;
+class Diagram;
+using UDiagram = Diagram;
+
 class Diagram {
+
 	friend class VoronoiDiagramGenerator;
-	Diagram() {}
+	friend class RiverEdge;
+	friend class RiverLine;
+	//UDiagram(GenerateSetting& setting) : river_lines(RiverLines(setting)) {}
+	Diagram() : ADDED_COUNT(0) {}
+	/*UDiagram(const FObjectInitializer& ObjectInitializer)
+		: Super(ObjectInitializer)
+		, ADDED_COUNT(0)
+	{};*/
+
 	void Initialize(GenerateSetting& setting);
+
 	std::vector<Cell*> cells;
 	std::vector<Edge*> edges;
 	std::vector<Vertex*> vertices;
@@ -25,6 +38,12 @@ class Diagram {
 	RiverLines river_lines;
 	RiverCrossing river_cross;
 	std::vector<Triangle> triangles;
+
+	std::vector<RiverEdge*> RIVER_EDGES;
+	std::queue<RiverEdge*> RIVER_DELETE_QUEUE;
+
+	std::vector<RiverLine*> RIVER_LINE_ARR;
+	unsigned int ADDED_COUNT;
 public:
 	std::vector<Cell*>& GetCells() { return cells; }
 	std::vector<Edge*>& GetEdges() { return edges; }
@@ -36,6 +55,10 @@ public:
 
 	~Diagram();
 	void printDiagram();
+
+	void RiverEdgeClear();
+	void RiverLineClear();
+	void RiverLineClearJunk();
 private:
 
 	//std::vector<Cell*> tmpCells;

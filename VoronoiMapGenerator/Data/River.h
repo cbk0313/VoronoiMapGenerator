@@ -14,6 +14,8 @@ struct RiverPoint;
 
 class GenerateSetting;
 
+class Diagram;
+
 namespace River {
 	struct pair_hash {
 		template <class T1, class T2>
@@ -82,8 +84,7 @@ using RiverPointVector = std::vector<RiverPoint>;
 
 class RiverEdge {
 
-	static std::vector< RiverEdge*> RIVER_EDGES;
-	static std::queue<RiverEdge*> RIVER_DELETE_QUEUE;
+	Diagram* diagram;
 
 	bool is_start;
 	bool is_end;
@@ -101,15 +102,14 @@ class RiverEdge {
 	unsigned int unique;
 public:
 
-	static void Clear();
 
 	//RiverEdge() : is_start(false), start(nullptr), end(nullptr), dist(0) {};
-	RiverEdge(RiverLines* lines, Cell* startCell, Cell* endCell, Cell* river_owner, RiverEdge* pre_edge, RiverEdge* next_edge, int distance)
-	{ 
-		Initialize(lines, startCell, endCell, river_owner, pre_edge, next_edge, distance);
+	RiverEdge(Diagram* l_diagram, RiverLines* lines, Cell* startCell, Cell* endCell, Cell* river_owner, RiverEdge* pre_edge, RiverEdge* next_edge, int distance)
+	{
+		Initialize(l_diagram, lines, startCell, endCell, river_owner, pre_edge, next_edge, distance);
 	};
 
-	void Initialize(RiverLines* lines, Cell* startCell, Cell* endCell, Cell* river_owner, RiverEdge* pre_edge, RiverEdge* next_edge, int distance);
+	void Initialize(Diagram* l_diagram, RiverLines* lines, Cell* startCell, Cell* endCell, Cell* river_owner, RiverEdge* pre_edge, RiverEdge* next_edge, int distance);
 	int GetDistance() { return dist; };
 	Cell* GetOnwer();
 	void SetOnwer(Cell* c);
@@ -132,8 +132,8 @@ public:
 	void SetDistAndNextAll(int num, Cell* river_owner);
 	void SetDist(int num);
 	void DeleteLine(/*std::vector<bool>& buf*/);
-	static RiverEdge* Create(RiverLines* lines, Cell* startCell, Cell* endCell, Cell* river_owner, RiverEdge* pre_edge, RiverEdge* next_edge, int distance);
-	static RiverEdge* CreateStartPoint(RiverLines* lines, Cell* c);
+	static RiverEdge* Create(Diagram* l_diagram, RiverLines* lines, Cell* startCell, Cell* endCell, Cell* river_owner, RiverEdge* pre_edge, RiverEdge* next_edge, int distance);
+	static RiverEdge* CreateStartPoint(Diagram* l_diagram, RiverLines* lines, Cell* c);
 	static RiverPos GetPos(Cell* start, Cell* end);
 
 	void ConnectPrev(RiverEdge* e);
@@ -168,10 +168,10 @@ public:
 class RiverTriangle {
 private:
 
-	static const double matrix_2[3][3];
-	static const double matrix_3[4][4];
 
 public:
+	static const double matrix_2[3][3];
+	static const double matrix_3[4][4];
 
 	// https://m.blog.naver.com/mykepzzang/220578028540
 	// https://wtg-study.tistory.com/101
@@ -188,14 +188,12 @@ public:
 	static void DrawCircle(Triangles& tris, Point2 center, const int num_segments, const double start, const int end, double radius, double river_scale, double power, VertexColor color);
 
 };
-
-
 class RiverLine {
 
-	static std::vector<RiverLine*> RIVER_LINE_ARR;
-	static unsigned int ADDED_COUNT;
+
 
 	bool used;
+	Diagram* diagram;
 	RiverPointVector points;
 	Triangles tris;
 	//double radius;
@@ -204,17 +202,19 @@ class RiverLine {
 
 	GenerateSetting& main_setting;
 
-	RiverLine(GenerateSetting& setting)
+	RiverLine(Diagram* l_diagram, GenerateSetting& setting)
 		: used(false)
+		, diagram(l_diagram)
 		, main_setting(setting)
 		//, radius(_radius)
 		//, power_sacle(_power_sacle)
 		//, curv_spacing(0.02f)
-		
+
 	{};
 
-	RiverLine(const RiverLine& other) 
+	RiverLine(const RiverLine& other)
 		: used(false)
+		, diagram(other.diagram)
 		, points(other.points)
 		, tris(other.tris)
 		, main_setting(other.main_setting)
@@ -225,16 +225,14 @@ class RiverLine {
 
 public:
 
-	// Deletes all created objects
-	static void Clear();
-	// Delete all unused objects.
-	static void ClearJunk();
+
 	// Create new RiverLine.
-	static RiverLine* Create(GenerateSetting& setting);
+	static RiverLine* Create(Diagram* l_diagram, GenerateSetting& setting);
 	// Copy other.
 	static RiverLine* Create(const RiverLine& other);
 	// Sets that it has been used
 	void SetUsed();
+	bool GetUsed();
 
 	void CreateTriangle(VertexColor& c);
 	// If no triangle was created, get an empty vector.
@@ -288,7 +286,7 @@ class RiverLines {
 	RiverLinkMap LINKED_RIVER_EDGES;
 	RiverLinkMap LINKED_RIVERS;
 	RiverCntMap RIVER_CNT;
-	
+
 public:
 	RiverLines()
 		: CurveChance(0)
@@ -300,7 +298,6 @@ public:
 		LINKED_RIVERS = RiverLinkMap();
 		RIVER_CNT = RiverCntMap();
 	}
-
 	void Initialize(GenerateSetting& setting);
 
 	void AddOceanConnect(Cell* c);

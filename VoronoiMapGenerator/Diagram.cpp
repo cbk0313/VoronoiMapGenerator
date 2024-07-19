@@ -29,12 +29,54 @@ Diagram::~Diagram() {
 	//MemoryPool<Edge> edgePool;
 	//MemoryPool<HalfEdge> halfEdgePool;
 	//MemoryPool<Vertex> vertexPool;
-	RiverEdge::Clear();
-	RiverLine::Clear();
+	RiverEdgeClear();
+	RiverLineClear();
 	Cell::ResetUnique();
 }
 
+void Diagram::RiverEdgeClear() {
+
+	for (RiverEdge* e : RIVER_EDGES) {
+		delete e;
+	}
+	RIVER_EDGES.clear();
+	//RIVER_DELETE_QUEUE = std::queue<RiverEdge*>();
+	//while (!RIVER_DELETE_QUEUE.empty()) RIVER_DELETE_QUEUE.pop();
+
+}
+
+void Diagram::RiverLineClear() {
+	for (RiverLine* item : RIVER_LINE_ARR) {
+		delete item;
+	}
+	RIVER_LINE_ARR.clear();
+	ADDED_COUNT = 0;
+}
+
+void Diagram::RiverLineClearJunk() {
+	unsigned int cnt = 0;
+	std::vector<RiverLine*> temp(ADDED_COUNT);
+	for (RiverLine* item : RIVER_LINE_ARR) {
+		if (item->GetUsed()) {
+			//std::cout << cnt << "\n";
+			temp[cnt++] = item;
+		}
+		else {
+			delete item;
+		}
+	}
+	ADDED_COUNT = 0;
+	RIVER_LINE_ARR = temp;
+}
+
+
+
 void Diagram::Initialize(GenerateSetting& setting) {
+	RIVER_EDGES = std::vector< RiverEdge*>();
+	RIVER_DELETE_QUEUE = std::queue<RiverEdge*>();
+	RIVER_LINE_ARR = std::vector<RiverLine*>();
+	ADDED_COUNT = 0;
+
 	river_lines.Initialize(setting);
 }
 

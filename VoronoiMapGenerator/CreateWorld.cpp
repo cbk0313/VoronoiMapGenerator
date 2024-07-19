@@ -772,8 +772,8 @@ struct LakeComp {
 void VoronoiDiagramGenerator::CreateRiver() {
 	diagram->river_lines.Clear();
 	diagram->river_cross.Clear();
-	RiverEdge::Clear();
-	RiverLine::Clear();
+	diagram->RiverEdgeClear();
+	diagram->RiverLineClear();
 
 	for (auto item : diagram->islandUnion.unions) {
 		auto island = item.second;
@@ -793,7 +793,7 @@ void VoronoiDiagramGenerator::CreateRiver() {
 				Container temp = std::make_pair(lake, lake);
 				buf.push(std::make_pair(lake, lake));
 				auto river_pos = std::make_pair(lake->GetUnique(), lake->GetUnique());
-				diagram->river_lines.GetRiverEdges()[river_pos] = RiverEdge::CreateStartPoint(&diagram->river_lines, lake);
+				diagram->river_lines.GetRiverEdges()[river_pos] = RiverEdge::CreateStartPoint(diagram, &diagram->river_lines, lake);
 
 			}
 
@@ -832,7 +832,7 @@ void VoronoiDiagramGenerator::CreateRiver() {
 								auto iter = diagram->river_lines.GetRiverOutEdges().find(targetCell->GetUnique());
 								// No rivers overlap with the new river
 								if (iter == diagram->river_lines.GetRiverOutEdges().end()) {
-									auto new_e = RiverEdge::Create(&diagram->river_lines, c, targetCell, owner, pre_e, nullptr, next_dist);
+									auto new_e = RiverEdge::Create(diagram, &diagram->river_lines, c, targetCell, owner, pre_e, nullptr, next_dist);
 									diagram->river_lines.GetRiverEdges()[river_pos] = new_e;
 
 									buf.push(std::make_pair(targetCell, c));
@@ -849,7 +849,7 @@ void VoronoiDiagramGenerator::CreateRiver() {
 									}
 									
 									if (!check1 && !check2) {
-										auto new_e = RiverEdge::Create(&diagram->river_lines, c, targetCell, owner, pre_e, nullptr, next_dist);
+										auto new_e = RiverEdge::Create(diagram, &diagram->river_lines, c, targetCell, owner, pre_e, nullptr, next_dist);
 										//new_e->SetRiverEnd(true);
 										new_e->SetRiverEnd(true);
 										diagram->river_lines.GetRiverEdges()[river_pos] = new_e;
@@ -898,7 +898,7 @@ void VoronoiDiagramGenerator::CreateRiver() {
 							//if (umap.find(owner_pos) != umap.end()) {
 							auto onwer_e = pre_e->GetOwnerEdge();
 							//if (onwer_e->GetDistance() == 0) {
-							auto new_e = RiverEdge::Create(&diagram->river_lines, c, targetCell, first_c, pre_e, nullptr, next_dist);
+							auto new_e = RiverEdge::Create(diagram, &diagram->river_lines, c, targetCell, first_c, pre_e, nullptr, next_dist);
 							//new_e->SetRiverEnd(true);
 							diagram->river_lines.GetRiverEdges()[RiverEdge::GetPos(c, targetCell)] = new_e;
 							//pre_e->AddNext(new_e);
@@ -1026,7 +1026,7 @@ void VoronoiDiagramGenerator::CreateRiver() {
 				using Temp = std::pair< RiverEdge*, RiverLine*>;
 				std::stack<Temp> buf;
 				if (diagram->river_lines.GetRiverEdges().find(river_pos) != diagram->river_lines.GetRiverEdges().end()) {
-					buf.push(std::make_pair(diagram->river_lines.GetRiverEdges()[river_pos], RiverLine::Create(setting)));
+					buf.push(std::make_pair(diagram->river_lines.GetRiverEdges()[river_pos], RiverLine::Create(diagram, setting)));
 				}
 
 
@@ -1055,7 +1055,7 @@ void VoronoiDiagramGenerator::CreateRiver() {
 						else if (c_arr->GetPointArray().size() > 1) {
 							diagram->river_lines.AddLine(&diagram->river_cross, c_arr);
 							for (auto next_e : e->GetNexts()) {
-								RiverLine* new_line = RiverLine::Create(setting);
+								RiverLine* new_line = RiverLine::Create(diagram, setting);
 								new_line->AddPoint(RiverPoint(next_e->GetPower(), next_e->GetStart()));
 								buf.push(std::make_pair(next_e, new_line));
 							}
@@ -1072,7 +1072,7 @@ void VoronoiDiagramGenerator::CreateRiver() {
 
 	diagram->river_lines.AdjustPoint();
 	SetupRiverTriangle(VertexColor(Color::lake));
-	RiverLine::ClearJunk();
+	diagram->RiverLineClearJunk();
 }
 
 void VoronoiDiagramGenerator::SetupRiverTriangle(VertexColor c) {
