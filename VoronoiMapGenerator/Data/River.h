@@ -93,18 +93,17 @@ class RiverEdge {
 	Cell* owner;
 	RiverLines* river_lines;
 	int dist;
-	int branch_dist;
 	int power;
 	std::vector<RiverEdge*> prevs;
 	std::vector<RiverEdge*> nexts;
 	std::vector<Cell*> links;
 
-	unsigned int unique;
 public:
 
 
 	//RiverEdge() : is_start(false), start(nullptr), end(nullptr), dist(0) {};
 	RiverEdge(Diagram* l_diagram, RiverLines* lines, Cell* startCell, Cell* endCell, Cell* river_owner, RiverEdge* pre_edge, RiverEdge* next_edge, int distance)
+		: is_start(false), is_end(false), start(nullptr), end(nullptr), owner(nullptr), river_lines(nullptr), dist(0), power(0)
 	{
 		Initialize(l_diagram, lines, startCell, endCell, river_owner, pre_edge, next_edge, distance);
 	};
@@ -287,6 +286,7 @@ class RiverLines {
 	RiverLinkMap LINKED_RIVERS;
 	RiverCntMap RIVER_CNT;
 
+	GenerateSetting* Setting;
 public:
 	RiverLines()
 		: CurveChance(0)
@@ -297,6 +297,7 @@ public:
 		LINKED_RIVER_EDGES = RiverLinkMap();
 		LINKED_RIVERS = RiverLinkMap();
 		RIVER_CNT = RiverCntMap();
+		Setting = nullptr;
 	}
 	void Initialize(GenerateSetting& setting);
 

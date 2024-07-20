@@ -221,41 +221,6 @@ bool sitesOrdered(const Point2& s1, const Point2& s2) {
 	return false;
 }
 
-void genRandomSites(int seed, std::vector<Point2>& sites, BoundingBox& bbox, unsigned int dimension, unsigned int numSites) {
-
-	bbox = BoundingBox(0, dimension, dimension, 0);
-	std::vector<Point2> tmpSites;
-	numSites = (unsigned int)sqrt(numSites);
-	unsigned int pow_site = (unsigned int)pow(numSites, 2);
-	tmpSites.reserve(pow_site);
-	sites.reserve(pow_site);
-
-	Point2 s;
-
-	double step = dimension / numSites;
-	int half_step = (int)(step / 1.5);
-	
-	srand(seed);
-	for (unsigned int i = 0; i < numSites; ++i) {
-		for (unsigned int j = 0; j < numSites; ++j) {
-			
-			//s.x = (i * step) + (rand() / ((double)RAND_MAX)) * (half_step);
-			s.x = (i * step) + (rand() % (int)half_step);
-			s.y = (j * step) + (rand() % (int)half_step);
-			//std::cout << "rand: " << (rand() / ((double)RAND_MAX)) * (half_step) << "\n";
-			//std::cout << "x: " << s.x << "\n";
-			//std::cout << "y: " << s.y << "\n";
-			tmpSites.push_back(s);
-		}
-	}
-
-	//remove any duplicates that exist
-	std::sort(tmpSites.begin(), tmpSites.end(), sitesOrdered);
-	sites.push_back(tmpSites[0]);
-	for (Point2& s : tmpSites) {
-		if (s != sites.back()) sites.push_back(s);
-	}
-}
 
 
 void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
@@ -429,7 +394,7 @@ int main() {
 	double radius = dimension / 2.1;
 
 	VoronoiDiagramGenerator vdg = VoronoiDiagramGenerator();
-	vdg.SetSetting(GenerateSetting(MapType::CONTINENT, 0, 0.6666, radius, 0.5, 0.5, 10, radius / 3, radius / 5, 50, radius / 15, radius / 20, 500.f, 0.2f, 0.02f, 1, 0.1));
+	vdg.SetSetting(GenerateSetting(MapType::CONTINENT, 0, nPoints, dimension, 0.6666, radius, 0.5, 0.5, 10, radius / 3, radius / 5, 50, radius / 15, radius / 20, 500.f, 0.2f, 0.02f, 1, 0.1));
 	
 
 
@@ -490,7 +455,7 @@ int main() {
 			startOver = false;
 
 			GenerateSetting& setting = vdg.GetSetting();
-			vdg.CreateSite(dimension, nPoints);
+			vdg.CreateSite();
 
 			start = std::clock();
 

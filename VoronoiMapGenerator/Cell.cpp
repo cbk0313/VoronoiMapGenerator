@@ -2,8 +2,9 @@
 #include "Edge.h"
 #include <algorithm>
 #include <limits>
+#include "Diagram.h"
 
-unsigned int Cell::s_unique = 0;
+//unsigned int Cell::s_unique = 0;
 
 //Cell* Cell::GetHasRiver() {
 //	return has_river;
@@ -12,6 +13,22 @@ unsigned int Cell::s_unique = 0;
 //void Cell::SetHasRiver(Cell* b) {
 //	has_river = b;
 //}
+Cell::Cell(Diagram* diagram)
+	: closeMe(false)
+	, detail(CellDetail(this))
+{
+	unique = diagram->CellUnique++;
+}
+
+Cell::Cell(Point2 _site, Diagram* diagram)
+	: site(_site, this)
+	, closeMe(false)
+	, detail(CellDetail(this))
+{ 
+	unique = diagram->CellUnique++;
+};
+
+
 std::vector<Cell*> Cell::getNeighbors() {
 	std::vector<Cell*> neighbors;
 	Edge* e;

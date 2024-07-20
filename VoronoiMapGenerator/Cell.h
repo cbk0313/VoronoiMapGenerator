@@ -26,10 +26,11 @@ struct Site {
 };
 
 struct HalfEdge;
+class Diagram;
 struct Cell {
 
 private:
-	static unsigned int s_unique;
+	//static unsigned int s_unique;
 private:
 	//Cell* has_river;
 	unsigned int unique;
@@ -41,9 +42,8 @@ public:
 
 
 
-	Cell() : closeMe(false), detail(CellDetail(this)) { unique = s_unique++; };
-	Cell(Point2 _site) : site(_site, this), closeMe(false), detail(CellDetail(this)) { unique = s_unique++; };
-
+	Cell(Diagram* diagram);
+	Cell(Point2 _site, Diagram* diagram);
 	unsigned int GetUnique() { return unique; };
 	CellDetail& GetDetail() { return detail; };
 
@@ -62,9 +62,9 @@ public:
 	int pointIntersection(double x, double y);
 
 	static bool edgesCCW(HalfEdge* a, HalfEdge* b);
-	static void ResetUnique() { s_unique = 0; };
-	static unsigned int GetMaxUnique() { return s_unique; };
-	static unsigned int GetCellCnt() { return s_unique + 1; };
+	//static void ResetUnique() { s_unique = 0; };
+	//static unsigned int GetMaxUnique() { return s_unique; };
+	//static unsigned int GetCellCnt() { return s_unique + 1; };
 };
 
 

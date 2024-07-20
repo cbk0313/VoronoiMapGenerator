@@ -45,7 +45,7 @@ public:
 
     double GetAngle() const;
 
-    Point2 Normailize() const;
+    Point2 Normalize() const;
 
     bool operator==( const Point2 &p ) const;
     bool operator!=( const Point2 &p ) const;

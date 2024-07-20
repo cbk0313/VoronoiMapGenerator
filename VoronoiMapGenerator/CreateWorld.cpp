@@ -27,7 +27,7 @@ void VoronoiDiagramGenerator::CreateWorld(bool trans_edge, bool create_tri) {
 		SetupOcean();
 		RemoveLake();
 		CreateLake();
-		CellVector buf(Cell::GetCellCnt());
+		CellVector buf(diagram->GetCellUnique());
 		SetupElevation(buf);
 		SetupCoast(buf);
 		SetupPeak(buf);
@@ -129,7 +129,7 @@ void VoronoiDiagramGenerator::CreateLand() {
 	std::vector<PointDist> islands;
 
 	for (unsigned int i = 0; i < setting.GetIslandCount(); i++) {
-		Point2 p = Point2((setting.GetRandom() - 0.5) * 2 * island_range, (setting.GetRandom() - 0.5) * 2 * island_range);
+		Point2 p = Point2((setting.GetRandomRound() - 0.5) * 2 * island_range, (setting.GetRandomRound() - 0.5) * 2 * island_range);
 		double length = Point2::Distance(Point2(0, 0), p);
 		Point2 dir = Point2((p.x / length) * continent_range + center.x, (p.y / length) * continent_range + center.y);
 		islands.push_back(std::make_pair(Point2(p.x + dir.x, p.y + dir.y), (setting.GetIslandRadiusMax() - (setting.GetRandom() * island_step))));
@@ -252,6 +252,9 @@ void VoronoiDiagramGenerator::CreateLake() {
 	lakeSize /= 100;
 	lakeScale /= 2;
 
+	lakeSize = round(lakeSize * 100) / 100;
+	lakeSize = round(lakeScale * 100) / 100;
+
 	FastNoiseLite lake_noise;
 	lake_noise.SetSeed(setting.GetSeed());
 	lake_noise.SetNoiseType(FastNoiseLite::NoiseType_Cellular);
@@ -320,7 +323,7 @@ void VoronoiDiagramGenerator::CreateLake() {
 		//if (ct == Terrain::OCEAN || ct == Terrain::LAKE) {
 		if (IS_WATER(ct)) {
 
-			auto unique = cd.UnionFindCell(Terrain::OCEAN)->GetUnique();
+			//auto unique = cd.UnionFindCell(Terrain::OCEAN)->GetUnique();
 			if (!cd.IsEdge()) {
 				//std::cout << "isEdge(): " << cd.IsEdge() << "\n";
 				//cd.SetTerrain(Terrain::LAKE);
@@ -340,10 +343,10 @@ void VoronoiDiagramGenerator::CreateLake() {
 
 void VoronoiDiagramGenerator::SetupElevation(CellVector& coastBuffer) {
 
-	CellQueue landQueue(Cell::GetCellCnt()); // BFS
-	CellQueue lakeQueue(Cell::GetCellCnt());
+	CellQueue landQueue(diagram->GetCellUnique()); // BFS
+	CellQueue lakeQueue(diagram->GetCellUnique());
 
-	CellQueue lakeBuf(Cell::GetCellCnt(), false);
+	CellQueue lakeBuf(diagram->GetCellUnique(), false);
 
 	for (Edge* e : diagram->edges) {
 		if (e->lSite && e->rSite) {
@@ -453,8 +456,8 @@ void VoronoiDiagramGenerator::SetupElevation(CellVector& coastBuffer) {
 
 void VoronoiDiagramGenerator::SetupPeak(CellVector& coastBuffer) {
 
-	CellQueue landQueue(Cell::GetCellCnt(), false); 
-	CellQueue UnionQueue(Cell::GetCellCnt(), false);
+	CellQueue landQueue(diagram->GetCellUnique(), false); 
+	CellQueue UnionQueue(diagram->GetCellUnique(), false);
 	for (Cell* c : coastBuffer.GetBuffer()) {
 		landQueue.push(c);
 		UnionQueue.push(c);
@@ -641,8 +644,8 @@ void VoronoiDiagramGenerator::SetupMoisture() {
 
 
 	for (auto item : diagram->islandUnion.unions) {
-		//CellPriorityQueue p_q(Cell::GetCellCnt(), false);
-		UniBuf<std::priority_queue, Cell*, decltype(p_u_f), decltype(p_v_f), Cell*, std::vector<Cell*>, River::RiverPriorityComp> p_q(p_u_f, p_v_f, Cell::GetCellCnt(), false);
+		//CellPriorityQueue p_q(diagram->GetCellUnique(), false);
+		UniBuf<std::priority_queue, Cell*, decltype(p_u_f), decltype(p_v_f), Cell*, std::vector<Cell*>, River::RiverPriorityComp> p_q(p_u_f, p_v_f, diagram->GetCellUnique(), false);
 
 		auto island = item.second;
 		for (auto highestPeak_union : island.highestPeakUnion.unions) {
@@ -706,7 +709,7 @@ void VoronoiDiagramGenerator::SetupMoisture() {
 
 	}
 
-	UniBuf<std::queue, Container, decltype(u_f), decltype(v_f), Container> lake_q(u_f, v_f, Cell::GetCellCnt(), false);
+	UniBuf<std::queue, Container, decltype(u_f), decltype(v_f), Container> lake_q(u_f, v_f, diagram->GetCellUnique(), false);
 	for (auto item : diagram->islandUnion.unions) {
 		auto island = item.second;
 		for (auto highestPeak_union : island.lakeUnion.unions) {
@@ -782,11 +785,11 @@ void VoronoiDiagramGenerator::CreateRiver() {
 		auto v_f = [](auto buffer) -> decltype(auto) { return buffer->front(); };
 
 		for (auto lake_union : island.lakeUnion.unions) {
-			//UniBuf<std::queue, Container, decltype(u_f), decltype(v_f), Container> buf(u_f, v_f, Cell::GetCellCnt(), false);
+			//UniBuf<std::queue, Container, decltype(u_f), decltype(v_f), Container> buf(u_f, v_f, diagram->GetCellUnique(), false);
 
 			auto p_u_f = [](ReturnType<Container> c) { return c.first->GetUnique(); };
 			auto p_v_f = [](auto buffer) -> decltype(auto) { return const_cast<Container&>(buffer->top()); };
-			UniBuf<std::priority_queue, Container, decltype(p_u_f), decltype(p_v_f), Container, std::vector<Container>, River::RiverPriorityComp> buf(p_u_f, p_v_f, Cell::GetCellCnt(), false);
+			UniBuf<std::priority_queue, Container, decltype(p_u_f), decltype(p_v_f), Container, std::vector<Container>, River::RiverPriorityComp> buf(p_u_f, p_v_f, diagram->GetCellUnique(), false);
 			Cell* first_c = lake_union.second[0];
 
 			for (auto lake : lake_union.second) {
@@ -1261,7 +1264,6 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 			Site* opposite_s = e->rSite && e->lSite->cell == c ? e->rSite : e->lSite;
 			Cell* opposite_c = opposite_s->cell;
 
-			CellDetail& cd = c->GetDetail();
 			CellDetail& tcd = opposite_s->cell->GetDetail();
 
 			Vertex* vA = e->vertA;
@@ -1293,7 +1295,6 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 			Site* opposite_s = e->rSite && e->lSite->cell == c ? e->rSite : e->lSite;
 			Cell* opposite_c = opposite_s->cell;
 
-			CellDetail& cd = c->GetDetail();
 			CellDetail& tcd = opposite_s->cell->GetDetail();
 
 			Vertex* vA = e->vertA;
@@ -1396,7 +1397,6 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 				Site* opposite_s = e->rSite && e->lSite->cell == c ? e->rSite : e->lSite;
 				Cell* opposite_c = opposite_s->cell;
 
-				CellDetail& cd = c->GetDetail();
 				CellDetail& tcd = opposite_s->cell->GetDetail();
 
 				Vertex* vA = e->vertA;

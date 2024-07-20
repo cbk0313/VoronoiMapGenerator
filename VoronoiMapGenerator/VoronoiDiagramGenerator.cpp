@@ -30,34 +30,28 @@ bool pointComparator(Point2* a, Point2* b) {
 }
 
 
-void VoronoiDiagramGenerator::CreateSite(unsigned int dimension, unsigned int numSites) {
+void VoronoiDiagramGenerator::CreateSite() {
 
-	image_dim = dimension;
 	sites.clear();
-
-	//bbox = BoundingBox(0, dimension, dimension, 0);
-	boundingBox = BoundingBox(0, dimension, dimension, 0);
-	//std::vector<Point2> tmpSites;
-	numSites = (unsigned int)sqrt(numSites);
+	unsigned int numSites = std::min<unsigned int>(100, (unsigned int)sqrt(setting.nPoints));
 	unsigned int pow_site = (unsigned int)pow(numSites, 2);
+	setting.dimension = std::max<signed int>(setting.dimension, pow_site);
+	//bbox = BoundingBox(0, dimension, dimension, 0);
+	boundingBox = BoundingBox(0, setting.dimension, setting.dimension, 0);
+	//std::vector<Point2> tmpSites;
+
 	//tmpSites.reserve(pow_site);
 	sites.reserve(pow_site);
 
 	Point2 s;
-
-	double step = dimension / numSites;
-	int half_step = (int)(step * setting.GetSiteRange());
+	unsigned int step = floor(setting.dimension / numSites);
+	double half_step = round(step * (setting.GetSiteRange() * 1000)) / 1000;
 	setting.Srand();
+
 	for (unsigned int i = 0; i < numSites; ++i) {
 		for (unsigned int j = 0; j < numSites; ++j) {
-
-			//s.x = (i * step) + (rand() / ((double)RAND_MAX)) * (half_step);
-			s.x = (i * step) + (rand() % (int)half_step);
-			s.y = (j * step) + (rand() % (int)half_step);
-			//s.Epsilon();
-			//std::cout << "rand: " << (rand() / ((double)RAND_MAX)) * (half_step) << "\n";
-			//std::cout << "x: " << s.x << "\n";
-			//std::cout << "y: " << s.y << "\n";
+			s.x = i * step + (round((setting.GetRandomRound() * half_step) * 1000) / 1000);
+			s.y = j * step + (round((setting.GetRandomRound() * half_step) * 1000) / 1000);
 			sites.push_back(s);
 		}
 	}
@@ -124,7 +118,7 @@ void VoronoiDiagramGenerator::Compute() {
 
 
 			// first create cell for new site
-			Cell* cell = diagram->createCell(*site);
+			Cell* cell = diagram->createCell(*site, diagram);
 			// then create a beachsection for that site
 			addBeachSection(&cell->site);
 			site = siteEventQueue.empty() ? nullptr : siteEventQueue.back();
@@ -193,16 +187,20 @@ void  VoronoiDiagramGenerator::Relax() {
 		Point2 centroid(0.0, 0.0);
 		double totalArea = 0.0;
 		for (size_t i = 1; i < edgeCount - 1; ++i) {
-			double area = (vectors[i + 1].x * vectors[i].y - vectors[i + 1].y * vectors[i].x) / 2;
+			double area = round(((vectors[i + 1].x * vectors[i].y - vectors[i + 1].y * vectors[i].x) / 2) * 1000) / 1000;
 			totalArea += area;
-			centroid.x += area * (verts[0].x + verts[i].x + verts[i + 1].x) / 3;
-			centroid.y += area * (verts[0].y + verts[i].y + verts[i + 1].y) / 3;
+			totalArea = round(totalArea * 1000) / 1000;
+			centroid.x += area * round(((verts[0].x + verts[i].x + verts[i + 1].x) / 3) * 1000) / 1000;
+			centroid.y += area * round(((verts[0].y + verts[i].y + verts[i + 1].y) / 3) * 1000) / 1000;
+			centroid.x = round(centroid.x);
+			centroid.y = round(centroid.y);
 		}
 		centroid.x /= totalArea;
 		centroid.y /= totalArea;
 		//centroid.Epsilon();
 		sites.push_back(centroid);
 	}
+
 
 	//then recompute the diagram using the cells' centroids
 
@@ -296,7 +294,7 @@ unsigned char* VoronoiDiagramGenerator::GetImage(int flag, unsigned int w, unsig
 
 	if (image_flag != RIVER) {
 		for (Triangle tri : diagram->triangles) {
-			tri.AdjustSize(w, h, image_dim);
+			tri.AdjustSize(w, h, setting.dimension);
 			tri.Draw(pixel_data, w, h);
 		}
 	}
@@ -306,12 +304,12 @@ unsigned char* VoronoiDiagramGenerator::GetImage(int flag, unsigned int w, unsig
 
 		for (RiverLine* line : diagram->river_lines.GetArray()) {
 			for (Triangle tri : line->GetTriangle()) {
-				tri.AdjustSize(w, h, image_dim);
+				tri.AdjustSize(w, h, setting.dimension);
 				tri.DrawTransparent(pixel_data, w, h);
 			}
 		}
 		for (Triangle tri : diagram->river_cross.GetTriangle()) {
-			tri.AdjustSize(w, h, image_dim);
+			tri.AdjustSize(w, h, setting.dimension);
 			tri.DrawTransparent(pixel_data, w, h);
 		}
 	}
@@ -345,7 +343,7 @@ void VoronoiDiagramGenerator::CreateHeightmap(Heightmap& out_map, bool clear_ima
 	//Heightmap* pixel_data = new Heightmap(w, h);
 	if (image_flag != RIVER) {
 		for (Triangle tri : diagram->triangles) {
-			tri.AdjustSize(w, h, image_dim);
+			tri.AdjustSize(w, h, setting.dimension);
 			tri.DrawGrayscale(out_map, w, h);
 		}
 	}
@@ -355,12 +353,12 @@ void VoronoiDiagramGenerator::CreateHeightmap(Heightmap& out_map, bool clear_ima
 
 		for (RiverLine* line : diagram->river_lines.GetArray()) {
 			for (Triangle tri : line->GetTriangle()) {
-				tri.AdjustSize(w, h, image_dim);
+				tri.AdjustSize(w, h, setting.dimension);
 				tri.DrawTransparentGrayscale(out_map, w, h);
 			}
 		}
 		for (Triangle tri : diagram->river_cross.GetTriangle()) {
-			tri.AdjustSize(w, h, image_dim);
+			tri.AdjustSize(w, h, setting.dimension);
 			tri.DrawTransparentGrayscale(out_map, w, h);
 		}
 	}

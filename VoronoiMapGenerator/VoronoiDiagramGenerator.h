@@ -45,7 +45,7 @@ private:
 
 	int max_elevation;
 	unsigned int max_moisture;
-	double image_dim;
+
 	Diagram* diagram;
 	//;
 	CircleEventQueue* circleEventQueue;
@@ -88,7 +88,7 @@ private:
 	std::pair<double, double> GetMinDist(std::vector<std::pair<Point2, double>>& points, Point2& center, double radius);
 
 public:
-	VoronoiDiagramGenerator() : has_created_ocean(false), has_set_color(false), image_flag(ALL_IMAGE), max_elevation(0), max_moisture(0), image_dim(0), diagram(nullptr), circleEventQueue(nullptr), boundingBox(BoundingBox()), beachLine(nullptr) {};
+	VoronoiDiagramGenerator() : has_created_ocean(false), has_set_color(false), image_flag(ALL_IMAGE), max_elevation(1), max_moisture(0), diagram(nullptr), circleEventQueue(nullptr), boundingBox(BoundingBox()), beachLine(nullptr) {};
 	~VoronoiDiagramGenerator() {};
 
 	Diagram* GetDiagram();
@@ -97,7 +97,7 @@ public:
 	unsigned int GetMaxMoisture() { return max_moisture; }
 
 	// Create a site. Must be run first
-	void CreateSite(unsigned int dimension, unsigned int numSites);
+	void CreateSite();
 	// Create cells according to the created site
 	void Compute();
 	// Makes cells uniform in size. The more run it, the more even it becomes.

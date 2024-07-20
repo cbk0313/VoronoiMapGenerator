@@ -2,12 +2,12 @@
 #include "Setting.h"
 #include <queue>
 #include "../Edge.h"
-#include "../diagram.h"
+#include "../Diagram.h"
 
 
 //RiverCrossingMap RiverCrossing::RIVER_CROSSING_MAP = RiverCrossingMap();
 
-
+#define PI_ 3.1415926
 
 
 void RiverLines::Clear() {
@@ -86,11 +86,12 @@ bool RiverLines::CheckRiverLinked(Cell* lakeA, Cell* lakeB) {
 }
 
 void RiverEdge::Initialize(Diagram* l_diagram, RiverLines* lines, Cell* startCell, Cell* endCell, Cell* river_owner, RiverEdge* pre_edge, RiverEdge* next_edge, int distance) {
+	is_end = false;
+	power = 0;
 	diagram = l_diagram;
 	prevs.clear();
 	nexts.clear();
 	links.clear();
-	power = 0;
 	is_start = false;
 	start = startCell;
 	end = endCell;
@@ -202,7 +203,7 @@ RiverEdge* RiverEdge::Create(Diagram* l_diagram, RiverLines* lines, Cell* startC
 	RiverEdge* e;
 	if (l_diagram->RIVER_DELETE_QUEUE.empty()) {
 		e = new RiverEdge(l_diagram, lines, startCell, endCell, river_owner, pre_edge, next_edge, distance);
-		e->unique = (unsigned int)(l_diagram->RIVER_EDGES.size());
+		//e->unique = (unsigned int)(l_diagram->RIVER_EDGES.size());
 		l_diagram->RIVER_EDGES.push_back(e);
 	}
 	else {
@@ -237,6 +238,7 @@ RiverEdge* RiverEdge::GetOwnerEdge() {
 void RiverLines::Initialize(GenerateSetting& setting) {
 	CurveChance = setting.GetRiverAdditionalCurveChance();
 	CurveDistance = setting.GetRiverAdditionalCurveDistance();
+	Setting = &setting;
 }
 
 void RiverLines::AddOceanConnect(Cell* c) {
@@ -274,11 +276,12 @@ void RiverTriangle::CalcCardinal(RiverPointVector& point, double result[][2], in
 	{
 		for (int j = 0; j < 3; j++)
 		{
+			//result[i][0] += round(100 * matrix_2[i][j] * point[j + start].point.x) / 100;
+			//result[i][1] += round(100 * matrix_2[i][j] * point[j + start].point.y) / 100;
 			result[i][0] += matrix_2[i][j] * point[j + start].point.x;
 			result[i][1] += matrix_2[i][j] * point[j + start].point.y;
 		}
 	}
-
 }
 
 Point2 RiverTriangle::GetCardinalPoint(double result[][2], double t) {
@@ -288,7 +291,7 @@ Point2 RiverTriangle::GetCardinalPoint(double result[][2], double t) {
 
 Point2 RiverTriangle::GetCardinalDirection(double result[][2], double prev, double next) {
 
-	return (GetCardinalPoint(result, next) - GetCardinalPoint(result, prev)).Normailize();
+	return (GetCardinalPoint(result, next) - GetCardinalPoint(result, prev)).Normalize();
 }
 
 
@@ -306,7 +309,7 @@ void RiverTriangle::CreateLineTri(Triangles& tris, RiverPointVector& point, Vert
 
 
 
-	Point2 norm = (p2 - p1).Normailize();
+	Point2 norm = (p2 - p1).Normalize();
 
 
 	double sacle1 = (pre_c.power) * river_scale + 1;
@@ -370,9 +373,9 @@ void RiverTriangle::CreateCardinalTri(Triangles& tris, RiverPointVector& point, 
 		double sacle1 = (point[0].power * (1 - t) + point[2].power * t) * river_scale + 1;
 		double sacle2 = (point[0].power * (1 - t + spacing) + point[2].power * t + spacing) * river_scale + 1;
 		if (norm != Point2(0, 0)) {
-			norm = norm.Normailize();
+			norm = norm.Normalize();
 
-			norm2 = norm2.Normailize();
+			norm2 = norm2.Normalize();
 			Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
 			Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
 
@@ -473,8 +476,8 @@ void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Ve
 		double sacle2 = (point[0].power * ((0.5 - (t + spacing)) * 2) + point[1].power * ((t + spacing) * 2)) * river_scale + 1;
 
 		if (norm != Point2(0, 0)) {
-			norm = norm.Normailize();
-			norm2 = norm2.Normailize();
+			norm = norm.Normalize();
+			norm2 = norm2.Normalize();
 			Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
 			Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
 
@@ -566,11 +569,24 @@ void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Ve
 			Point2 norm2 = (next_p - new_p);
 			double sacle1 = (point[cubic_case + 1].power * (1 - t) + point[cubic_case + 2].power * t) * river_scale + 1;
 			double sacle2 = (point[cubic_case + 1].power * (1 - (t + spacing)) + point[cubic_case + 2].power * (t + spacing)) * river_scale + 1;
+
+
+			/*std::cout << "power: " << point[cubic_case + 1].power << "\n";
+			std::cout << "sacle: " << sacle1 << ", " << sacle2 << "\n";
+			std::cout << "radius: " << radius << "\n";
+			std::cout << "radius * sacle1: " << radius * sacle1 << "\n";
+			std::cout << "radius * sacle2: " << radius * sacle2 << "\n";*/
+
 			if (norm != Point2(0, 0)) {
-				norm = norm.Normailize();
-				norm2 = norm2.Normailize();
+				norm = norm.Normalize();
+				norm2 = norm2.Normalize();
 				Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
 				Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
+
+				//std::cout << "norm: " << norm.x << ", " << norm.y << "\n";
+				//std::cout << "norm2: " << norm2.x << ", " << norm2.y << "\n";
+				//std::cout << "PerpA: " << PerpA.x << ", " << PerpA.y << "\n";
+				//std::cout << "PerpB: " << PerpB.x << ", " << PerpB.y << "\n";
 
 				tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpA), color, color, c_trans }));
 				tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpA), color, color, c_trans }));
@@ -604,6 +620,12 @@ void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Ve
 		double x2 = result[2][0] + (t + spacing) * (result[1][0] + result[0][0] * (t + spacing));
 		double y2 = result[2][1] + (t + spacing) * (result[1][1] + result[0][1] * (t + spacing));
 
+		//x = round(x * 100) / 100;
+		//y = round(y * 100) / 100;
+
+		//x2 = round(x2 * 100) / 100;
+		//y2 = round(y2 * 100) / 100;
+
 
 		Point2 new_p = Point2(x, y);
 		Point2 next_p = Point2(x2, y2);
@@ -611,9 +633,11 @@ void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Ve
 		Point2 norm2 = (next_p - new_p);
 		double sacle1 = (point[SIZE - 2].power * (1 - t) + point[SIZE - 1].power * t) * river_scale + 1;
 		double sacle2 = (point[SIZE - 2].power * (1 - (t + spacing)) + point[SIZE - 1].power * (t + spacing)) * river_scale + 1;
+		//sacle1 = round(100 * sacle1) / 100;
+		//sacle2 = round(100 * sacle2) / 100;
 		if (norm != Point2(0, 0)) {
-			norm = norm.Normailize();
-			norm2 = norm2.Normailize();
+			norm = norm.Normalize();
+			norm2 = norm2.Normalize();
 			Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
 			Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
 
@@ -740,6 +764,8 @@ void RiverLine::AdjustPoint() {
 	RiverPoint& f_p = GetFirstPoint();
 	RiverPoint& e_p = GetEndPoint();
 
+	//double f_scale = round(100 * main_setting.GetRiverRadius() * (main_setting.GetRiverPowerScale() * f_p.power + 1) / 2) / 100;
+	//double e_scale = round(100 * main_setting.GetRiverRadius() * (main_setting.GetRiverPowerScale() * e_p.power + 1) / 2) / 100;
 	double f_scale = main_setting.GetRiverRadius() * (main_setting.GetRiverPowerScale() * f_p.power + 1) / 2;
 	double e_scale = main_setting.GetRiverRadius() * (main_setting.GetRiverPowerScale() * e_p.power + 1) / 2;
 
@@ -755,7 +781,7 @@ void RiverLine::AdjustPoint() {
 		e_p.point = e_p.point + RiverTriangle::GetCardinalDirection(end_result, 1, 1 - main_setting.GetRiverCurvSpacing()) * e_scale;
 	}
 	else {
-		Point2 dir = (e_p.point - f_p.point).Normailize();
+		Point2 dir = (e_p.point - f_p.point).Normalize();
 
 		f_p.point = f_p.point + dir * f_scale;
 		e_p.point = e_p.point - dir * e_scale;
@@ -844,13 +870,15 @@ void RiverCrossing::CreateCrossingPointTriagle(VertexColor& color, double radius
 			//RiverPoint& input_point = rc.inputs[0]->GetEndPoint();
 			//RiverPoint& ouput_point = rc.outputs[0]->GetFirstPoint();
 			double power = 0;
+			unsigned int power_stack = 0;
 			for (auto& p : rc.inputs) {
-				power += p->GetEndPoint().power;
+				power_stack += p->GetEndPoint().power;
 			}
 			for (auto& p : rc.outputs) {
-				power += p->GetFirstPoint().power;
+				power_stack += p->GetFirstPoint().power;
 			}
-			power /= (rc.inputs.size() + rc.outputs.size());
+			//power = round(((double)power_stack / (rc.inputs.size() + rc.outputs.size())) * 100) / 100;
+			power = (double)power_stack / (rc.inputs.size() + rc.outputs.size());
 
 			//RiverPoint middle_point = RiverPoint((input_point.power + ouput_point.power) / 2, rc.GetCell());
 			//points.push_back(input_point);
@@ -866,12 +894,26 @@ void RiverCrossing::CreateCrossingPointTriagle(VertexColor& color, double radius
 			color.rgb.a = 1;
 			VertexColor trans_c = VertexColor(Color(color.rgb.r, color.rgb.g, color.rgb.b, 0), color.gray);
 			for (int i = 0; i < num_segments; i++) {
-				double theta = 2.0f * 3.1415926 * double(i) / double(num_segments);
+				double theta = 2.0f * PI_ * double(i) / double(num_segments);
+				//theta = round(theta / 100) * 100;
+
+				//double x_ = radius * (round(100 * (river_scale * power + 1)) / 100) * (round(100 * cosf((float)theta)) / 100);
+				//double y_ = radius * (round(100 * (river_scale * power + 1)) / 100) * (round(100 * sinf((float)theta)) / 100);
 				double x_ = radius * (river_scale * power + 1) * cosf((float)theta);
 				double y_ = radius * (river_scale * power + 1) * sinf((float)theta);
-				theta = 2.0f * 3.1415926 * double(i - 1) / double(num_segments);
+				//x_ = round(x_ / 100) * 100;
+				//y_ = round(y_ / 100) * 100;
+				//3.1415926
+				theta = 2.0f * PI_ * double(i - 1) / double(num_segments);
+				//theta = round(theta / 100) * 100;
+
+				//double x_2 = radius * (round(100 * (river_scale * power + 1)) / 100) * (round(100 * cosf((float)theta)) / 100);
+				//double y_2 = radius * (round(100 * (river_scale * power + 1)) / 100) * (round(100 * sinf((float)theta)) / 100);
 				double x_2 = radius * (river_scale * power + 1) * cosf((float)theta);
 				double y_2 = radius * (river_scale * power + 1) * sinf((float)theta);
+				//x_2 = round(x_2 / 100) * 100;
+				//y_2 = round(y_2 / 100) * 100;
+
 				rc.tris.push_back(Triangle({
 					Point2(x_ + rc.GetCell()->site.p.x, y_ + rc.GetCell()->site.p.y),
 					Point2(x_2 + rc.GetCell()->site.p.x, y_2 + rc.GetCell()->site.p.y),
@@ -908,7 +950,7 @@ void RiverLines::AddLine(RiverCrossing* corssing, RiverLine* line) {
 		int chance_cnt = 0;
 		std::vector<bool> list = std::vector<bool>(cnt - 1, false);
 		for (unsigned int i = 0, loop_cnt = cnt - 1; i < loop_cnt; i++) {
-			list[i] = GenerateSetting::GetRandom() >= chance;
+			list[i] = Setting->GetRandom() >= chance;
 			chance_cnt++;
 		}
 
@@ -929,13 +971,14 @@ void RiverLines::AddLine(RiverCrossing* corssing, RiverLine* line) {
 				}
 				double p_dist;
 				if (e == nullptr) {
+					//p_dist = round(vec[i - 1].point.DistanceTo(vec[i].point) * 100) / 100;
 					p_dist = vec[i - 1].point.DistanceTo(vec[i].point);
 				}
 				else {
 					p_dist = e->vertA->point.DistanceTo(e->vertB->point);
 				}
 				double dist = p_dist * CurveDistance;
-				double theta = 2.0f * 3.1415926f * (GenerateSetting::GetRandom() * 360.0 / 360);
+				double theta = 2.0f * PI_ * (Setting->GetRandom() / 360);
 				double x = dist * cosf((float)theta);
 				double y = dist * sinf((float)theta);
 				//Point2 p = (vec[i - 1].point + vec[i].point) / 2 + Point2(main_setting.GetRandom(), main_setting.GetRandom()) * p_dist * main_setting.GetRiverAdditionalCurveDistance();
@@ -971,3 +1014,6 @@ void RiverLines::CreateTriagle(VertexColor& c) {
 	}
 
 }
+
+
+#undef PI_

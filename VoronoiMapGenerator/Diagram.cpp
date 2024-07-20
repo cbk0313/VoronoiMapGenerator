@@ -31,7 +31,7 @@ Diagram::~Diagram() {
 	//MemoryPool<Vertex> vertexPool;
 	RiverEdgeClear();
 	RiverLineClear();
-	Cell::ResetUnique();
+	//Cell::ResetUnique();
 }
 
 void Diagram::RiverEdgeClear() {
@@ -76,20 +76,20 @@ void Diagram::Initialize(GenerateSetting& setting) {
 	RIVER_DELETE_QUEUE = std::queue<RiverEdge*>();
 	RIVER_LINE_ARR = std::vector<RiverLine*>();
 	ADDED_COUNT = 0;
-
+	CellUnique = 0;
 	river_lines.Initialize(setting);
 }
 
 
 Vertex* Diagram::createVertex(double x, double y) {
-	Vertex* vert = vertexPool.newElement(Point2(x, y));
+	Vertex* vert = vertexPool.newElement(Point2(round(100 * x) / 100, round(100 * y) / 100));
 	vertices.push_back(vert);
 
 	return vert;
 }
 
-Cell* Diagram::createCell(Point2 site) {
-	Cell* cell = cellPool.newElement(site);
+Cell* Diagram::createCell(Point2 site, Diagram* diagram) {
+	Cell* cell = cellPool.newElement(site, diagram);
 	cells.push_back(cell);
 
 	return cell;

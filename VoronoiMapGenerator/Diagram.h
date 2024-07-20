@@ -22,7 +22,7 @@ class Diagram {
 	friend class RiverEdge;
 	friend class RiverLine;
 	//UDiagram(GenerateSetting& setting) : river_lines(RiverLines(setting)) {}
-	Diagram() : ADDED_COUNT(0) {}
+	Diagram() : ADDED_COUNT(0), CellUnique(0) {}
 	/*UDiagram(const FObjectInitializer& ObjectInitializer)
 		: Super(ObjectInitializer)
 		, ADDED_COUNT(0)
@@ -45,6 +45,9 @@ class Diagram {
 	std::vector<RiverLine*> RIVER_LINE_ARR;
 	unsigned int ADDED_COUNT;
 public:
+	unsigned int CellUnique;
+
+	unsigned int GetCellUnique() { return CellUnique; }
 	std::vector<Cell*>& GetCells() { return cells; }
 	std::vector<Edge*>& GetEdges() { return edges; }
 	UnionArray<std::vector<Cell*>>& GetOceanUnion() { return oceanUnion; }
@@ -71,7 +74,7 @@ private:
 	MemoryPool<Vertex> vertexPool;
 
 	Vertex* createVertex(double x, double y);
-	Cell* createCell(Point2 site);
+	Cell* createCell(Point2 site, Diagram* diagram);
 	Edge* createEdge(Site* lSite, Site* rSite, Vertex* vertA, Vertex* vertB);
 	Edge* createBorderEdge(Site* lSite, Vertex* vertA, Vertex* vertB);
 

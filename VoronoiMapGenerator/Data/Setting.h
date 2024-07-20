@@ -1,16 +1,38 @@
 #pragma once
 #include <algorithm>
+#include <random>
 
 enum class MapType {
 	CONTINENT,
 	ISLAND
 };
 
+class RandomGenerator {
+public:
+	RandomGenerator(int seed) : engine((unsigned int)seed) {}
+
+	double GetRandom() {
+		std::uniform_real_distribution<double> dist(0.0, 1.0);
+		return dist(engine);
+	}
+
+	int GetRandomInt() {
+		std::uniform_int_distribution<int> dist(0, 0x7fff);
+		return dist(engine);
+	}
+
+private:
+	std::mt19937 engine;
+};
+
+
 class GenerateSetting {
-	//friend class VoronoiDiagramGenerator;
+	friend class VoronoiDiagramGenerator;
 private:
 	MapType type;
 	int seed;
+	signed int nPoints;
+	signed int dimension;
 	double site_range;
 	double radius;
 	double lake_scale;
@@ -29,10 +51,14 @@ private:
 	double river_curv_spacing;
 	double river_additional_curve_chance;
 	double river_additional_curve_distance;
+private:
+	RandomGenerator randgen;
 public:
 	GenerateSetting()
 		: type(MapType::CONTINENT)
 		, seed(0)
+		, nPoints(10000)
+		, dimension(1000000)
 		, site_range(0.666)
 		, radius(500000) // radius, 0, 0.7, 10, radius / 3, radius / 5, 10, radius / 5, radius / 7)
 		, lake_scale(0)
@@ -47,9 +73,11 @@ public:
 		, river_power_scale(0.2)
 		, river_curv_spacing(0.02f)
 		, river_additional_curve_chance(0.5)
-		, river_additional_curve_distance(0.5) {};
+		, river_additional_curve_distance(0.5)
+		, randgen(RandomGenerator(0)) 
+	{};
 
-	GenerateSetting(MapType _type, int _seed, double _site_range, double _radius, double _lake_scale,
+	GenerateSetting(MapType _type, int _seed, signed int _nPoints, signed int _dimension, double _site_range, double _radius, double _lake_scale,
 		double _lake_size, unsigned int _island_cnt, double _island_radius_max,
 		double _island_radius_min, unsigned int _lake_cnt, double _lake_radius_max,
 		double _lake_radius_min, double _river_radius, double _river_power_scale, 
@@ -92,10 +120,19 @@ public:
 	inline double GetRiverAdditionalCurveChance() { return river_additional_curve_chance; };
 	inline double GetRiverAdditionalCurveDistance() { return river_additional_curve_distance; };
 
-	static inline double GetRandom() {
-		return rand() / ((double)0x7fff); // RAND_MAX 
+	inline double GetRandom() {
+		return randgen.GetRandom(); // RAND_MAX 
 	}
 
-	inline void Srand() { srand(seed); }
+	inline double GetRandomRound() {
+		return round(randgen.GetRandom() * 100) / 100;
+	}
+
+	inline int GetRandomInt() {
+		return randgen.GetRandomInt(); // RAND_MAX 
+	}
+
+	inline void Srand() { randgen = RandomGenerator(seed); }
+
 
 };

@@ -118,7 +118,7 @@ double Point2::GetAngle() const {
     return atan2(y, x) * 180.0 / 3.1415926f;
 }
 
-Point2 Point2::Normailize() const {
+Point2 Point2::Normalize() const {
     double dist = DistanceFromOrigin();
     return Point2(x / dist, y / dist);
 }
