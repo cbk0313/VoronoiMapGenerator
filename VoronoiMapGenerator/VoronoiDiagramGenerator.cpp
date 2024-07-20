@@ -33,13 +33,12 @@ bool pointComparator(Point2* a, Point2* b) {
 void VoronoiDiagramGenerator::CreateSite() {
 
 	sites.clear();
-	unsigned int numSites = std::min<unsigned int>(100, (unsigned int)sqrt(setting.nPoints));
+	unsigned int numSites = std::max<unsigned int>(100, (unsigned int)sqrt(setting.nPoints));
 	unsigned int pow_site = (unsigned int)pow(numSites, 2);
 	setting.dimension = std::max<signed int>(setting.dimension, pow_site);
 	//bbox = BoundingBox(0, dimension, dimension, 0);
 	boundingBox = BoundingBox(0, setting.dimension, setting.dimension, 0);
 	//std::vector<Point2> tmpSites;
-
 	//tmpSites.reserve(pow_site);
 	sites.reserve(pow_site);
 
