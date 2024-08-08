@@ -58,30 +58,7 @@ private:
 private:
 	RandomGenerator randgen;
 public:
-	GenerateSetting()
-		: type(MapType::CONTINENT)
-		, seed(0)
-		, nPoints(10000)
-		, dimension(1000000)
-		, site_range(0.666)
-		, sea_level(0.5)
-		, coast_area(2)
-		, radius(500000) // radius, 0, 0.7, 10, radius / 3, radius / 5, 10, radius / 5, radius / 7)
-		, lake_scale(0)
-		, lake_size(0.7)
-		, island_cnt(10)
-		, island_radius_max(333333)
-		, island_radius_min(200000)
-		, lake_cnt(10)
-		, lake_radius_max(200000)
-		, lake_radius_min(142857.1428571429)
-		, river_radius(500)
-		, river_power_scale(0.2)
-		, river_curv_spacing(0.02f)
-		, river_additional_curve_chance(0.5)
-		, river_additional_curve_distance(0.5)
-		, randgen(RandomGenerator(0)) 
-	{};
+	GenerateSetting();
 
 	GenerateSetting(MapType _type, int _seed, signed int _nPoints, signed int _dimension, double _site_range, double _sea_level, int _coast_area, double _radius, double _lake_scale,
 		double _lake_size, unsigned int _island_cnt, double _island_radius_max,
@@ -92,8 +69,13 @@ public:
 
 	inline void SetMapType(MapType new_type) { type = new_type; };
 	inline void SetSeed(int new_seed) { seed = new_seed; };
-	inline void SetSiteRange(int new_seed) { seed = new_seed; };
+	inline void SetPoints(int new_points) { nPoints = new_points; };
+	inline void SetDimension(int new_dimension) { dimension = new_dimension; };
+	inline void SetSiteRange(double new_site_range) { site_range = new_site_range; };
+
 	inline void SetSeaLevel(double new_sea_level) { sea_level = std::clamp<double>(new_sea_level, 0, 1.0); };
+	inline void SetCoastArea(int new_sea_level) { coast_area = std::max<int>(new_sea_level, 1); };
+	
 	inline void SetRadius(double new_radius) { radius = new_radius; };
 	inline void SetLakeScale(double new_scale) { lake_scale = new_scale; };
 	inline void SetLakeSize(double new_size) { lake_size = new_size; };

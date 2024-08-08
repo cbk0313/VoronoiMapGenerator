@@ -52,9 +52,6 @@ private:
 
 	int image_flag;
 
-	int max_elevation;
-	int min_elevation;
-	unsigned int max_moisture;
 
 	Diagram* diagram;
 	//;
@@ -100,14 +97,11 @@ private:
 	std::pair<double, double> GetMinDist(std::vector<std::pair<Point2, double>>& points, Point2& center, double radius);
 
 public:
-	VoronoiDiagramGenerator() : has_created_ocean(false), has_set_color(false), image_flag(ALL_IMAGE), max_elevation(1), min_elevation(-1), max_moisture(0), diagram(nullptr), circleEventQueue(nullptr), boundingBox(BoundingBox()), beachLine(nullptr) {};
+	VoronoiDiagramGenerator() : has_created_ocean(false), has_set_color(false), image_flag(ALL_IMAGE), diagram(nullptr), circleEventQueue(nullptr), boundingBox(BoundingBox()), beachLine(nullptr) {};
 	~VoronoiDiagramGenerator() {};
 
 	Diagram* GetDiagram();
 
-	int GetMaxElevation() { return max_elevation; }
-	unsigned int GetMaxMoisture() { return max_moisture; }
-	int GetMinElevation() { return min_elevation; }
 
 	// Create a site. Must be run first
 	void CreateSite();

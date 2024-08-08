@@ -22,7 +22,7 @@ class Diagram {
 	friend class RiverEdge;
 	friend class RiverLine;
 	//UDiagram(GenerateSetting& setting) : river_lines(RiverLines(setting)) {}
-	Diagram() : ADDED_COUNT(0), CellUnique(0) {}
+	Diagram() : ADDED_COUNT(0), max_elevation(1), min_elevation(-1), max_moisture(0), CellUnique(0) {}
 	/*UDiagram(const FObjectInitializer& ObjectInitializer)
 		: Super(ObjectInitializer)
 		, ADDED_COUNT(0)
@@ -44,6 +44,12 @@ class Diagram {
 
 	std::vector<RiverLine*> RIVER_LINE_ARR;
 	unsigned int ADDED_COUNT;
+
+
+	int max_elevation;
+	int min_elevation;
+	unsigned int max_moisture;
+
 public:
 	unsigned int CellUnique;
 
@@ -55,6 +61,14 @@ public:
 	RiverLines& GetRiverLines() { return river_lines; }
 	RiverCrossing& GetRiverCrossing() { return river_cross; }
 	std::vector<Triangle>& GetTriangles() { return triangles; }
+
+	int GetMaxElevation() { return max_elevation; }
+	unsigned int GetMaxMoisture() { return max_moisture; }
+	int GetMinElevation() { return min_elevation; }
+
+	void SetMaxElevation(int new_max_elevation) { max_elevation = new_max_elevation; }
+	void SetMaxMoisture(unsigned int new_max_moisture) { max_moisture = new_max_moisture; }
+	void SetMinElevation(int new_min_elevation) { min_elevation = new_min_elevation; }
 
 	~Diagram();
 	void printDiagram();

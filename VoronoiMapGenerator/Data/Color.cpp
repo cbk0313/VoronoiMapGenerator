@@ -8,12 +8,15 @@ Color Color::operator *(const int num) {
 	double cast_num = (double)num;
 	return Color(r * cast_num, g * cast_num, b * cast_num, a);
 }
+
 Color Color::operator *(const double num) {
 	return Color(r * num, g * num, b * num, a);
 }
+
 Color Color::operator*(double num) const {
 	return Color(r * num, g * num, b * num, a);
 }
+
 Color Color::operator *=(int num) {
 	*this = *this * num;
 	return *this;

@@ -471,7 +471,7 @@ void VoronoiDiagramGenerator::SetupPeak(CellVector& coastBuffer) {
 
 		CellDetail& cd = c->GetDetail();
 		int under_cell_cnt = 0;
-		max_elevation = std::max<int>(max_elevation, cd.GetElevation());
+		diagram->max_elevation = std::max<int>(diagram->max_elevation, cd.GetElevation());
 		double avg_elev = cd.GetElevation();
 
 		for (HalfEdge* he : c->halfEdges) {
@@ -603,6 +603,7 @@ void VoronoiDiagramGenerator::ExpandCoast(CellVector& coastBuffer) {
 		}
 	}
 }
+
 void VoronoiDiagramGenerator::SetupCoast(CellVector& coastBuffer) {
 	for (Cell* c : coastBuffer.GetBuffer()) {
 		CellDetail& cd = c->GetDetail();
@@ -694,7 +695,7 @@ void VoronoiDiagramGenerator::SetupMoisture() {
 			p_q.pop();
 
 			CellDetail& cd = c->GetDetail();
-			max_moisture = std::max<unsigned int>(max_moisture, cd.GetMoisture());
+			diagram->max_moisture = std::max<unsigned int>(diagram->max_moisture, cd.GetMoisture());
 			for (HalfEdge* he : c->halfEdges) {
 				Edge* e = he->edge;
 				Cell* targetCell = (e->lSite->cell == c && e->rSite) ? e->rSite->cell : e->lSite->cell;
@@ -716,7 +717,7 @@ void VoronoiDiagramGenerator::SetupMoisture() {
 								}
 							}
 							tcd.AddMoisture(1 + nonPeakBonus);
-							max_moisture = std::max<unsigned int>(max_moisture, tcd.GetMoisture());
+							diagram->max_moisture = std::max<unsigned int>(diagram->max_moisture, tcd.GetMoisture());
 						}
 						else if (cd.GetElevation() == tcd.GetElevation()) {
 
@@ -729,7 +730,7 @@ void VoronoiDiagramGenerator::SetupMoisture() {
 							}
 							else {
 								tcd.AddMoisture(1 + nonPeakBonus);
-								max_moisture = std::max<unsigned int>(max_moisture, tcd.GetMoisture());
+								diagram->max_moisture = std::max<unsigned int>(diagram->max_moisture, tcd.GetMoisture());
 							}
 						}
 					}
@@ -1206,11 +1207,11 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 
 	double sea_level = GetSetting().GetSeaLevel();
 	
-	double island_elev_rate = (1.0 / (double)(max_elevation)) * (1 - sea_level);
-	double ocean_elev_rate = (1.0 / -(double)(min_elevation == -1 ? -1 : min_elevation + 1)) * sea_level;
+	double island_elev_rate = (1.0 / (double)(diagram->max_elevation)) * (1 - sea_level);
+	double ocean_elev_rate = (1.0 / -(double)(diagram->min_elevation == -1 ? -1 : diagram->min_elevation + 1)) * sea_level;
 
-	double island_gray_rate = static_cast<uint16_t>(((MAX_GRAY) / (double)max_elevation) * (1 - sea_level));
-	double ocean_gray_rate = static_cast<uint16_t>(((MAX_GRAY) / (double)-min_elevation) * (1 - sea_level));
+	double island_gray_rate = static_cast<uint16_t>(((MAX_GRAY) / (double)diagram->max_elevation) * (1 - sea_level));
+	double ocean_gray_rate = static_cast<uint16_t>(((MAX_GRAY) / (double)-diagram->min_elevation) * (1 - sea_level));
 	
 
 	VertexColor elev_rate_c = VertexColor(Color(island_elev_rate / 2, island_elev_rate / 2, island_elev_rate / 2), island_gray_rate / 2);
@@ -1309,13 +1310,12 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 				}
 				else {*/
 
-				double rate = (cd.GetElevation() ) / (double)(min_elevation);
-				Color c = Color::edgeOcean * rate + Color::ocean * (1 - rate);
-				cd.GetColor() = VertexColor(c);
+				double rate = (cd.GetElevation() ) / (double)(diagram->min_elevation);
+				cd.GetColor() = VertexColor(Color::edgeOcean * rate + Color::ocean * (1 - rate));
 				//}
 			}
 			else if (flag & OCEAN) {
-				double ocean_elev = cd.GetElevation() - min_elevation + 1;
+				double ocean_elev = cd.GetElevation() - diagram->min_elevation + 1;
 				double elev_scale = (ocean_elev * ocean_elev_rate);
 				uint16_t gray_scale = static_cast<uint16_t>(elev_scale * MAX_GRAY);
 				VertexColor island_elev = VertexColor(Color(elev_scale, elev_scale, elev_scale), gray_scale);
@@ -1513,7 +1513,7 @@ void VoronoiDiagramGenerator::SetupOceanDepth(CellVector& coastBuffer) {
 		oceanQueue.pop();
 		CellDetail& cd = c->GetDetail();
 
-		min_elevation = std::min<int>(min_elevation, cd.GetElevation());
+		diagram->min_elevation = std::min<int>(diagram->min_elevation, cd.GetElevation());
 		//std::cout << c->GetDetail().GetElevation() << "\n";
 		for (HalfEdge* he : c->halfEdges) {
 			Edge* e = he->edge;

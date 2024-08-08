@@ -319,7 +319,7 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 			else if (draw_white_dot) {
 				glPointSize(whitePointSize * 2);
 				glBegin(GL_POINTS);
-				double temp = (double)c->GetDetail().GetMoisture() / vdg->GetMaxMoisture();
+				double temp = (double)c->GetDetail().GetMoisture() / vdg->GetDiagram()->GetMaxMoisture();
 				glColor4f((GLfloat)(1.0 - temp), (GLfloat)(1.0 - temp), 1.f, 1.f);
 				glVertex3d((GLfloat)normalize(p.x, dimension), -(GLfloat)normalize(p.y, dimension), 0.0);
 				glEnd();

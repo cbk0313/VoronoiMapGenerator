@@ -1,32 +1,64 @@
 #include "Setting.h"
 
+GenerateSetting::GenerateSetting()
+	: type(MapType::CONTINENT)
+	, seed(0)
+	, nPoints(10000)
+	, dimension(1000000)
+	, site_range(0.666)
+	, sea_level(0.5)
+	, coast_area(2)
+	, radius(500000) // radius, 0, 0.7, 10, radius / 3, radius / 5, 10, radius / 5, radius / 7)
+	, lake_scale(0)
+	, lake_size(0.7)
+	, island_cnt(10)
+	, island_radius_max(333333)
+	, island_radius_min(200000)
+	, lake_cnt(10)
+	, lake_radius_max(200000)
+	, lake_radius_min(142857.1428571429)
+	, river_radius(500)
+	, river_power_scale(0.2)
+	, river_curv_spacing(0.02f)
+	, river_additional_curve_chance(0.5)
+	, river_additional_curve_distance(0.5)
+	, randgen(RandomGenerator(0))
+{};
+
+
+
+
 GenerateSetting::GenerateSetting(MapType _type, int _seed, signed int _nPoints,
 	signed int _dimension, double _site_range, double _sea_level, int _coast_area,
 	double _radius, double _lake_scale, double _lake_size, unsigned int _island_cnt,
 	double _island_radius_max, double _island_radius_min, unsigned int _lake_cnt,
 	double _lake_radius_max, double _lake_radius_min, double _river_radius, double _river_power_scale,
 	double _river_curv_spacing, double _river_additional_curve_chance, double _additional_curve_distance)
-	: type(_type)
-	, seed(_seed)
-	, nPoints(_nPoints)
-	, dimension(_dimension)
-	, site_range(std::clamp(_site_range, 0.0, 1.0))
-	, sea_level(_sea_level)
-	, coast_area(_coast_area)
-	, radius(_radius)
-	, lake_scale(_lake_scale)
-	, lake_size(_lake_size)
-	, island_cnt(_island_cnt)
-	, island_radius_max(_island_radius_max)
-	, island_radius_min(_island_radius_min)
-	, lake_cnt(_lake_cnt)
-	, lake_radius_max(_lake_radius_max)
-	, lake_radius_min(_lake_radius_min)
-	, river_radius(_river_radius)
-	, river_power_scale(_river_power_scale)
-	, river_curv_spacing(_river_curv_spacing)
-	, river_additional_curve_chance(_river_additional_curve_chance)
-	, river_additional_curve_distance(_additional_curve_distance)
-	, randgen(RandomGenerator(_seed))
-{};
+	: randgen(RandomGenerator(_seed))
+{
+
+	SetMapType(_type);
+	SetSeed(_seed);
+	SetPoints(_nPoints);
+	SetDimension(_dimension);
+	SetSiteRange(_site_range);
+
+	SetSeaLevel(_sea_level);
+	SetCoastArea(_coast_area);
+
+	SetRadius(_radius);
+	SetLakeScale(_lake_scale);
+	SetLakeSize(_lake_size);
+	SetIslandCount(_island_cnt);
+	SetIslandRadiusMax(_island_radius_max);
+	SetIslandRadiusMin(_island_radius_min);
+	SetLakeCount(_lake_cnt);
+	SetLakeRadiusMax(_lake_radius_max);
+	SetLakeRadiusMin(_lake_radius_min);
+	SetRiverRadius(_river_radius);
+	SetRiverPowerScale(_river_power_scale);
+	SetRiverCurvSpacing(_river_curv_spacing);
+	SetRiverAdditionalCurveChance(_river_additional_curve_chance);
+	SetRiverAdditionalCurveDistance(_additional_curve_distance);
+};
 
