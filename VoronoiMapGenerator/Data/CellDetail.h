@@ -25,9 +25,13 @@ enum class Terrain : std::size_t {
 #define TERRAIN_CNT static_cast<int>(Terrain::COUNT)
 
 #define IS_GROUND(x) (x == Terrain::LAND || x == Terrain::PEAK || x == Terrain::HIGHEST_PEAK)
+#define IS_GROUND_CELL(x) (IS_GROUND(x->GetDetail().GetTerrain()))
 #define IS_LAND(x) (IS_GROUND(x) || x == Terrain::LAKE )
+#define IS_LAND_CELL(x) (IS_LAND(x->GetDetail().GetTerrain()))
 #define IS_WATER(x) (x == Terrain::OCEAN || x == Terrain::LAKE || x == Terrain::COAST)
+#define IS_WATER_CELL(x) (IS_WATER(x->GetDetail().GetTerrain()))
 #define IS_OCEAN(x) (x == Terrain::OCEAN || x == Terrain::COAST)
+#define IS_OCEAN_CELL(x) (IS_OCEAN(x->GetDetail().GetTerrain()))
 
 #define VERTEX_DECREASE_COLOR Color(0.2, 0.2, 0.2)
 

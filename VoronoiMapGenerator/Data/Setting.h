@@ -11,12 +11,12 @@ class RandomGenerator {
 public:
 	RandomGenerator(int seed) : engine((unsigned int)seed) {}
 
-	double GetRandom() {
+	inline double GetRandom() {
 		std::uniform_real_distribution<double> dist(0.0, 1.0);
 		return dist(engine);
 	}
 
-	int GetRandomInt() {
+	inline int GetRandomInt() {
 		std::uniform_int_distribution<int> dist(0, 0x7fff);
 		return dist(engine);
 	}
@@ -34,6 +34,10 @@ private:
 	signed int nPoints;
 	signed int dimension;
 	double site_range;
+
+	double sea_level;
+	int coast_area;
+
 	double radius;
 	double lake_scale;
 	double lake_size;
@@ -60,6 +64,8 @@ public:
 		, nPoints(10000)
 		, dimension(1000000)
 		, site_range(0.666)
+		, sea_level(0.5)
+		, coast_area(2)
 		, radius(500000) // radius, 0, 0.7, 10, radius / 3, radius / 5, 10, radius / 5, radius / 7)
 		, lake_scale(0)
 		, lake_size(0.7)
@@ -77,7 +83,7 @@ public:
 		, randgen(RandomGenerator(0)) 
 	{};
 
-	GenerateSetting(MapType _type, int _seed, signed int _nPoints, signed int _dimension, double _site_range, double _radius, double _lake_scale,
+	GenerateSetting(MapType _type, int _seed, signed int _nPoints, signed int _dimension, double _site_range, double _sea_level, int _coast_area, double _radius, double _lake_scale,
 		double _lake_size, unsigned int _island_cnt, double _island_radius_max,
 		double _island_radius_min, unsigned int _lake_cnt, double _lake_radius_max,
 		double _lake_radius_min, double _river_radius, double _river_power_scale, 
@@ -87,6 +93,7 @@ public:
 	inline void SetMapType(MapType new_type) { type = new_type; };
 	inline void SetSeed(int new_seed) { seed = new_seed; };
 	inline void SetSiteRange(int new_seed) { seed = new_seed; };
+	inline void SetSeaLevel(double new_sea_level) { sea_level = std::clamp<double>(new_sea_level, 0, 1.0); };
 	inline void SetRadius(double new_radius) { radius = new_radius; };
 	inline void SetLakeScale(double new_scale) { lake_scale = new_scale; };
 	inline void SetLakeSize(double new_size) { lake_size = new_size; };
@@ -105,6 +112,8 @@ public:
 	inline MapType GetMapType() { return type; };
 	inline int GetSeed() { return seed; };
 	inline double GetSiteRange() { return site_range; };
+	inline double GetSeaLevel() { return sea_level; };
+	inline int GetCoastArea() { return coast_area; };
 	inline double GetRadius() { return radius; };
 	inline double GetLakeScale() { return lake_scale; };
 	inline double GetLakeSize() { return lake_size; };

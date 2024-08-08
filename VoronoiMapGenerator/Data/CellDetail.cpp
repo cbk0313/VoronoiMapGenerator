@@ -60,6 +60,7 @@ int CellDetail::GetElevation() {
 		return elevation;
 	}
 }
+
 void CellDetail::SetElevation(int num) {
 	elevation = num;
 }

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <algorithm>
 #include "Data/River.h"
+#include "Data/Utility.h"
 using std::cout;
 using std::endl;
 
@@ -82,7 +83,7 @@ void Diagram::Initialize(GenerateSetting& setting) {
 
 
 Vertex* Diagram::createVertex(double x, double y) {
-	Vertex* vert = vertexPool.newElement(Point2(round(100 * x) / 100, round(100 * y) / 100));
+	Vertex* vert = vertexPool.newElement(Point2(VoronoiMapGenerator::Round2(x), VoronoiMapGenerator::Round2(y)));
 	vertices.push_back(vert);
 
 	return vert;

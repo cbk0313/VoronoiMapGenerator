@@ -18,6 +18,7 @@ public:
 
 	Color operator *(const int num);
 	Color operator *(const double num);
+	Color operator *(double num) const;
 	Color operator *=(int num);
 	Color operator *=(double num);
 

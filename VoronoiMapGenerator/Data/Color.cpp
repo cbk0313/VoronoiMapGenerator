@@ -11,6 +11,9 @@ Color Color::operator *(const int num) {
 Color Color::operator *(const double num) {
 	return Color(r * num, g * num, b * num, a);
 }
+Color Color::operator*(double num) const {
+	return Color(r * num, g * num, b * num, a);
+}
 Color Color::operator *=(int num) {
 	*this = *this * num;
 	return *this;
@@ -81,7 +84,7 @@ Color const Color::black = Color(0, 0, 0);
 Color const Color::lake = Color(0.2, 0.4, 0.6);
 Color const Color::white = Color(1, 1, 1);
 Color const Color::edgeOcean = Color(0.1, 0, 0.3, 1);
-Color const Color::ocean = Color(0.2, 0, 0.6, 1);
+Color const Color::ocean = Color(0.3, 0, 0.9, 1);
 Color const Color::coast = Color(0.4, 0, 1, 1);
 
 #include <iostream>

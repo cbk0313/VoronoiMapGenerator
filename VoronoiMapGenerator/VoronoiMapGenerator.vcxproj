@@ -30,6 +30,7 @@
     <ClInclude Include="Data\Setting.h" />
     <ClInclude Include="Data\Triangle.h" />
     <ClInclude Include="Data\UnionFind.h" />
+    <ClInclude Include="Data\Utility.h" />
     <ClInclude Include="Diagram.h" />
     <ClInclude Include="Edge.h" />
     <ClInclude Include="Epsilon.h" />

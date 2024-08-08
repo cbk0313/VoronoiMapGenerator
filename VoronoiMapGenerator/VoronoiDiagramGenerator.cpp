@@ -2,6 +2,7 @@
 #include <iostream>
 #include <Windows.h>
 #include "Data/Heightmap.h"
+#include "Data/Utility.h"
 
 
 Diagram* VoronoiDiagramGenerator::GetDiagram() {
@@ -43,14 +44,14 @@ void VoronoiDiagramGenerator::CreateSite() {
 	sites.reserve(pow_site);
 
 	Point2 s;
-	unsigned int step = floor(setting.dimension / numSites);
-	double half_step = round(step * (setting.GetSiteRange() * 1000)) / 1000;
+	double step = VoronoiMapGenerator::Round2(setting.dimension / numSites);
+	double half_step = VoronoiMapGenerator::Round2(step * setting.GetSiteRange());
 	setting.Srand();
-
+	//UE_LOG(LogTemp, Warning, TEXT("step: %f, half_step: %f"), step, half_step)
 	for (unsigned int i = 0; i < numSites; ++i) {
 		for (unsigned int j = 0; j < numSites; ++j) {
-			s.x = i * step + (round((setting.GetRandomRound() * half_step) * 1000) / 1000);
-			s.y = j * step + (round((setting.GetRandomRound() * half_step) * 1000) / 1000);
+			s.x = i * step + VoronoiMapGenerator::Round2(setting.GetRandomRound() * half_step);
+			s.y = j * step + VoronoiMapGenerator::Round2(setting.GetRandomRound() * half_step);
 			sites.push_back(s);
 		}
 	}
@@ -186,19 +187,20 @@ void  VoronoiDiagramGenerator::Relax() {
 		Point2 centroid(0.0, 0.0);
 		double totalArea = 0.0;
 		for (size_t i = 1; i < edgeCount - 1; ++i) {
-			double area = round(((vectors[i + 1].x * vectors[i].y - vectors[i + 1].y * vectors[i].x) / 2) * 1000) / 1000;
+			double area = VoronoiMapGenerator::Round2((vectors[i + 1].x * vectors[i].y - vectors[i + 1].y * vectors[i].x) / 2);
 			totalArea += area;
-			totalArea = round(totalArea * 1000) / 1000;
-			centroid.x += area * round(((verts[0].x + verts[i].x + verts[i + 1].x) / 3) * 1000) / 1000;
-			centroid.y += area * round(((verts[0].y + verts[i].y + verts[i + 1].y) / 3) * 1000) / 1000;
-			centroid.x = round(centroid.x);
-			centroid.y = round(centroid.y);
+			totalArea = VoronoiMapGenerator::Round2(totalArea);
+			centroid.x += area * VoronoiMapGenerator::Round2((verts[0].x + verts[i].x + verts[i + 1].x) / 3);
+			centroid.y += area * VoronoiMapGenerator::Round2((verts[0].y + verts[i].y + verts[i + 1].y) / 3);
+			centroid.x = VoronoiMapGenerator::Round2(centroid.x);
+			centroid.y = VoronoiMapGenerator::Round2(centroid.y);
 		}
 		centroid.x /= totalArea;
 		centroid.y /= totalArea;
 		//centroid.Epsilon();
 		sites.push_back(centroid);
 	}
+
 
 
 	//then recompute the diagram using the cells' centroids

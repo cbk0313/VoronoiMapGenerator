@@ -10,6 +10,12 @@
 #include "Data/Setting.h"
 
 
+#if !IS_UNREAL_PLUIN
+#define UVoronoiDiagramGenerator VoronoiDiagramGenerator
+#endif 
+
+
+
 struct BoundingBox {
 	double xL;
 	double xR;
@@ -44,6 +50,7 @@ private:
 	int image_flag;
 
 	int max_elevation;
+	int min_elevation;
 	unsigned int max_moisture;
 
 	Diagram* diagram;
@@ -74,12 +81,14 @@ private:
 	void CreateLake();
 	void SetupElevation(CellVector& coastBuffer);
 	void SetupPeak(CellVector& coastBuffer);
+	void ExpandCoast(CellVector& coastBuffer);
 	void SetupCoast(CellVector& coastBuffer);
 	void SetupLandUnion();
 	void SetupIsland();
 	void SetupBiome();
 	void CreateRiver();
 	void SetupMoisture();
+	void SetupOceanDepth(CellVector& coastBuffer);
 	void SetupEdgePos(bool trans_edge);
 	void SetupColor(int flag = ALL_IMAGE);
 	void SetupRiverTriangle(VertexColor c);
@@ -88,13 +97,14 @@ private:
 	std::pair<double, double> GetMinDist(std::vector<std::pair<Point2, double>>& points, Point2& center, double radius);
 
 public:
-	VoronoiDiagramGenerator() : has_created_ocean(false), has_set_color(false), image_flag(ALL_IMAGE), max_elevation(1), max_moisture(0), diagram(nullptr), circleEventQueue(nullptr), boundingBox(BoundingBox()), beachLine(nullptr) {};
+	VoronoiDiagramGenerator() : has_created_ocean(false), has_set_color(false), image_flag(ALL_IMAGE), max_elevation(1), min_elevation(-1), max_moisture(0), diagram(nullptr), circleEventQueue(nullptr), boundingBox(BoundingBox()), beachLine(nullptr) {};
 	~VoronoiDiagramGenerator() {};
 
 	Diagram* GetDiagram();
 
-	unsigned int GetMaxElevation() { return max_elevation; }
+	int GetMaxElevation() { return max_elevation; }
 	unsigned int GetMaxMoisture() { return max_moisture; }
+	int GetMinElevation() { return min_elevation; }
 
 	// Create a site. Must be run first
 	void CreateSite();
