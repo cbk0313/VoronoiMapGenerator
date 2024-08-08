@@ -19,7 +19,7 @@ using DistRadius = std::pair<double, double>; // fisrt: distance, second: radius
 using PointDist = std::pair<Point2, double>; // first: point, second: radius
 
 
-void VoronoiDiagramGenerator::CreateWorld(bool trans_edge, bool create_tri) {
+void VoronoiDiagramGenerator::CreateWorld(int flag, bool trans_edge, bool create_tri) {
 	if (diagram) {
 		setting.Srand();
 		CreateLand();
@@ -39,7 +39,7 @@ void VoronoiDiagramGenerator::CreateWorld(bool trans_edge, bool create_tri) {
 		CreateRiver();
 		SetupOceanDepth(buf);
 		SetupEdgePos(trans_edge);
-		SetupColor();
+		SetupColor(flag);
 		if (create_tri) {
 			CreateTriangle();
 		}

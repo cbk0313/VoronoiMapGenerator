@@ -112,7 +112,7 @@ public:
 	// Repeat 'Relax()' num times
 	void RepeatRelax(int num);
 
-	void CreateWorld(bool trans_edge = true, bool create_tri = true);
+	void CreateWorld(int flag = ALL_IMAGE, bool trans_edge = true, bool create_tri = true);
 
 	inline void SetSetting(GenerateSetting newSetting) { setting = newSetting; };
 	inline GenerateSetting& GetSetting() { return setting; };
