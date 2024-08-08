@@ -501,23 +501,33 @@ int main() {
 
 			Heightmap map(IMAGE_WIDTH, IMAGE_HEIGHT);
 			vdg.CreateHeightmap(map, true, VoronoiDiagramGenerator::ISLAND, IMAGE_WIDTH, IMAGE_HEIGHT, false);
+			map.SaveImage("voronoi_map_island_only_grayscale.png");
+
+			int flag = VoronoiDiagramGenerator::ISLAND | VoronoiDiagramGenerator::COAST | VoronoiDiagramGenerator::OCEAN;
+			vdg.CreateHeightmap(map, true, flag, IMAGE_WIDTH, IMAGE_HEIGHT, false);
 			map.SaveImage("voronoi_map_island_grayscale.png");
 
 			map.BoxBlur(10);
 			map.SaveImage("voronoi_map_island_BoxBlur_grayscale.png");
 
-			vdg.CreateHeightmap(map, true, VoronoiDiagramGenerator::ISLAND, IMAGE_WIDTH, IMAGE_HEIGHT, false);
+			vdg.CreateHeightmap(map, true, flag, IMAGE_WIDTH, IMAGE_HEIGHT, false);
 			map.GaussianBlur(3, 1.0);
 			map.SaveImage("voronoi_map_island_GaussianBlur_grayscale.png");
+
+			vdg.CreateHeightmap(map, true, VoronoiDiagramGenerator::ISLAND_PAINT, IMAGE_WIDTH, IMAGE_HEIGHT, false);
+			map.SaveImage("voronoi_map_island_paint_grayscale.png");
 
 			vdg.CreateHeightmap(map, true, VoronoiDiagramGenerator::LAKE, IMAGE_WIDTH, IMAGE_HEIGHT, false);
 			map.SaveImage("voronoi_map_lake_grayscale.png");
 
-			vdg.CreateHeightmap(map, true, VoronoiDiagramGenerator::RIVER, IMAGE_WIDTH, IMAGE_HEIGHT);
+			vdg.CreateHeightmap(map, true, VoronoiDiagramGenerator::RIVER, IMAGE_WIDTH, IMAGE_HEIGHT, false);
 			map.SaveImage("voronoi_map_river_grayscale.png");
 			
-			vdg.CreateHeightmap(map, true, VoronoiDiagramGenerator::COAST, IMAGE_WIDTH, IMAGE_HEIGHT);
+			vdg.CreateHeightmap(map, true, VoronoiDiagramGenerator::COAST_PAINT, IMAGE_WIDTH, IMAGE_HEIGHT);
 			map.SaveImage("voronoi_map_coast_grayscale.png");
+			
+			vdg.CreateHeightmap(map, true, VoronoiDiagramGenerator::OCEAN_PAINT, IMAGE_WIDTH, IMAGE_HEIGHT);
+			map.SaveImage("voronoi_map_ocean_grayscale.png");
 
 		}
 		else {

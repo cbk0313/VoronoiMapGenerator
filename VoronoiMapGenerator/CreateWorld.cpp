@@ -1236,6 +1236,9 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 				cd.GetColor() = island_elev;
 				//}
 			}
+			else if (flag == ISLAND_PAINT) {
+				cd.GetColor() = VertexColor(Color::white);
+			}
 			else {
 				cd.GetColor() = VertexColor(Color::black);
 			}
@@ -1270,21 +1273,15 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 			std::cout << "Coast: " << elev_scale << "\n";
 			std::cout << "coast_elev: " << coast_elev << "\n";*/
 
-			if (flag & COAST) {
+			if (flag == ALL_IMAGE) {
 				cd.GetColor() = VertexColor(Color::coast);
 			}
 			else {
-				if (flag & OCEAN) {
-					if (cd.IsEdge()) {
-						cd.GetColor() = VertexColor(Color::edgeOcean);
-					}
-					else {
-						cd.GetColor() = VertexColor(Color::ocean);
-					}
-
+				if (flag == COAST_PAINT) {
+					cd.GetColor() = VertexColor(Color::white);
 				}
 				else {
-					if (flag & ISLAND) {
+					if (flag & COAST) {
 						//cd.GetColor() = VertexColor(Color::black);
 						double coast_elev = 1 + (cd.GetElevation() * coast_ratio);
 						double elev_scale = sea_level + (double)(coast_elev * island_elev_rate);
@@ -1306,7 +1303,7 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 				std::cout << "Ocean: " << elev_scale << ", " << cd.GetElevation() << ", " << ocean_elev << ", " << ocean_elev_rate << "\n";
 			}
 			*/
-			if (flag & OCEAN) {
+			if (flag == ALL_IMAGE) {
 			/*	if (cd.GetEdge()) {
 					cd.GetColor() = VertexColor(Color::edgeOcean);
 				}
@@ -1317,12 +1314,15 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 				cd.GetColor() = VertexColor(c);
 				//}
 			}
-			else if (flag & ISLAND) {
+			else if (flag & OCEAN) {
 				double ocean_elev = cd.GetElevation() - min_elevation + 1;
 				double elev_scale = (ocean_elev * ocean_elev_rate);
 				uint16_t gray_scale = static_cast<uint16_t>(elev_scale * MAX_GRAY);
 				VertexColor island_elev = VertexColor(Color(elev_scale, elev_scale, elev_scale), gray_scale);
 				cd.GetColor() = island_elev;
+			}
+			else if (flag == OCEAN_PAINT) {
+				cd.GetColor() = Color::white;
 			}
 			else {
 				cd.GetColor() = Color::black;
@@ -1348,9 +1348,16 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 
 			Vertex* vA = e->vertA;
 			Vertex* vB = e->vertB;
-
-			SetupVertexColor(vA, c, opposite_c, elev_rate_c);
-			SetupVertexColor(vB, c, opposite_c, elev_rate_c);
+			if (flag == ISLAND_PAINT) {
+				VertexColor emptyColor = VertexColor(Color(0, 0, 0), 0);
+				SetupVertexColor(vA, c, opposite_c, emptyColor);
+				SetupVertexColor(vB, c, opposite_c, emptyColor);
+			}
+			else {
+				SetupVertexColor(vA, c, opposite_c, elev_rate_c);
+				SetupVertexColor(vB, c, opposite_c, elev_rate_c);
+			}
+		
 
 		}
 	}

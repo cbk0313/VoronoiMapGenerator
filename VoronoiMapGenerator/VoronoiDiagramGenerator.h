@@ -35,11 +35,14 @@ struct CellVector;
 class VoronoiDiagramGenerator {
 public:
 	enum ImageFlag {
-		ISLAND		= 0b00001,
-		OCEAN		= 0b00010,
-		LAKE		= 0b00100,
-		COAST		= 0b01000,
-		RIVER		= 0b10000,
+		ISLAND			= 0b00000001,
+		OCEAN			= 0b00000010,
+		LAKE			= 0b00000100,
+		COAST			= 0b00001000,
+		RIVER			= 0b00010000,
+		ISLAND_PAINT	= 0b00100000,
+		OCEAN_PAINT		= 0b01000000,
+		COAST_PAINT		= 0b10000000,
 	};
 
 private:

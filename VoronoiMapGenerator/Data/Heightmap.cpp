@@ -3,6 +3,7 @@
 #include <algorithm>
 #include "png.h"
 
+
 #define M_PI 3.14159265358979323846
 
 Heightmap::Heightmap(unsigned int w, unsigned int h) : Width(w), Height(h) {
@@ -192,6 +193,8 @@ void Heightmap::SaveImage(const char* filename) {
 		fclose(fp);
 		return;
 	}
+
+	png_set_compression_level(png, 3);
 
 	// PNG info struct
 	png_infop info = png_create_info_struct(png);
