@@ -1588,10 +1588,18 @@ void VoronoiDiagramGenerator::CreateTriangle() {
 			VertexColor colorB = e->vertB->color;
 			VertexColor edge_c = e->color;
 			VertexColor center_c = s->cell->GetDetail().GetColor();
-
+			if (colorA.rgb != Color::black || colorA.gray != 0 || 
+				center_c.rgb != Color::black || center_c.gray != 0 ||
+				edge_c.rgb != Color::black || edge_c.gray != 0) {
+				diagram->triangles.push_back(Triangle({ pA, center, edge_mp, colorA, center_c, edge_c }));
+			}
+				
+			if (colorB.rgb != Color::black || colorB.gray != 0 ||
+				center_c.rgb != Color::black || center_c.gray != 0 ||
+				edge_c.rgb != Color::black || edge_c.gray != 0) {
+				diagram->triangles.push_back(Triangle({ pB, center, edge_mp, colorB, center_c, edge_c }));
+			}
 			//middle_c = (colorA + colorB) / 2;
-			diagram->triangles.push_back(Triangle({ pA, center, edge_mp, colorA, center_c, edge_c }));
-			diagram->triangles.push_back(Triangle({ pB, center, edge_mp, colorB, center_c, edge_c }));
 		}
 	}
 }

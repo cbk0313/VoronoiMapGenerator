@@ -34,6 +34,7 @@ public:
 	Color operator -=(Color& c);
 
 	bool operator ==(Color& c);
+	bool operator ==(Color& c) const;
 	static Color MixColor(Color& c1, Color& c2);
 	static Color lerp(const Color& a, const Color& b, double t);
 	operator CharColor() const;

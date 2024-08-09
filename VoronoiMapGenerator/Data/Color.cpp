@@ -70,6 +70,14 @@ bool Color::operator ==(Color& c) {
 		return false;
 	}
 }
+bool Color::operator ==(Color& c) const {
+	if (this->r == c.r && this->g == c.g && this->b == c.b && this->a == c.a) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
 
 Color Color::MixColor(Color& c1, Color& c2) {
 	return Color((c1.r + c2.r) / 2, (c1.g + c2.g) / 2, (c1.b + c2.b) / 2, (c1.a + c2.a) / 2);
