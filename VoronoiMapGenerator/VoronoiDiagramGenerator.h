@@ -35,14 +35,15 @@ struct CellVector;
 class VoronoiDiagramGenerator {
 public:
 	enum ImageFlag {
-		ISLAND			= 0b00000001,
-		OCEAN			= 0b00000010,
-		LAKE			= 0b00000100,
-		COAST			= 0b00001000,
-		RIVER			= 0b00010000,
-		ISLAND_PAINT	= 0b00100000,
-		OCEAN_PAINT		= 0b01000000,
-		COAST_PAINT		= 0b10000000,
+		ISLAND =		0b000000000001,
+		OCEAN =			0b000000000010,
+		LAKE =			0b000000000100,
+		COAST =			0b000000001000,
+		RIVER =			0b000000010000,
+		ISLAND_PAINT =	0b000000100000,
+		OCEAN_PAINT =	0b000001000000,
+		COAST_PAINT =	0b000010000000,
+		LAKE_PAINT =	0b000100000000,
 	};
 
 private:
@@ -85,6 +86,7 @@ private:
 	void SetupCoast(CellVector& coastBuffer);
 	void SetupLandUnion();
 	void SetupIsland();
+	void SetupLakeElevtion();
 	void SetupBiome();
 	void CreateRiver();
 	void SetupMoisture();
@@ -119,6 +121,10 @@ public:
 
 	//void printBeachLine();
 
+	double CalcIslandElevRate();
+	double CalcOceanElevRate();
+	double CalcIslandGrayRate();
+	double CalcOceanGrayRate();
 
 	void SaveAllImage(unsigned int w, unsigned int h);
 	void SaveImage(int flag, const char* filename, unsigned int w, unsigned int h, bool restore = true);

@@ -40,6 +40,7 @@ struct Edge {
 
 	void setStartPoint(Site* _lSite, Site* _rSite, Vertex* vertex);
 	void setEndPoint(Site* _lSite, Site* _rSite, Vertex* vertex);
+	Cell* GetOppositeCell(Cell* c);
 };
 
 struct HalfEdge {

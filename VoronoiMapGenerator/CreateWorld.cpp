@@ -34,6 +34,7 @@ void VoronoiDiagramGenerator::CreateWorld(int flag, bool trans_edge, bool create
 		SetupPeak(buf);
 		SetupLandUnion();
 		SetupIsland();
+		SetupLakeElevtion();
 		SetupMoisture();
 		SetupBiome();
 		CreateRiver();
@@ -255,7 +256,7 @@ void VoronoiDiagramGenerator::CreateLake() {
 	lakeScale /= 2;
 
 	lakeSize = round(lakeSize * 100) / 100;
-	lakeSize = round(lakeScale * 100) / 100;
+	lakeScale = round(lakeScale * 100) / 100;
 
 	FastNoiseLite lake_noise;
 	lake_noise.SetSeed(setting.GetSeed());
@@ -667,6 +668,54 @@ void VoronoiDiagramGenerator::SetupIsland() {
 	}
 }
 
+void VoronoiDiagramGenerator::SetupLakeElevtion() {
+
+	CellQueue lakeQueue(diagram->GetCellUnique(), false);
+
+	for (auto item : diagram->GetIslandUnion().unions) {
+		auto island = item.second;
+		for (auto lake_union : island.GetLakeUnion()) {
+			if (lake_union.second.size() > 0) {
+				int lowest_elev = lake_union.second[0]->GetDetail().UnionFindCellDetail(Terrain::OCEAN).GetElevation();
+
+				for (Cell* c : lake_union.second) {
+					c->GetDetail().SetElevation(lowest_elev);
+
+					for (HalfEdge* he : c->halfEdges) {
+						Edge* e = he->edge;
+						Cell* targetCell = (e->lSite->cell == c && e->rSite) ? e->rSite->cell : e->lSite->cell;
+						CellDetail& tcd = targetCell->GetDetail();
+						if (tcd.GetTerrain() != Terrain::LAKE) {
+							lakeQueue.push(c);
+							break;
+						}
+					}
+				}
+			}
+			
+		}
+	}
+
+
+
+	while (!lakeQueue.empty()) {
+		Cell* c = lakeQueue.GetValue();
+		lakeQueue.pop();
+		CellDetail& cd = c->GetDetail();
+
+		for (HalfEdge* he : c->halfEdges) {
+			Edge* e = he->edge;
+			Cell* targetCell = (e->lSite->cell == c && e->rSite) ? e->rSite->cell : e->lSite->cell;
+			CellDetail& tcd = targetCell->GetDetail();
+			
+			if (tcd.GetTerrain() == Terrain::LAKE && !lakeQueue.IsCalculating(targetCell->GetUnique())) {
+				tcd.SetElevation(cd.GetElevation() - 1);
+				lakeQueue.push(targetCell);
+			}
+
+		}
+	}
+}
 
 void VoronoiDiagramGenerator::SetupMoisture() {
 
@@ -1140,7 +1189,7 @@ void VoronoiDiagramGenerator::SetupVertexColor(Vertex* v, Cell* c, Cell* opposit
 				v->color = cd.GetColor();
 			}
 		}
-		else {
+		else if(tcd.GetTerrain() != Terrain::LAKE) {
 			if (v->elev < cd.GetElevation()) {
 				v->elev = cd.GetElevation();
 				v->cells.clear();
@@ -1188,6 +1237,19 @@ void VoronoiDiagramGenerator::SetupVertexColor(Vertex* v, Cell* c, Cell* opposit
 	}
 
 
+}
+
+double UVoronoiDiagramGenerator::CalcIslandElevRate() {
+	return (1.0 / (double)(diagram->max_elevation)) * (1 - GetSetting().GetSeaLevel());;
+}
+double UVoronoiDiagramGenerator::CalcOceanElevRate() {
+	return (1.0 / -(double)(diagram->min_elevation == -1 ? -1 : diagram->min_elevation + 1)) * GetSetting().GetSeaLevel();
+}
+double UVoronoiDiagramGenerator::CalcIslandGrayRate() {
+	return static_cast<uint16_t>(((MAX_GRAY) / (double)diagram->max_elevation) * (1 - GetSetting().GetSeaLevel()));
+}
+double UVoronoiDiagramGenerator::CalcOceanGrayRate() {
+	return static_cast<uint16_t>(((MAX_GRAY) / (double)-diagram->min_elevation) * (1 - GetSetting().GetSeaLevel()));
 }
 
 void VoronoiDiagramGenerator::SetupColor(int flag) {
@@ -1247,18 +1309,25 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 		}
 		else if (cd.GetTerrain() == Terrain::LAKE) {
 
-			if (flag & LAKE) {
-				if (flag == LAKE) {
-					cd.GetColor() = VertexColor(Color::white);
-				}
-				else cd.GetColor() = VertexColor(Color::lake);
+			if (flag == ALL_IMAGE) {
+				cd.GetColor() = VertexColor(Color::lake);
+			}
+			else if (flag == LAKE_PAINT) {
+				cd.GetColor() = VertexColor(Color::white);
+			}
+			else if (flag == LAKE) {
+				//auto tud = cd.UnionFindCellDetail(Terrain::OCEAN);
+				int lake_elev = max(cd.GetElevation() - 1, 0);
+				double elev_scale = sea_level + ((double)(lake_elev) * island_elev_rate);
+				uint16_t gray_scale = static_cast<uint16_t>(elev_scale * MAX_GRAY);
+				VertexColor island_elev = VertexColor(Color(elev_scale, elev_scale, elev_scale), gray_scale);
+				cd.GetColor() = island_elev;
 			}
 			else {
 				if (flag & ISLAND) {
-					
-
-					auto tud = cd.UnionFindCellDetail(Terrain::OCEAN);
-					double elev_scale = sea_level + ((double)(tud.GetElevation()) * island_elev_rate);
+					//auto tud = cd.UnionFindCellDetail(Terrain::OCEAN);
+					int lake_elev = max(cd.GetElevation() - 1, 1);
+					double elev_scale = sea_level + ((double)(lake_elev) * island_elev_rate);
 					uint16_t gray_scale = static_cast<uint16_t>(elev_scale * MAX_GRAY);
 					VertexColor island_elev = VertexColor(Color(elev_scale, elev_scale, elev_scale), gray_scale);
 					cd.GetColor() = island_elev;
@@ -1410,7 +1479,7 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 							e->color = cd.GetColor();
 						}
 						else {
-							if (cd.GetElevation() == tcd.GetElevation()) {
+							if (cd.GetElevation() == tcd.GetElevation() && cd.GetTerrain() == tcd.GetTerrain()) {
 								if (vA->elev == vB->elev) {
 									e->color = cd.GetColor();
 								}

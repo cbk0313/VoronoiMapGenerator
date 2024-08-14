@@ -517,8 +517,11 @@ int main() {
 			vdg.CreateHeightmap(map, true, VoronoiDiagramGenerator::ISLAND_PAINT, IMAGE_WIDTH, IMAGE_HEIGHT, false);
 			map.SaveImage("voronoi_map_island_paint_grayscale.png");
 
-			vdg.CreateHeightmap(map, true, VoronoiDiagramGenerator::LAKE, IMAGE_WIDTH, IMAGE_HEIGHT, false);
+			vdg.CreateHeightmap(map, true, VoronoiDiagramGenerator::LAKE_PAINT, IMAGE_WIDTH, IMAGE_HEIGHT, false);
 			map.SaveImage("voronoi_map_lake_grayscale.png");
+
+			map.BoxBlur(10);
+			map.SaveImage("voronoi_map_lake_BoxBlur_grayscale.png");
 
 			vdg.CreateHeightmap(map, true, VoronoiDiagramGenerator::RIVER, IMAGE_WIDTH, IMAGE_HEIGHT, false);
 			map.SaveImage("voronoi_map_river_grayscale.png");

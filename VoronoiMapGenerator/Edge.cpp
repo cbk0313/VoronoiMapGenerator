@@ -56,3 +56,7 @@ void Edge::setStartPoint(Site* _lSite, Site* _rSite, Vertex* vertex) {
 void Edge::setEndPoint(Site* _lSite, Site* _rSite, Vertex* vertex) {
 	setStartPoint(_rSite, _lSite, vertex);
 }
+
+Cell* Edge::GetOppositeCell(Cell* c) {
+	return (lSite->cell == c && rSite) ? rSite->cell : lSite->cell;
+}
