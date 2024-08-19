@@ -312,11 +312,11 @@ void RiverTriangle::CreateLineTri(Triangles& tris, RiverPointVector& point, Vert
 	Point2 norm = (p2 - p1).Normalize();
 
 
-	double sacle1 = (pre_c.power) * river_scale + 1;
-	double sacle2 = (c.power) * river_scale + 1;
+	double scale1 = (pre_c.power) * river_scale + 1;
+	double scale2 = (c.power) * river_scale + 1;
 
-	Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
-	Point2 PerpB = Point2(-norm.y, norm.x) * radius * sacle2;
+	Point2 PerpA = Point2(-norm.y, norm.x) * radius * scale1;
+	Point2 PerpB = Point2(-norm.y, norm.x) * radius * scale2;
 	tris.push_back(Triangle({ p2, p1, (p1 - PerpA), color, color, c_trans }));
 	tris.push_back(Triangle({ p2, p1, (p1 + PerpA), color, color, c_trans }));
 	tris.push_back(Triangle({ p2, (p1 + PerpA), (p2 + PerpB), color, c_trans, c_trans }));
@@ -370,14 +370,14 @@ void RiverTriangle::CreateCardinalTri(Triangles& tris, RiverPointVector& point, 
 		Point2 next_p = Point2(x2, y2);
 		Point2 norm = (new_p - pre_p);
 		Point2 norm2 = (next_p - new_p);
-		double sacle1 = (point[0].power * (1 - t) + point[2].power * t) * river_scale + 1;
-		double sacle2 = (point[0].power * (1 - t + spacing) + point[2].power * t + spacing) * river_scale + 1;
+		double scale1 = (point[0].power * (1 - t) + point[2].power * t) * river_scale + 1;
+		double scale2 = (point[0].power * (1 - t + spacing) + point[2].power * t + spacing) * river_scale + 1;
 		if (norm != Point2(0, 0)) {
 			norm = norm.Normalize();
 
 			norm2 = norm2.Normalize();
-			Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
-			Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
+			Point2 PerpA = Point2(-norm.y, norm.x) * radius * scale1;
+			Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * scale2;
 
 			tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpA), color, color, c_trans }));
 			tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpA), color, color, c_trans }));
@@ -388,7 +388,7 @@ void RiverTriangle::CreateCardinalTri(Triangles& tris, RiverPointVector& point, 
 
 		if (t == spacing) {
 			if (fade_in) {
-				//RiverTriangle::DrawCircle(tris, point[0].point, 100, norm.GetAngle() + 90, 50, radius, river_scale, point[0].power, color);
+				RiverTriangle::DrawCircle(tris, point[0].point, 100, norm.GetAngle() + 90, 50, radius, river_scale, point[0].power, color);
 			}
 		}
 		pre_p = new_p;
@@ -472,14 +472,17 @@ void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Ve
 		Point2 next_p = Point2(x2, y2);
 		Point2 norm = (new_p - pre_p);
 		Point2 norm2 = (next_p - new_p);
-		double sacle1 = (point[0].power * ((0.5 - t) * 2) + point[1].power * (t * 2)) * river_scale + 1;
-		double sacle2 = (point[0].power * ((0.5 - (t + spacing)) * 2) + point[1].power * ((t + spacing) * 2)) * river_scale + 1;
+
+		double t_scale = (t - 0.5) * 2;
+		double t_scale2 = (t - 0.5 + spacing) * 2;
+		double scale1 = (point[0].power * (1 - t_scale) + point[1].power * t_scale) * river_scale + 1;
+		double scale2 = (point[0].power * (1 - t_scale2) + point[1].power * t_scale2) * river_scale + 1;
 
 		if (norm != Point2(0, 0)) {
 			norm = norm.Normalize();
 			norm2 = norm2.Normalize();
-			Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
-			Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
+			Point2 PerpA = Point2(-norm.y, norm.x) * radius * scale1;
+			Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * scale2;
 
 			tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpA), color, color, c_trans }));
 			tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpA), color, color, c_trans }));
@@ -567,21 +570,21 @@ void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Ve
 			Point2 next_p = Point2(x2, y2);
 			Point2 norm = pre_norm;
 			Point2 norm2 = (next_p - new_p);
-			double sacle1 = (point[cubic_case + 1].power * (1 - t) + point[cubic_case + 2].power * t) * river_scale + 1;
-			double sacle2 = (point[cubic_case + 1].power * (1 - (t + spacing)) + point[cubic_case + 2].power * (t + spacing)) * river_scale + 1;
+			double scale1 = (point[cubic_case + 1].power * (1 - t)				+ point[cubic_case + 2].power * t)				* river_scale + 1;
+			double scale2 = (point[cubic_case + 1].power * (1 - (t + spacing))	+ point[cubic_case + 2].power * (t + spacing))	* river_scale + 1;
 
 
 			/*std::cout << "power: " << point[cubic_case + 1].power << "\n";
-			std::cout << "sacle: " << sacle1 << ", " << sacle2 << "\n";
+			std::cout << "sacle: " << scale1 << ", " << scale2 << "\n";
 			std::cout << "radius: " << radius << "\n";
-			std::cout << "radius * sacle1: " << radius * sacle1 << "\n";
-			std::cout << "radius * sacle2: " << radius * sacle2 << "\n";*/
+			std::cout << "radius * scale1: " << radius * scale1 << "\n";
+			std::cout << "radius * scale2: " << radius * scale2 << "\n";*/
 
 			if (norm != Point2(0, 0)) {
 				norm = norm.Normalize();
 				norm2 = norm2.Normalize();
-				Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
-				Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
+				Point2 PerpA = Point2(-norm.y, norm.x) * radius * scale1;
+				Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * scale2;
 
 				//std::cout << "norm: " << norm.x << ", " << norm.y << "\n";
 				//std::cout << "norm2: " << norm2.x << ", " << norm2.y << "\n";
@@ -631,15 +634,17 @@ void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Ve
 		Point2 next_p = Point2(x2, y2);
 		Point2 norm = pre_norm;
 		Point2 norm2 = (next_p - new_p);
-		double sacle1 = (point[SIZE - 2].power * (1 - t) + point[SIZE - 1].power * t) * river_scale + 1;
-		double sacle2 = (point[SIZE - 2].power * (1 - (t + spacing)) + point[SIZE - 1].power * (t + spacing)) * river_scale + 1;
-		//sacle1 = round(100 * sacle1) / 100;
-		//sacle2 = round(100 * sacle2) / 100;
+		double t_scale = (t - 0.5) * 2;
+		double t_scale2 = (t - 0.5 + spacing) * 2;
+		double scale1 = (point[SIZE - 2].power * (1 - t_scale)				+ point[SIZE - 1].power * t_scale)				* river_scale + 1;
+		double scale2 = (point[SIZE - 2].power * (1 - t_scale2)				+ point[SIZE - 1].power * t_scale2)				* river_scale + 1;
+		//scale1 = round(100 * scale1) / 100;
+		//scale2 = round(100 * scale2) / 100;
 		if (norm != Point2(0, 0)) {
 			norm = norm.Normalize();
 			norm2 = norm2.Normalize();
-			Point2 PerpA = Point2(-norm.y, norm.x) * radius * sacle1;
-			Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * sacle2;
+			Point2 PerpA = Point2(-norm.y, norm.x) * radius * scale1;
+			Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * scale2;
 
 			tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpA), color, color, c_trans }));
 			tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpA), color, color, c_trans }));
