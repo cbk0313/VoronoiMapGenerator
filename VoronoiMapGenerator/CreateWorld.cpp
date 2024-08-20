@@ -359,7 +359,8 @@ void VoronoiDiagramGenerator::SetupElevation(CellVector& coastBuffer) {
 			Cell* landCell, * oceanCell;
 			(l_cell->GetDetail().GetTerrain() == Terrain::OCEAN || l_cell->GetDetail().GetTerrain() == Terrain::LAKE) ? (landCell = r_cell, oceanCell = l_cell) : (landCell = l_cell, oceanCell = r_cell);
 
-			if (landCell->GetDetail().GetTerrain() == Terrain::LAND && oceanCell->GetDetail().GetTerrain() == Terrain::OCEAN) {
+			if (landCell->GetDetail().GetTerrain() == Terrain::LAND &&
+				(oceanCell->GetDetail().GetTerrain() == Terrain::OCEAN || oceanCell->GetDetail().GetTerrain() == Terrain::LAKE)) {
 				CellDetail& cd = oceanCell->GetDetail();
 				if (cd.IsEdge()) { // check if it's lake or not
 					coastBuffer.push_back(oceanCell);
@@ -368,9 +369,10 @@ void VoronoiDiagramGenerator::SetupElevation(CellVector& coastBuffer) {
 
 			}
 
-			else if (landCell->GetDetail().GetTerrain() == Terrain::LAND && oceanCell->GetDetail().GetTerrain() == Terrain::LAKE) {
+			//Even if the lake passed by to give the feeling of a cliff, it did not affect the height, but this code was removed because it was awkward after actual application.
+			/*else if (landCell->GetDetail().GetTerrain() == Terrain::LAND && oceanCell->GetDetail().GetTerrain() == Terrain::LAKE) {
 				lakeQueue.push(oceanCell);
-			}
+			}*/
 		}
 	}
 
@@ -389,29 +391,34 @@ void VoronoiDiagramGenerator::SetupElevation(CellVector& coastBuffer) {
 		}
 
 		CellDetail& cd = c->GetDetail();
-		unsigned int land_cnt = 0, low_cnt = 0;
 		int cur_elev = IS_LAND(cd.GetTerrain()) ? cd.GetElevation() : 0;
 
 		for (HalfEdge* he : c->halfEdges) {
 			Edge* e = he->edge;
 			Cell* targetCell = (e->lSite->cell == c && e->rSite) ? e->rSite->cell : e->lSite->cell;
 			CellDetail& tcd = targetCell->GetDetail();
-			if (cd.GetTerrain() == Terrain::LAKE && tcd.GetTerrain() == Terrain::LAND) {
+			//Even if the lake passed by to give the feeling of a cliff, it did not affect the height, but this code was removed because it was awkward after actual application.
+
+			/*if (cd.GetTerrain() == Terrain::LAKE && tcd.GetTerrain() == Terrain::LAND) {
 				if (tcd.GetElevation() == 0) {
-					tcd.SetElevation(cd.UnionFindCell(Terrain::OCEAN)->GetDetail().GetElevation());
+					tcd.SetElevation(cd.UnionFindCellDetail(Terrain::OCEAN).GetElevation());
 					lakeQueue.push(targetCell);
 					continue;
 				}
-
 			}
-			else if (tcd.GetTerrain() == Terrain::LAND) {
-				land_cnt++;
-				if (cur_elev + 1 < tcd.GetElevation()) {
+			else */
+			//if (tcd.GetTerrain() == Terrain::LAND ) {
+			if (tcd.GetTerrain() == Terrain::LAND || tcd.GetTerrain() == Terrain::LAKE) {
+				if (cur_elev + (tcd.GetTerrain() == Terrain::LAND) < tcd.GetElevation()) {
 
 					tcd.SetElevation(0);
 				}
 				if (tcd.GetElevation() == 0) {
-					if (tcd.IsFlat() && cd.GetElevation() > LAND_MIN_ELEVATION) {
+					//if (tcd.IsFlat() && cd.GetElevation() > LAND_MIN_ELEVATION) {
+					if (cd.GetTerrain() == Terrain::LAKE || tcd.GetTerrain() == Terrain::LAKE) {
+						tcd.SetElevation(cur_elev);
+					}
+					else if (tcd.IsFlat() && cd.GetElevation() > LAND_MIN_ELEVATION) {
 						tcd.SetElevation(cur_elev);
 					}
 					else {
@@ -1333,7 +1340,7 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 			else {
 				if (flag & ISLAND) {
 					//auto tud = cd.UnionFindCellDetail(Terrain::OCEAN);
-					int lake_elev = max(cd.GetElevation() - 1, 1);
+					int lake_elev = max(cd.GetElevation() - 1, 0);
 					double elev_scale = sea_level + ((double)(lake_elev) * island_elev_rate);
 					uint16_t gray_scale = static_cast<uint16_t>(elev_scale * MAX_GRAY);
 					VertexColor island_elev = VertexColor(Color(elev_scale, elev_scale, elev_scale), gray_scale);
