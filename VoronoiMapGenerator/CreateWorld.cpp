@@ -928,15 +928,17 @@ void VoronoiDiagramGenerator::CreateRiver() {
 								}
 								else {
 
+									Cell* pre_owner = pre_e->GetOnwer();
+
 									bool check1 = false;
 									bool check2 = false;
-									bool check3 = pre_c->GetDetail().GetTerrain() == Terrain::COAST;
-									Cell* pre_c = pre_e->GetOnwer();
+									bool check3 = pre_owner->GetDetail().GetTerrain() == Terrain::COAST;
+									
 									for (RiverEdge* check_e : iter->second) {
 										check1 = check1 || diagram->river_lines.CheckRiverEdgeLinked(pre_e->GetOnwer(), check_e->GetOnwer());
-										Cell* check_c = pre_e->GetOnwer();
-										check2 = check2 || pre_c == check_c;
-										check3 = check3 || check_c ->GetDetail().GetTerrain() == Terrain::COAST;
+										Cell* check_owner = pre_e->GetOnwer();
+										check2 = check2 || pre_owner == check_owner;
+										check3 = check3 || check_owner->GetDetail().GetTerrain() == Terrain::COAST;
 									}
 									
 									if (!check1 && !check2 && !check3) {
