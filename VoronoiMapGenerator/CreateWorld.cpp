@@ -908,9 +908,10 @@ void VoronoiDiagramGenerator::CreateRiver() {
 						Cell* targetCell = (e->lSite->cell == c && e->rSite) ? e->rSite->cell : e->lSite->cell;
 						CellDetail& tcd = targetCell->GetDetail();
 
-						if (IS_GROUND(tcd.GetTerrain()) && !buf.IsCalculating(targetCell->GetUnique())) {
+						if (IS_RIVER_ABLE(tcd.GetTerrain()) && !buf.IsCalculating(targetCell->GetUnique())) {
 							if (tcd.GetElevation() < cd.GetElevation() ||
-								(IS_WATER(cd.GetTerrain()) ||
+								(cd.GetTerrain() == Terrain::COAST && tcd.GetElevation() <= cd.GetElevation()) ||
+								(IS_RIVER_END(cd.GetTerrain()) ||
 									((tcd.IsFlat() || cd.IsFlat()) && tcd.GetElevation() == cd.GetElevation() /*&& tcd.GetMoisture() >= cd.GetMoisture()*/))) {
 								auto river_pos = RiverEdge::GetPos(c, targetCell);
 								//umap[RiverEdge::GetPos(c, targetCell)]
@@ -929,12 +930,16 @@ void VoronoiDiagramGenerator::CreateRiver() {
 
 									bool check1 = false;
 									bool check2 = false;
-									for (auto check_e : iter->second) {
+									bool check3 = pre_c->GetDetail().GetTerrain() == Terrain::COAST;
+									Cell* pre_c = pre_e->GetOnwer();
+									for (RiverEdge* check_e : iter->second) {
 										check1 = check1 || diagram->river_lines.CheckRiverEdgeLinked(pre_e->GetOnwer(), check_e->GetOnwer());
-										check2 = check2 || pre_e->GetOnwer() == check_e->GetOnwer();
+										Cell* check_c = pre_e->GetOnwer();
+										check2 = check2 || pre_c == check_c;
+										check3 = check3 || check_c ->GetDetail().GetTerrain() == Terrain::COAST;
 									}
 									
-									if (!check1 && !check2) {
+									if (!check1 && !check2 && !check3) {
 										auto new_e = RiverEdge::Create(diagram, &diagram->river_lines, c, targetCell, owner, pre_e, nullptr, next_dist);
 										//new_e->SetRiverEnd(true);
 										new_e->SetRiverEnd(true);
@@ -953,8 +958,8 @@ void VoronoiDiagramGenerator::CreateRiver() {
 
 							}
 						}
-						else if (IS_WATER(tcd.GetTerrain()) && tcd.UnionFindCell(Terrain::OCEAN) != owner->GetDetail().UnionFindCell(Terrain::OCEAN)) {
-							if (IS_OCEAN(tcd.GetTerrain())) {
+						else if (IS_RIVER_END(tcd.GetTerrain()) && tcd.UnionFindCell(Terrain::OCEAN) != owner->GetDetail().UnionFindCell(Terrain::OCEAN)) {
+							if (tcd.GetTerrain() == Terrain::OCEAN) {
 								if (!buf.IsCalculating(targetCell->GetUnique())) {
 									buf.SetCalculating(targetCell->GetUnique(), true);
 								}

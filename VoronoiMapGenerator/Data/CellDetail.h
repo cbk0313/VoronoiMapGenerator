@@ -30,6 +30,12 @@ enum class Terrain : std::size_t {
 #define IS_LAND_CELL(x) (IS_LAND(x->GetDetail().GetTerrain()))
 #define IS_WATER(x) (x == Terrain::OCEAN || x == Terrain::LAKE || x == Terrain::COAST)
 #define IS_WATER_CELL(x) (IS_WATER(x->GetDetail().GetTerrain()))
+
+#define IS_RIVER_END(x) (x == Terrain::OCEAN || x == Terrain::LAKE)
+#define IS_RIVER_END_CELL(x) (IS_RIVER_END(x->GetDetail().GetTerrain()))
+#define IS_RIVER_ABLE(x) (x == Terrain::LAND || x == Terrain::PEAK || x == Terrain::HIGHEST_PEAK || x == Terrain::COAST)
+#define IS_RIVER_ABLE_CELL(x) (IS_RIVER_ABLE(x->GetDetail().GetTerrain()))
+
 #define IS_OCEAN(x) (x == Terrain::OCEAN || x == Terrain::COAST)
 #define IS_OCEAN_CELL(x) (IS_OCEAN(x->GetDetail().GetTerrain()))
 

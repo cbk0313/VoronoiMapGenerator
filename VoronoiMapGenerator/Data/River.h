@@ -36,30 +36,52 @@ namespace River {
 
 	struct RiverPriorityComp {
 		bool operator() (Cell* A, Cell* B) {
-			if (A->GetDetail().GetElevation() < B->GetDetail().GetElevation()) {
-				return true;
+			if (A->GetDetail().GetTerrain() == Terrain::COAST && B->GetDetail().GetTerrain() == Terrain::COAST) {
+				if (A->GetDetail().GetElevation() < B->GetDetail().GetElevation()) {
+					return false;
+				}
+				else {
+					return true;
+				}
 			}
 			else {
-				if (A->GetDetail().GetElevation() == B->GetDetail().GetElevation()) {
-					if (A->GetDetail().GetMoisture() < B->GetDetail().GetMoisture()) {
-						return true;
-					}
+				if (A->GetDetail().GetElevation() < B->GetDetail().GetElevation()) {
+					return true;
 				}
-				return false;
+				else {
+					if (A->GetDetail().GetElevation() == B->GetDetail().GetElevation()) {
+						if (A->GetDetail().GetMoisture() < B->GetDetail().GetMoisture()) {
+							return true;
+						}
+					}
+					return false;
+				}
 			}
 		}
 
 		bool operator() (std::pair<Cell*, Cell*>& A, std::pair<Cell*, Cell*>& B) {
-			if (A.first->GetDetail().GetElevation() < B.first->GetDetail().GetElevation()) {
-				return true;
+			
+			if (A.first->GetDetail().GetTerrain() == Terrain::COAST && B.first->GetDetail().GetTerrain() == Terrain::COAST) {
+				if (A.first->GetDetail().GetElevation() < B.first->GetDetail().GetElevation()) {
+					return false;
+				}
+				else {
+					return true;
+				}
 			}
 			else {
-				if (A.first->GetDetail().GetElevation() == B.first->GetDetail().GetElevation()) {
-					if (A.first->GetDetail().GetMoisture() < B.first->GetDetail().GetMoisture()) {
-						return true;
-					}
+
+				if (A.first->GetDetail().GetElevation() < B.first->GetDetail().GetElevation()) {
+					return true;
 				}
-				return false;
+				else {
+					if (A.first->GetDetail().GetElevation() == B.first->GetDetail().GetElevation()) {
+						if (A.first->GetDetail().GetMoisture() < B.first->GetDetail().GetMoisture()) {
+							return true;
+						}
+					}
+					return false;
+				}
 			}
 		}
 
