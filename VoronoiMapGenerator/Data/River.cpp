@@ -271,7 +271,6 @@ const double RiverTriangle::matrix_3[4][4] = { {-1.0f, 3.0f, -3.0f, 1.0f},
 						  {-1.0f, 0.0f, 1.0f, 0.0f},
 						  {0.0f, 2.0f, 0.0f, 0.0f} };
 
-
 void RiverTriangle::CalcCardinal(RiverPointVector& point, double result[][2], int start) {
 	memset(result, 0, sizeof(double) * 3 * 2);
 	for (int i = 0; i < 3; i++)
@@ -345,8 +344,13 @@ void RiverTriangle::CreateCardinalTri(Triangles& tris, RiverPointVector& point, 
 
 	t = spacing;
 	Point2 pre_p = point[0].point;
-	Point2 pre_norm = point[0].point;
 
+	x = result[2][0] + t * (result[1][0] + result[0][0] * t);
+	y = result[2][1] + t * (result[1][1] + result[0][1] * t);
+
+	Point2 pre_norm = (Point2(x, y) - pre_p).Normalize();
+	double pre_angle_left = 1;
+	double pre_angle_right = 1;
 	//glBegin(GL_TRIANGLES);
 	color.rgb.a = 1;
 	VertexColor c_trans = VertexColor(Color(color.rgb.r, color.rgb.g, color.rgb.b, 0), color.gray);
@@ -369,12 +373,17 @@ void RiverTriangle::CreateCardinalTri(Triangles& tris, RiverPointVector& point, 
 		/*	std::cout << point[0].power << "\n";
 			std::cout << point[2].power << "\n";*/
 		Point2 new_p = Point2(x, y);
-		Point2 next_p = Point2(x2, y2);
-		Point2 norm = (new_p - pre_p);
-		Point2 norm2 = (next_p - new_p);
+		//Point2 next_p = Point2(x2, y2);
+		//Point2 norm = (new_p - pre_p);
+		//Point2 norm2 = (next_p - new_p);
+		//Point2 next_p = Point2(x2, y2);
+		//Point2 cul_norm = pre_norm;
+		Point2 next_norm = (new_p - pre_p);
+
+
 		double scale1 = (point[0].power * (1 - t) + point[2].power * t) * river_scale + 1;
 		double scale2 = (point[0].power * (1 - t + spacing) + point[2].power * t + spacing) * river_scale + 1;
-		if (norm != Point2(0, 0)) {
+		/*if (norm != Point2(0, 0)) {
 			norm = norm.Normalize();
 
 			norm2 = norm2.Normalize();
@@ -386,15 +395,17 @@ void RiverTriangle::CreateCardinalTri(Triangles& tris, RiverPointVector& point, 
 			tris.push_back(Triangle({ new_p, (pre_p + PerpA), (new_p + PerpB), color, c_trans, c_trans }));
 			tris.push_back(Triangle({ new_p, (pre_p - PerpA), (new_p - PerpB), color, c_trans, c_trans }));
 
-		}
+		}*/
+
+		AddCurvedTri(tris, point, color, c_trans, next_norm, pre_norm, new_p, pre_p, pre_angle_left, pre_angle_right, t, radius, scale1, scale2, spacing, t > 0.5);
 
 		if (t == spacing) {
 			if (fade_in) {
-				RiverTriangle::DrawCircle(tris, point[0].point, 100, norm.GetAngle() + 90, 50, radius, river_scale, point[0].power, color);
+				RiverTriangle::DrawCircle(tris, point[0].point, 100, pre_norm.GetAngle() + 90, 50, radius, river_scale, point[0].power, color);
 			}
 		}
 		pre_p = new_p;
-		pre_norm = norm2;
+		pre_norm = next_norm;
 		t += spacing;
 	}
 
@@ -433,6 +444,81 @@ void RiverTriangle::CreateCardinalTri(Triangles& tris, RiverPointVector& point, 
 	}
 }
 
+void RiverTriangle::AddCurvedTri(Triangles& tris, RiverPointVector& point, VertexColor& color, VertexColor c_trans, Point2& next_norm, Point2& pre_norm, Point2& new_p, Point2& pre_p, double& pre_angle_left, double& pre_angle_right, double t, double radius, double scale1, double scale2, double spacing, bool is_end) {
+	if (pre_norm != Point2(0, 0)) {
+		pre_norm = pre_norm.Normalize();
+		next_norm = next_norm.Normalize();
+
+
+		Point2 PerpPre = Point2(-pre_norm.y, pre_norm.x) * radius * scale1;
+		Point2 PerpNext = Point2(-next_norm.y, next_norm.x) * radius * scale2;
+
+
+		double lange = 2;
+		double pow_lange = std::pow(lange, 2);
+
+		double between;
+		double angle;
+
+		double angle_left;
+		double angle_right;
+		
+		if (!is_end) {
+			int pow_size = 3;
+			double weight = 0.5;
+			between = Point2::AngleBetween(next_norm, pre_norm);
+			angle = std::clamp(between * weight, -lange, lange);
+
+
+			angle_left = lange + angle;
+			angle_right = lange - angle;
+			angle_left /= pow_lange;
+			angle_right /= pow_lange;
+
+			angle_left = std::max(angle_left, 0.2);
+			angle_right = std::max(angle_right, 0.2);
+		}
+		else {
+			between = 0;
+			angle = 0;
+
+			angle_left = 1;
+			angle_right = 1;
+		}
+	
+
+		double curv_add = std::pow(std::abs(t - 0.5), 4) + std::clamp((std::abs(between) / 40), 0.0, spacing);
+
+		double curv_weight = spacing + curv_add;
+		curv_weight = std::clamp(curv_weight, 0.0, 1.0);
+
+		if (is_end) {
+			double end_t = (t - 0.5) * 2;
+			angle_left = angle_left * end_t + pre_angle_left * (1 - end_t);
+			angle_right = angle_right * end_t + pre_angle_right * (1 - end_t);
+		}
+		else {
+			angle_left = angle_left * curv_weight + pre_angle_left * (1 - curv_weight);
+			angle_right = angle_right * curv_weight + pre_angle_right * (1 - curv_weight);
+		}
+		
+		double pre_test_left = std::clamp(pre_angle_left, 0.2, 1.0);
+		double pre_test_right = std::clamp(pre_angle_right, 0.2, 1.0);
+
+		double test_left = std::clamp(angle_left, 0.2, 1.0);
+		double test_right = std::clamp(angle_right, 0.2, 1.0);
+
+		tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpPre * pre_test_left), color, color, c_trans }));
+		tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpPre * pre_test_right), color, color, c_trans }));
+		tris.push_back(Triangle({ new_p, (pre_p - PerpPre * pre_test_left), (new_p - PerpNext * test_left), color, c_trans, c_trans }));
+		tris.push_back(Triangle({ new_p, (pre_p + PerpPre * pre_test_right), (new_p + PerpNext * test_right), color, c_trans, c_trans }));
+		
+
+		pre_angle_left = angle_left;
+		pre_angle_right = angle_right;
+
+	}
+}
 void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, VertexColor& color, double radius, double river_scale, double spacing, bool fade_in, bool fade_out) {
 
 	double result[4][2];
@@ -458,11 +544,18 @@ void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Ve
 	VertexColor c_trans = VertexColor(Color(color.rgb.r, color.rgb.g, color.rgb.b, 0), color.gray);
 	t = spacing;
 	Point2 pre_p = point[0].point;
-	Point2 pre_norm = point[0].point;
+
+	x = result[2][0] + t * (result[1][0] + result[0][0] * t);
+	y = result[2][1] + t * (result[1][1] + result[0][1] * t);
+	
+	Point2 pre_norm = (Point2(x, y) - pre_p).Normalize();
+
 	double pre_angle_left = 1;
 	double pre_angle_right = 1;
 	//glColor4f(1.0f, 0.0f, 0.0f, 0.0f);
 	//glBegin(GL_TRIANGLES);
+	
+
 	while (t < 0.5f) {
 
 		x = result[2][0] + t * (result[1][0] + result[0][0] * t);
@@ -473,9 +566,9 @@ void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Ve
 
 		
 		Point2 new_p = Point2(x, y);
-		Point2 next_p = Point2(x2, y2);
-		Point2 cul_norm = (new_p - pre_p);
-		Point2 next_norm = (next_p - new_p);
+		//Point2 next_p = Point2(x2, y2);
+		//Point2 cul_norm = pre_norm;
+		Point2 next_norm = (new_p - pre_p);
 
 
 
@@ -484,67 +577,13 @@ void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Ve
 		double scale1 = (point[0].power * (1 - t_scale) + point[1].power * t_scale) * river_scale + 1;
 		double scale2 = (point[0].power * (1 - t_scale2) + point[1].power * t_scale2) * river_scale + 1;
 
-		if (cul_norm != Point2(0, 0)) {
-			cul_norm = cul_norm.Normalize();
-			next_norm = next_norm.Normalize();
+		AddCurvedTri(tris, point, color, c_trans, next_norm, pre_norm, new_p, pre_p, pre_angle_left, pre_angle_right, t, radius, scale1, scale2, spacing);
 
-
-
-			Point2 PerpPre = Point2(-cul_norm.y, cul_norm.x) * radius * scale1;
-			Point2 PerpNext = Point2(-next_norm.y, next_norm.x) * radius * scale2;
-
-
-			Point2 middle_norm = (new_p - pre_p).Normalize();
-
-			Point2 dir_norm = (next_norm - middle_norm);
-			Point2 dir_norm2 = (middle_norm - cul_norm);
-
-			double lange = 2;
-
-			double angle = ((dir_norm).GetAngle()) / 90;
-			angle = std::round(angle * 100) / 100;
-			angle = std::clamp(angle, -lange, lange);
-
-			//std::cout << angle << "\n";
-
-			int weight = 1;
-			bool is_miner = angle < 0;
-			double value = std::abs(angle) / lange;
-			value = std::pow(value, weight);
-			if (is_miner) value = -value;
-
-			double angle_left = (1 + value);
-			angle_left = std::round(angle_left * 1000) / 1000;
-			double angle_right = (2 - angle_left);
-
-
-
-			if (pre_angle_left == -1) {
-				pre_angle_left = angle_left;
-				pre_angle_right = angle_right;
-			}
-
-			double curv_weight = spacing;
-			angle_left = (angle_left * curv_weight + pre_angle_left * (1 - curv_weight));
-			angle_right = (angle_right * curv_weight + pre_angle_right * (1 - curv_weight));
-
-			tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpPre * pre_angle_left), color, color, c_trans }));
-			tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpPre * pre_angle_right), color, color, c_trans }));
-			tris.push_back(Triangle({ new_p, (pre_p + PerpPre * pre_angle_right), (new_p + PerpNext * angle_right), color, c_trans, c_trans }));
-			tris.push_back(Triangle({ new_p, (pre_p - PerpPre * pre_angle_left), (new_p - PerpNext * angle_left), color, c_trans, c_trans }));
-
-
-
-
-			pre_angle_left = angle_left;
-			pre_angle_right = angle_right;
-
-		}
 		
 
 		if (t == spacing) {
 			if (fade_in) {
-				RiverTriangle::DrawCircle(tris, point[0].point, 100, cul_norm.GetAngle() + 90, 50, radius, river_scale, point[0].power, color);
+				RiverTriangle::DrawCircle(tris, point[0].point, 100, pre_norm.GetAngle() + 90, 50, radius, river_scale, point[0].power, color);
 			}
 		}
 
@@ -605,7 +644,7 @@ void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Ve
 
 
 
-		t = 0.0f;
+		t = spacing;
 		//Point2 pre_p = point[0]->site.p;
 		//Point2 pre_norm = point[0]->site.p;
 
@@ -623,8 +662,9 @@ void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Ve
 			Point2 new_p = Point2(x, y);
 			//Point2 next_p = Point2(x2, y2);
 
-			Point2 cul_norm = pre_norm;
+			//Point2 cul_norm = pre_norm;
 			Point2 next_norm = (new_p - pre_p);
+			//Point2 next_norm = (next_p - new_p);
 
 			double t_scale = t;
 			double t_scale2 = t + spacing;
@@ -637,89 +677,66 @@ void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Ve
 			std::cout << "radius: " << radius << "\n";
 			std::cout << "radius * scale1: " << radius * scale1 << "\n";
 			std::cout << "radius * scale2: " << radius * scale2 << "\n";*/
-
-			if (cul_norm != Point2(0, 0)) {
-				cul_norm = cul_norm.Normalize();
-				next_norm = next_norm.Normalize();
-				
 			
+			AddCurvedTri(tris, point, color, c_trans, next_norm, pre_norm, new_p, pre_p, pre_angle_left, pre_angle_right, t, radius, scale1, scale2, spacing);
 
-				Point2 PerpPre = Point2(-cul_norm.y, cul_norm.x) * radius * scale1;
-				Point2 PerpNext = Point2(-next_norm.y, next_norm.x) * radius * scale2;
+			//if (cul_norm != Point2(0, 0)) {
+			//	cul_norm = cul_norm.Normalize();
+			//	next_norm = next_norm.Normalize();
+			//	
+			//
+			//	Point2 PerpPre = Point2(-cul_norm.y, cul_norm.x) * radius * scale1;
+			//	Point2 PerpNext = Point2(-next_norm.y, next_norm.x) * radius * scale2;
 
-				
-				Point2 middle_norm = (new_p - pre_p).Normalize();
-				//(next_p - new_p);
-				Point2 dir_norm = (next_norm - middle_norm);
-				Point2 dir_norm2 = (middle_norm - cul_norm);
+			//	Point2 middle_norm = (new_p - pre_p).Normalize();
+			//	//(next_p - new_p);
+			//	Point2 dir_norm = (next_norm - middle_norm);
+			//	Point2 dir_norm2 = (middle_norm - cul_norm);
 
-				double lange = 2;
+			//	double lange = 2;
 
-				int pow_size = 3;
-				double weight = 1;
-				double between = Point2::AngleBetween(next_norm, cul_norm);
-				//std::cout << between << "\n";
-				double angle = std::clamp(between * weight, -lange, lange);
+			//	int pow_size = 3;
+			//	double weight = 1;
+			//	double between = Point2::AngleBetween(next_norm, cul_norm);
 
-				//angle = VoronoiMapGenerator::Round2(angle);
-				//std::cout << angle << "\n";
-				double angle_left = lange + angle;
-				//angle_left = VoronoiMapGenerator::Round2(angle_left);
+			//	double angle = std::clamp(between * weight, -lange, lange);
 
-				double angle_right = lange - angle;
-				//angle_right = VoronoiMapGenerator::Round2(angle_right);
-				
-				angle_left /= 2;
-				angle_right /= 2;
+			//	double angle_left = lange + angle;
+			//	double angle_right = lange - angle;
+			//	angle_left /= 2;
+			//	angle_right /= 2;
 
-				angle_left = std::max(angle_left, 0.2);
-				angle_right = std::max(angle_right, 0.2);
-				/*if (std::abs(between) < 0.01) {
-					std::cout << between << ", " << angle_left << ", " << angle_right << "\n";
-				}*/
-				//angle_left = std::clamp(angle_left, 0.2, lange);
-				//angle_right = std::clamp(angle_right, 0.2, lange);
-				//std::cout << angle_left << "\n";
+			//	angle_left = std::max(angle_left, 0.2);
+			//	angle_right = std::max(angle_right, 0.2);
 
-				
+			//	if (pre_angle_left == -1) {
+			//		pre_angle_left = angle_left;
+			//		pre_angle_right = angle_right;
+			//	}
+			//	double curv_add = std::pow(std::abs(t - 0.5) / 2, 2) + std::clamp((std::abs(between) / 40), 0.0, spacing);
 
-				if (pre_angle_left == -1) {
-					pre_angle_left = angle_left;
-					pre_angle_right = angle_right;
-				}
-				//double curv_weight = spacing + (std::abs(between) / (180 / M_PI)) / 2;
-				//double curv_add = std::clamp((std::abs(between) / 40), 0.0, spacing) + std::abs(t - 0.5);
-				double curv_add = std::pow(std::abs(t - 0.5) / 2, 2) + std::clamp((std::abs(between) / 40), 0.0, spacing);
+			//	double curv_weight = spacing + curv_add;
+			//	curv_weight = std::clamp(curv_weight, 0.0, 1.0);
 
-				//std::cout << std::pow(std::abs(t - 0.5) / 2, 2) << "\n";
+			//	angle_left = angle_left * curv_weight + pre_angle_left * (1 - curv_weight);
+			//	angle_right = angle_right * curv_weight + pre_angle_right * (1 - curv_weight);
+			//	
+			//	double pre_test_left = std::clamp(pre_angle_left, 0.2, 1.0);
+			//	double pre_test_right = std::clamp(pre_angle_right, 0.2, 1.0);
+			//	
+			//	double test_left = std::clamp(angle_left, 0.2, 1.0);
+			//	double test_right = std::clamp(angle_right, 0.2, 1.0);
+			//	
+			//	tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpPre * pre_test_left), color, color, c_trans }));
+			//	tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpPre * pre_test_right), color, color, c_trans }));
+			//	tris.push_back(Triangle({ new_p, (pre_p + PerpPre * pre_test_right), (new_p + PerpNext * test_right), color, c_trans, c_trans }));
+			//	tris.push_back(Triangle({ new_p, (pre_p - PerpPre * pre_test_left), (new_p - PerpNext * test_left), color, c_trans, c_trans }));
 
-				double curv_weight = spacing + curv_add;
-				curv_weight = std::clamp(curv_weight, 0.0, 1.0);
+			//	
+			//	pre_angle_left = angle_left;
+			//	pre_angle_right = angle_right;
 
-				//std::cout << (curv_weight + (std::abs(between) / (180 / M_PI)) / 2) << "\n";
-
-				//angle_left = VoronoiMapGenerator::Round3(angle_left * curv_weight) + VoronoiMapGenerator::Round3(pre_angle_left * (1 - curv_weight));
-				//angle_right = VoronoiMapGenerator::Round3(angle_right * curv_weight) + VoronoiMapGenerator::Round3(pre_angle_right * (1 - curv_weight));
-				
-				angle_left = angle_left * curv_weight + pre_angle_left * (1 - curv_weight);
-				angle_right = angle_right * curv_weight + pre_angle_right * (1 - curv_weight);
-				
-				double pre_test_left = std::clamp(pre_angle_left, 0.2, 1.0);
-				double pre_test_right = std::clamp(pre_angle_right, 0.2, 1.0);
-				
-				double test_left = std::clamp(angle_left, 0.2, 1.0);
-				double test_right = std::clamp(angle_right, 0.2, 1.0);
-				
-				tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpPre * pre_test_left), color, color, c_trans }));
-				tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpPre * pre_test_right), color, color, c_trans }));
-				tris.push_back(Triangle({ new_p, (pre_p + PerpPre * pre_test_right), (new_p + PerpNext * test_right), color, c_trans, c_trans }));
-				tris.push_back(Triangle({ new_p, (pre_p - PerpPre * pre_test_left), (new_p - PerpNext * test_left), color, c_trans, c_trans }));
-
-				
-				pre_angle_left = angle_left;
-				pre_angle_right = angle_right;
-
-			}
+			//}
 			pre_norm = next_norm;
 			pre_p = new_p;
 			t += spacing;
@@ -755,27 +772,20 @@ void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Ve
 
 
 		Point2 new_p = Point2(x, y);
-		Point2 next_p = Point2(x2, y2);
-		Point2 norm = pre_norm;
-		Point2 norm2 = (next_p - new_p);
+		//Point2 next_p = Point2(x2, y2);
+
+		//Point2 cul_norm = pre_norm;
+		Point2 next_norm = (new_p - pre_p);
+
 		double t_scale = (t - 0.5) * 2;
 		double t_scale2 = (t - 0.5 + spacing) * 2;
 		double scale1 = (point[SIZE - 2].power * (1 - t_scale)				+ point[SIZE - 1].power * t_scale)				* river_scale + 1;
 		double scale2 = (point[SIZE - 2].power * (1 - t_scale2)				+ point[SIZE - 1].power * t_scale2)				* river_scale + 1;
 		//scale1 = round(100 * scale1) / 100;
 		//scale2 = round(100 * scale2) / 100;
-		if (norm != Point2(0, 0)) {
-			norm = norm.Normalize();
-			norm2 = norm2.Normalize();
-			Point2 PerpA = Point2(-norm.y, norm.x) * radius * scale1;
-			Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * scale2;
+		AddCurvedTri(tris, point, color, c_trans, next_norm, pre_norm, new_p, pre_p, pre_angle_left, pre_angle_right, t, radius, scale1, scale2, spacing, true);
 
-			tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpA), color, color, c_trans }));
-			tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpA), color, color, c_trans }));
-			tris.push_back(Triangle({ new_p, (pre_p + PerpA), (new_p + PerpB), color, c_trans, c_trans }));
-			tris.push_back(Triangle({ new_p, (pre_p - PerpA), (new_p - PerpB), color, c_trans, c_trans }));
-		}
-		pre_norm = norm2;
+		pre_norm = next_norm;
 		pre_p = new_p;
 		t += spacing;
 	}
@@ -934,13 +944,13 @@ void RiverLine::CreateTriangle(VertexColor& c) {
 			CalcCardinal(start_result, 0);
 			CalcCardinal(end_result, (int)points.size() - 3);*/
 
-		RiverTriangle::CreateSplineTri(tris, points, c, main_setting.GetRiverRadius(), main_setting.GetRiverPowerScale(), main_setting.GetRiverCurvSpacing(), false, false); //true, true
+		RiverTriangle::CreateSplineTri(tris, points, c, main_setting.GetRiverRadius(), main_setting.GetRiverPowerScale(), main_setting.GetRiverCurvSpacing(), true, true); //true, true
 	}
 	else if (points.size() == 3) {
-		RiverTriangle::CreateCardinalTri(tris, points, c, main_setting.GetRiverRadius(), main_setting.GetRiverPowerScale(), main_setting.GetRiverCurvSpacing(), false, false);
+		RiverTriangle::CreateCardinalTri(tris, points, c, main_setting.GetRiverRadius(), main_setting.GetRiverPowerScale(), main_setting.GetRiverCurvSpacing(), true, true);
 	}
 	else {
-		RiverTriangle::CreateLineTri(tris, points, c, main_setting.GetRiverRadius(), main_setting.GetRiverPowerScale(), main_setting.GetRiverCurvSpacing(), false, false);
+		RiverTriangle::CreateLineTri(tris, points, c, main_setting.GetRiverRadius(), main_setting.GetRiverPowerScale(), main_setting.GetRiverCurvSpacing(), true, true);
 	}
 
 }

@@ -188,8 +188,7 @@ public:
 
 class RiverTriangle {
 private:
-
-
+	static void AddCurvedTri(Triangles& tris, RiverPointVector& point, VertexColor& color, VertexColor c_trans, Point2& cul_norm, Point2& next_norm, Point2& new_p, Point2& pre_p, double& pre_angle_left, double& pre_angle_right, double t, double radius, double scale1, double scale2, double spacing, bool is_end = false);
 public:
 	static const double matrix_2[3][3];
 	static const double matrix_3[4][4];
