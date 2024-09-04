@@ -394,7 +394,7 @@ int main() {
 	double radius = dimension / 2.1;
 
 	VoronoiDiagramGenerator vdg = VoronoiDiagramGenerator();
-	vdg.SetSetting(GenerateSetting(MapType::CONTINENT, 0, nPoints, dimension, 0.6666, 0.5, 2, radius, 0.5, 0.5, 10, radius / 3, radius / 5, 50, radius / 15, radius / 20, 500.f, 0.2f, 0.02f, 1, 0.1));
+	vdg.SetSetting(GenerateSetting(MapType::CONTINENT, 0, nPoints, dimension, 0.6666, 0.5, 2, radius, 0.5, 0.5, 10, radius / 3, radius / 5, 50, radius / 15, radius / 20, 1000.f, 0.2f, 0.02f, 1, 0.1));
 	
 
 

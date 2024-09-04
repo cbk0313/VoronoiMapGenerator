@@ -905,7 +905,7 @@ void VoronoiDiagramGenerator::CreateRiver() {
 				int next_dist = pre_e->IsStart() ? 1 : pre_e->GetDistance() + 1;
 
 				Cell* owner = pre_e->GetOnwer();
-
+				
 				//if (pre_e->GetOwnerEdge()->GetOceanConnect() > lake_union.second.size()) continue;
 				auto uni_e = diagram->river_lines.GetRiverEdge(RiverEdge::GetPos(first_c, first_c));
 				int cell_cnt = 0;
@@ -940,7 +940,7 @@ void VoronoiDiagramGenerator::CreateRiver() {
 									bool check1 = false;
 									bool check2 = false;
 									bool check3 = pre_owner->GetDetail().GetTerrain() == Terrain::COAST;
-									
+
 									for (RiverEdge* check_e : iter->second) {
 										check1 = check1 || diagram->river_lines.CheckRiverEdgeLinked(pre_e->GetOnwer(), check_e->GetOnwer());
 										Cell* check_owner = pre_e->GetOnwer();
@@ -956,7 +956,7 @@ void VoronoiDiagramGenerator::CreateRiver() {
 										auto find_v = iter->second;
 										for (auto find_e : find_v) {
 											new_e->AddNext(find_e);
-											find_e->SetDistAndNextAll(next_dist + 1, owner);
+											find_e->RefreshDistAndOwner(next_dist + 1, owner);
 											diagram->river_lines.AddLinkRiverEdge(pre_e->GetOnwer(), find_e->GetOnwer());
 										}
 
@@ -1048,7 +1048,7 @@ void VoronoiDiagramGenerator::CreateRiver() {
 					auto power = std::max<int>(e->GetPower(), value.second);
 					e->SetPower(power);
 					if (!e->IsStart()) {
-						if (e->GetStart()->GetDetail().GetElevation() < e->GetEnd()->GetDetail().GetElevation()) {
+						if (e->GetStart()->GetDetail().GetElevation() > e->GetEnd()->GetDetail().GetElevation()) {
 							power++;
 							e->SetPower(power);
 						}
@@ -1067,7 +1067,7 @@ void VoronoiDiagramGenerator::CreateRiver() {
 								}
 							}
 						}
-						else if (e->GetRiverEnd()) {
+						else if (e->IsEnd()) {
 							auto iter = diagram->river_lines.GetRiverOutEdges().find(e->GetEnd()->GetUnique());
 							if (iter != diagram->river_lines.GetRiverOutEdges().end()) {
 								for (auto iter_e : iter->second) {
@@ -1123,41 +1123,82 @@ void VoronoiDiagramGenerator::CreateRiver() {
 
 
 				auto river_pos = RiverEdge::GetPos(lake, lake);
-				using Temp = std::pair< RiverEdge*, RiverLine*>;
+				using Temp = std::tuple<RiverEdge*, RiverLine*/*, bool*/>;
 				std::stack<Temp> buf;
 				if (diagram->river_lines.GetRiverEdges().find(river_pos) != diagram->river_lines.GetRiverEdges().end()) {
-					buf.push(std::make_pair(diagram->river_lines.GetRiverEdges()[river_pos], RiverLine::Create(diagram, setting)));
+					buf.push(std::make_tuple(diagram->river_lines.GetRiverEdges()[river_pos], RiverLine::Create(diagram, setting)/*, true*/));
 				}
 
 
 				while (!buf.empty()) {
 					auto value = buf.top();
 					buf.pop();
-					RiverEdge* e = value.first;
-					RiverLine* c_arr = RiverLine::Create(*value.second);
+					RiverEdge* e = get<0>(value);
+					RiverLine* c_arr = RiverLine::Create(*get<1>(value));
+					//bool is_valid = get<2>(value);
 
 					if (e == nullptr) continue;
-
-					if (e->IsStart()) c_arr->AddPoint(RiverPoint(e->GetPower(), e->GetStart()));
+					
+					if (e->IsStart()) {
+						c_arr->AddPoint(RiverPoint(e->GetPower(), e->GetStart()));
+					}
 					else c_arr->AddPoint(RiverPoint(e->GetPower(), e->GetEnd()));
 
-					if (e->GetNexts().size() == 0 || e->GetRiverEnd()) {
-						if (c_arr->GetPointArray().size() > 1) {
+					if ((e->GetNexts().size() == 0 || e->IsEnd())) {
+						if (c_arr->GetPointArray().size() > 1/* && is_valid*/) {
 							diagram->river_lines.AddLine(&diagram->river_cross, c_arr);
 						}
 					}
 					else {
 						if (e->GetNexts().size() == 1 || e->IsStart()) {
+							int e_elev = e->GetEnd()->GetDetail().GetElevation();
 							for (auto next_e : e->GetNexts()) {
-								buf.push(std::make_pair(next_e, c_arr));
+								int next_elev = next_e->GetEnd()->GetDetail().GetElevation();
+								bool valid = false;
+								//if (is_valid) {
+
+									if ((e->GetEnd()->GetDetail().GetTerrain() == Terrain::LAKE || next_e->GetEnd()->GetDetail().GetTerrain() == Terrain::LAKE)) {
+										//if ((e_elev >= next_elev)) {
+											valid = true;
+										//}
+									}
+									else if (e->GetEnd()->GetDetail().GetTerrain() == Terrain::COAST && next_e->GetEnd()->GetDetail().GetTerrain() == Terrain::COAST) {
+										if ((e_elev >= next_elev)) {
+											valid = true;
+										}
+									}
+									else if (IS_LAND_CELL(e->GetEnd()) && next_e->GetEnd()->GetDetail().GetTerrain() == Terrain::COAST) {
+										//if ((next_e->IsEnd()) || (e_elev <= next_elev)) {
+										valid = true;
+										//}
+									}
+									else if (e->GetEnd()->GetDetail().GetTerrain() == Terrain::COAST && IS_LAND_CELL(next_e->GetEnd())) {
+										valid = false;
+									}
+									else if (e->GetEnd()->GetDetail().GetTerrain() == Terrain::COAST && next_e->GetEnd()->GetDetail().GetTerrain() == Terrain::OCEAN) {
+										valid = true;
+									}
+									else {
+										if ((e_elev >= next_elev)) {
+											valid = true;
+										}
+										
+									}
+								//}
+
+								if (valid) {
+									buf.push(std::make_tuple(next_e, c_arr));
+								}
 							}
 						}
 						else if (c_arr->GetPointArray().size() > 1) {
-							diagram->river_lines.AddLine(&diagram->river_cross, c_arr);
+							//if (is_valid) {
+								diagram->river_lines.AddLine(&diagram->river_cross, c_arr);
+							//}
 							for (auto next_e : e->GetNexts()) {
 								RiverLine* new_line = RiverLine::Create(diagram, setting);
 								new_line->AddPoint(RiverPoint(next_e->GetPower(), next_e->GetStart()));
-								buf.push(std::make_pair(next_e, new_line));
+								buf.push(std::make_tuple(next_e, new_line/*, true*/));
 							}
 						}
 

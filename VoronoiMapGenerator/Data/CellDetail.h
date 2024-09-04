@@ -39,6 +39,10 @@ enum class Terrain : std::size_t {
 #define IS_OCEAN(x) (x == Terrain::OCEAN || x == Terrain::COAST)
 #define IS_OCEAN_CELL(x) (IS_OCEAN(x->GetDetail().GetTerrain()))
 
+#define IS_LAKE_OR_OCEAN(x) (x == Terrain::OCEAN || x == Terrain::LAKE)
+#define IS_LAKE_OR_OCEAN_CELL(x) (IS_LAKE_OR_OCEAN(x->GetDetail().GetTerrain()))
+
+
 #define VERTEX_DECREASE_COLOR Color(0.2, 0.2, 0.2)
 
 #define COAST_ELEVATION -1

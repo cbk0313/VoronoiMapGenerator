@@ -144,13 +144,13 @@ public:
 	void SetPower(int num) { power = num; };
 	bool IsStart() { return is_start; };
 	void SetRiverEnd(bool b) { is_end = b; };
-	bool GetRiverEnd() { return is_end; };
+	bool IsEnd() { return is_end; };
 	Cell* GetStart() { return start; };
 	Cell* GetEnd() { return end; };
 	void SetStart(Cell* c) { start = c; };
 	void SetEnd(Cell* c) { end = c; };
 	void ChangeDist(int num);
-	void SetDistAndNextAll(int num, Cell* river_owner);
+	void RefreshDistAndOwner(int num, Cell* river_owner);
 	void SetDist(int num);
 	void DeleteLine(/*std::vector<bool>& buf*/);
 	static RiverEdge* Create(Diagram* l_diagram, RiverLines* lines, Cell* startCell, Cell* endCell, Cell* river_owner, RiverEdge* pre_edge, RiverEdge* next_edge, int distance);
