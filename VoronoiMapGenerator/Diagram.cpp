@@ -73,14 +73,21 @@ void Diagram::RiverLineClearJunk() {
 
 
 void Diagram::Initialize(GenerateSetting& setting) {
+	mSetting = setting;
+	mSetting.Srand();
+
 	RIVER_EDGES = std::vector< RiverEdge*>();
 	RIVER_DELETE_QUEUE = std::queue<RiverEdge*>();
 	RIVER_LINE_ARR = std::vector<RiverLine*>();
 	ADDED_COUNT = 0;
 	CellUnique = 0;
-	river_lines.Initialize(setting);
+	river_lines.Initialize(this);
+	river_cross.Initialize(this);
 }
 
+const GenerateSetting& Diagram::GetSetting() const {
+	return mSetting;
+}
 
 Vertex* Diagram::createVertex(double x, double y) {
 	Vertex* vert = vertexPool.newElement(Point2(VoronoiMapGenerator::Round2(x), VoronoiMapGenerator::Round2(y)));

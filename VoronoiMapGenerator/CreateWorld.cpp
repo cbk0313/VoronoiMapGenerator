@@ -43,6 +43,7 @@ void VoronoiDiagramGenerator::CreateWorld(int flag, bool trans_edge, bool create
 		SetupColor(flag);
 		if (create_tri) {
 			CreateTriangle();
+			SetupRiverTriangle();
 		}
 	}
 }
@@ -1146,7 +1147,7 @@ void VoronoiDiagramGenerator::CreateRiver() {
 
 					if ((e->GetNexts().size() == 0 || e->IsEnd())) {
 						if (c_arr->GetPointArray().size() > 1/* && is_valid*/) {
-							diagram->river_lines.AddLine(&diagram->river_cross, c_arr);
+							diagram->river_lines.AddLine(c_arr);
 						}
 					}
 					else {
@@ -1193,7 +1194,7 @@ void VoronoiDiagramGenerator::CreateRiver() {
 						}
 						else if (c_arr->GetPointArray().size() > 1) {
 							//if (is_valid) {
-								diagram->river_lines.AddLine(&diagram->river_cross, c_arr);
+								diagram->river_lines.AddLine(c_arr);
 							//}
 							for (auto next_e : e->GetNexts()) {
 								RiverLine* new_line = RiverLine::Create(diagram, setting);
@@ -1212,13 +1213,13 @@ void VoronoiDiagramGenerator::CreateRiver() {
 	}
 
 	diagram->river_lines.AdjustPoint();
-	SetupRiverTriangle(VertexColor(Color::lake));
 	diagram->RiverLineClearJunk();
 }
 
-void VoronoiDiagramGenerator::SetupRiverTriangle(VertexColor c) {
-	diagram->river_lines.CreateTriagle(c);
-	diagram->river_cross.CreateCrossingPointTriagle(c, setting.GetRiverRadius(), setting.GetRiverPowerScale(), 0.1);
+void VoronoiDiagramGenerator::SetupRiverTriangle() {
+	double color_rate = CalcIslandColorRate();
+	diagram->river_lines.CreateTriagle(color_rate);
+	diagram->river_cross.CreateCrossingPointTriagle((double)GetSetting().GetSeaLevel(), color_rate, setting.GetRiverRadius(), setting.GetRiverPowerScale(), 0.1);
 
 }
 
@@ -1294,21 +1295,36 @@ void VoronoiDiagramGenerator::SetupVertexColor(Vertex* v, Cell* c, Cell* opposit
 
 }
 
-double UVoronoiDiagramGenerator::CalcIslandElevRate() {
+
+double VoronoiDiagramGenerator::CalcIslandColorRate() {
 	return (1.0 / (double)(diagram->max_elevation)) * (1 - GetSetting().GetSeaLevel());;
 }
-double UVoronoiDiagramGenerator::CalcOceanElevRate() {
+double VoronoiDiagramGenerator::CalcOceanColorRate() {
 	return (1.0 / -(double)(diagram->min_elevation == -1 ? -1 : diagram->min_elevation + 1)) * GetSetting().GetSeaLevel();
 }
-double UVoronoiDiagramGenerator::CalcIslandGrayRate() {
+double VoronoiDiagramGenerator::CalcIslandGrayRate() {
 	return static_cast<uint16_t>(((MAX_GRAY) / (double)diagram->max_elevation) * (1 - GetSetting().GetSeaLevel()));
 }
-double UVoronoiDiagramGenerator::CalcOceanGrayRate() {
+double VoronoiDiagramGenerator::CalcOceanGrayRate() {
 	return static_cast<uint16_t>(((MAX_GRAY) / (double)-diagram->min_elevation) * (1 - GetSetting().GetSeaLevel()));
+}
+
+VertexColor VoronoiDiagramGenerator::CalcIslandColor(double elev, double sea_level, double island_elev_rate) {
+	double elev_scale = sea_level + (elev * island_elev_rate);
+	uint16_t gray_scale = static_cast<uint16_t>(elev_scale * MAX_GRAY);
+	return VertexColor(Color(elev_scale, elev_scale, elev_scale), gray_scale);
+}
+
+VertexColor VoronoiDiagramGenerator::CalcOceanColor(double elev, double ocean_elev_rate) {
+	double elev_scale = (elev * ocean_elev_rate);
+	uint16_t gray_scale = static_cast<uint16_t>(elev_scale * MAX_GRAY);
+	return VertexColor(Color(elev_scale, elev_scale, elev_scale), gray_scale);
+
 }
 
 void VoronoiDiagramGenerator::SetupColor(int flag) {
 	image_flag = flag;
+	GetDiagram()->mImageFlag = flag;
 
 	if (has_set_color) {
 		for (Vertex* v : diagram->vertices) {
@@ -1324,12 +1340,12 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 
 	double sea_level = GetSetting().GetSeaLevel();
 	
-	double island_elev_rate = (1.0 / (double)(diagram->max_elevation)) * (1 - sea_level);
-	double ocean_elev_rate = (1.0 / -(double)(diagram->min_elevation == -1 ? -1 : diagram->min_elevation + 1)) * sea_level;
+	double island_elev_rate = CalcIslandColorRate();
+	double ocean_elev_rate = CalcOceanColorRate();
 
-	double island_gray_rate = static_cast<uint16_t>(((MAX_GRAY) / (double)diagram->max_elevation) * (1 - sea_level));
-	double ocean_gray_rate = static_cast<uint16_t>(((MAX_GRAY) / (double)-diagram->min_elevation) * (1 - sea_level));
-	
+	double island_gray_rate = CalcIslandGrayRate();
+	double ocean_gray_rate = CalcOceanGrayRate();
+
 
 	VertexColor elev_rate_c = VertexColor(Color(island_elev_rate / 2, island_elev_rate / 2, island_elev_rate / 2), island_gray_rate / 2);
 	//VertexColor ocean_elev_rate_c = VertexColor(Color(island_elev_rate / 2, island_elev_rate / 2, island_elev_rate / 2), island_gray_rate / 2);
@@ -1347,11 +1363,7 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 				//}
 				//else {
 				//	
-				
-				double elev_scale = sea_level + ((double)(cd.GetElevation()) * island_elev_rate);
-				uint16_t gray_scale = static_cast<uint16_t>(elev_scale * MAX_GRAY);
-				VertexColor island_elev = VertexColor(Color(elev_scale, elev_scale, elev_scale), gray_scale);
-				cd.GetColor() = island_elev;
+				cd.GetColor() = CalcIslandColor((double)cd.GetElevation(), sea_level, island_elev_rate);
 				//}
 			}
 			else if (flag == ISLAND_PAINT) {
@@ -1373,19 +1385,13 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 			else if (flag == LAKE) {
 				//auto tud = cd.UnionFindCellDetail(Terrain::OCEAN);
 				int lake_elev = max(cd.GetElevation() - 1, 0);
-				double elev_scale = sea_level + ((double)(lake_elev) * island_elev_rate);
-				uint16_t gray_scale = static_cast<uint16_t>(elev_scale * MAX_GRAY);
-				VertexColor island_elev = VertexColor(Color(elev_scale, elev_scale, elev_scale), gray_scale);
-				cd.GetColor() = island_elev;
+				cd.GetColor() = CalcIslandColor((double)lake_elev, sea_level, island_elev_rate);
 			}
 			else {
 				if (flag & ISLAND) {
 					//auto tud = cd.UnionFindCellDetail(Terrain::OCEAN);
 					int lake_elev = max(cd.GetElevation() - 1, 0);
-					double elev_scale = sea_level + ((double)(lake_elev) * island_elev_rate);
-					uint16_t gray_scale = static_cast<uint16_t>(elev_scale * MAX_GRAY);
-					VertexColor island_elev = VertexColor(Color(elev_scale, elev_scale, elev_scale), gray_scale);
-					cd.GetColor() = island_elev;
+					cd.GetColor() = CalcIslandColor(lake_elev, sea_level, island_elev_rate);
 				}
 				else {
 					cd.GetColor() = VertexColor(Color::black);
@@ -1409,11 +1415,7 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 					if (flag & COAST) {
 						//cd.GetColor() = VertexColor(Color::black);
 						double coast_elev = 1 + (cd.GetElevation() * coast_ratio);
-						double elev_scale = sea_level + (double)(coast_elev * island_elev_rate);
-						//std::cout << elev_scale << "\n";
-						uint16_t gray_scale = static_cast<uint16_t>(elev_scale * MAX_GRAY);
-						VertexColor island_elev = VertexColor(Color(elev_scale, elev_scale, elev_scale), gray_scale);
-						cd.GetColor() = island_elev;
+						cd.GetColor() = CalcIslandColor(coast_elev, sea_level, island_elev_rate);
 					}
 					else {
 						cd.GetColor() = Color::black;
@@ -1440,10 +1442,7 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 			}
 			else if (flag & OCEAN) {
 				double ocean_elev = cd.GetElevation() - diagram->min_elevation + 1;
-				double elev_scale = (ocean_elev * ocean_elev_rate);
-				uint16_t gray_scale = static_cast<uint16_t>(elev_scale * MAX_GRAY);
-				VertexColor island_elev = VertexColor(Color(elev_scale, elev_scale, elev_scale), gray_scale);
-				cd.GetColor() = island_elev;
+				cd.GetColor() = CalcOceanColor(ocean_elev, ocean_elev_rate);
 			}
 			else if (flag == OCEAN_PAINT) {
 				cd.GetColor() = Color::white;

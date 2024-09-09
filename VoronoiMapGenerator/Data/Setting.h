@@ -11,18 +11,18 @@ class RandomGenerator {
 public:
 	RandomGenerator(int seed) : engine((unsigned int)seed) {}
 
-	inline double GetRandom() {
+	inline double GetRandom() const {
 		std::uniform_real_distribution<double> dist(0.0, 1.0);
 		return dist(engine);
 	}
 
-	inline int GetRandomInt() {
+	inline int GetRandomInt() const {
 		std::uniform_int_distribution<int> dist(0, 0x7fff);
 		return dist(engine);
 	}
 
 private:
-	std::mt19937 engine;
+	mutable std::mt19937 engine;
 };
 
 
@@ -91,35 +91,35 @@ public:
 	inline void SetRiverAdditionalCurveChance(double new_curvSpacing) { river_additional_curve_chance = new_curvSpacing; };
 	inline void SetRiverAdditionalCurveDistance(double new_dist) { river_additional_curve_distance = new_dist; };
 
-	inline MapType GetMapType() { return type; };
-	inline int GetSeed() { return seed; };
-	inline double GetSiteRange() { return site_range; };
-	inline double GetSeaLevel() { return sea_level; };
-	inline int GetCoastArea() { return coast_area; };
-	inline double GetRadius() { return radius; };
-	inline double GetLakeScale() { return lake_scale; };
-	inline double GetLakeSize() { return lake_size; };
-	inline unsigned int GetIslandCount() { return island_cnt; };
-	inline double GetIslandRadiusMax() { return island_radius_max; };
-	inline double GetIslandRadiusMin() { return island_radius_min; };
-	inline unsigned int GetLakeCount() { return lake_cnt; };
-	inline double GetLakeRadiusMax() { return lake_radius_max; };
-	inline double GetLakeRadiusMin() { return lake_radius_min; };
-	inline double GetRiverRadius() { return river_radius; };
-	inline double GetRiverPowerScale() { return river_power_scale; };
-	inline double GetRiverCurvSpacing() { return river_curv_spacing; };
-	inline double GetRiverAdditionalCurveChance() { return river_additional_curve_chance; };
-	inline double GetRiverAdditionalCurveDistance() { return river_additional_curve_distance; };
+	inline MapType GetMapType() const { return type; };
+	inline int GetSeed() const { return seed; };
+	inline double GetSiteRange() const { return site_range; };
+	inline double GetSeaLevel() const { return sea_level; };
+	inline int GetCoastArea() const { return coast_area; };
+	inline double GetRadius() const { return radius; };
+	inline double GetLakeScale() const { return lake_scale; };
+	inline double GetLakeSize() const { return lake_size; };
+	inline unsigned int GetIslandCount() const { return island_cnt; };
+	inline double GetIslandRadiusMax() const { return island_radius_max; };
+	inline double GetIslandRadiusMin() const { return island_radius_min; };
+	inline unsigned int GetLakeCount() const { return lake_cnt; };
+	inline double GetLakeRadiusMax() const { return lake_radius_max; };
+	inline double GetLakeRadiusMin() const { return lake_radius_min; };
+	inline double GetRiverRadius() const { return river_radius; };
+	inline double GetRiverPowerScale() const { return river_power_scale; };
+	inline double GetRiverCurvSpacing() const { return river_curv_spacing; };
+	inline double GetRiverAdditionalCurveChance() const { return river_additional_curve_chance; };
+	inline double GetRiverAdditionalCurveDistance() const { return river_additional_curve_distance; };
 
-	inline double GetRandom() {
+	inline double GetRandom() const {
 		return randgen.GetRandom(); // RAND_MAX 
 	}
 
-	inline double GetRandomRound() {
+	inline double GetRandomRound() const {
 		return round(randgen.GetRandom() * 100) / 100;
 	}
 
-	inline int GetRandomInt() {
+	inline int GetRandomInt() const {
 		return randgen.GetRandomInt(); // RAND_MAX 
 	}
 

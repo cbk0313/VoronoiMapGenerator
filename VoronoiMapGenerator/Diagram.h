@@ -6,13 +6,13 @@
 #include "Edge.h"
 #include "Cell.h"
 #include "Data/River.h"
+#include "Data/Setting.h"
 
 template<typename T>
 struct UnionArray;
 
 
 struct BoundingBox;
-class GenerateSetting;
 class Diagram;
 using UDiagram = Diagram;
 
@@ -28,6 +28,8 @@ class Diagram {
 		, ADDED_COUNT(0)
 	{};*/
 
+	GenerateSetting mSetting;
+
 	void Initialize(GenerateSetting& setting);
 
 	std::vector<Cell*> cells;
@@ -36,7 +38,7 @@ class Diagram {
 	UnionArray<std::vector<Cell*>> oceanUnion;
 	UnionArray<IslandUnion> islandUnion;
 	RiverLines river_lines;
-	RiverCrossing river_cross;
+	RiverCrossingMap river_cross;
 	std::vector<Triangle> triangles;
 
 	std::vector<RiverEdge*> RIVER_EDGES;
@@ -50,6 +52,8 @@ class Diagram {
 	int min_elevation;
 	unsigned int max_moisture;
 
+	int mImageFlag;
+
 public:
 	unsigned int CellUnique;
 
@@ -59,12 +63,14 @@ public:
 	UnionArray<std::vector<Cell*>>& GetOceanUnion() { return oceanUnion; }
 	UnionArray<IslandUnion>& GetIslandUnion() { return islandUnion; }
 	RiverLines& GetRiverLines() { return river_lines; }
-	RiverCrossing& GetRiverCrossing() { return river_cross; }
+	RiverCrossingMap& GetRiverCrossing() { return river_cross; }
 	std::vector<Triangle>& GetTriangles() { return triangles; }
 
 	int GetMaxElevation() { return max_elevation; }
 	unsigned int GetMaxMoisture() { return max_moisture; }
 	int GetMinElevation() { return min_elevation; }
+
+	int GetImageFlag() { return mImageFlag; }
 
 	void SetMaxElevation(int new_max_elevation) { max_elevation = new_max_elevation; }
 	void SetMaxMoisture(unsigned int new_max_moisture) { max_moisture = new_max_moisture; }
@@ -76,6 +82,8 @@ public:
 	void RiverEdgeClear();
 	void RiverLineClear();
 	void RiverLineClearJunk();
+
+	const GenerateSetting& GetSetting() const;
 private:
 
 	//std::vector<Cell*> tmpCells;
