@@ -10,12 +10,6 @@
 #include "Data/Setting.h"
 
 
-#if !IS_UNREAL_PLUIN
-#define UVoronoiDiagramGenerator VoronoiDiagramGenerator
-#endif 
-
-
-
 struct BoundingBox {
 	double xL;
 	double xR;
@@ -42,8 +36,9 @@ public:
 		RIVER =			0b000000010000,
 		ISLAND_PAINT =	0b000000100000,
 		OCEAN_PAINT =	0b000001000000,
-		COAST_PAINT =	0b000010000000,
-		LAKE_PAINT =	0b000100000000,
+		LAKE_PAINT =	0b000010000000,
+		COAST_PAINT =	0b000100000000,
+		RIVER_PAINT =	0b001000000000,
 	};
 
 private:
@@ -93,7 +88,7 @@ private:
 	void SetupOceanDepth(CellVector& coastBuffer);
 	void SetupEdgePos(bool trans_edge);
 	void SetupColor(int flag = ALL_IMAGE);
-	void SetupRiverTriangle(VertexColor c);
+	void SetupRiverTriangle();
 	void CreateTriangle();
 
 	std::pair<double, double> GetMinDist(std::vector<std::pair<Point2, double>>& points, Point2& center, double radius);
@@ -121,10 +116,13 @@ public:
 
 	//void printBeachLine();
 
-	double CalcIslandElevRate();
-	double CalcOceanElevRate();
+	double CalcIslandColorRate();
+	double CalcOceanColorRate();
 	double CalcIslandGrayRate();
 	double CalcOceanGrayRate();
+
+	static VertexColor CalcIslandColor(double elev, double sea_level, double island_elev_rate);
+	static VertexColor CalcOceanColor(double elev, double ocean_elev_rate);
 
 	void SaveAllImage(unsigned int w, unsigned int h);
 	void SaveImage(int flag, const char* filename, unsigned int w, unsigned int h, bool restore = true);

@@ -4,6 +4,7 @@
 #include "../Edge.h"
 #include "../Diagram.h"
 #include "Utility.h"
+#include "../VoronoiDiagramGenerator.h"
 
 
 
@@ -237,10 +238,14 @@ RiverEdge* RiverEdge::GetOwnerEdge() {
 	return river_lines->RIVER_EDGES_MAP[RiverEdge::GetPos(GetOnwer(), GetOnwer())];
 }
 
-void RiverLines::Initialize(GenerateSetting& setting) {
-	CurveChance = setting.GetRiverAdditionalCurveChance();
-	CurveDistance = setting.GetRiverAdditionalCurveDistance();
-	Setting = &setting;
+void RiverLines::Initialize(Diagram* diagram) {
+	mDiagram = diagram;
+	CurveChance = diagram->GetSetting().GetRiverAdditionalCurveChance();
+	CurveDistance = diagram->GetSetting().GetRiverAdditionalCurveDistance();
+}
+
+Diagram* RiverLines::GetDiagram() {
+	return mDiagram;
 }
 
 void RiverLines::AddOceanConnect(Cell* c) {
@@ -296,162 +301,14 @@ Point2 RiverTriangle::GetCardinalDirection(double result[][2], double prev, doub
 }
 
 
-void RiverTriangle::CreateLineTri(Triangles& tris, RiverPointVector& point, VertexColor& color, double radius, double river_scale, double spacing, bool fade_in, bool fade_out) {
-
-
-	RiverPoint& pre_c = point[0];
-
-	Point2 p1 = pre_c.point;
-	RiverPoint& c = point[1];
-	Point2 p2 = c.point;
-
-	color.rgb.a = 1;
-	VertexColor c_trans = VertexColor(Color(color.rgb.r, color.rgb.g, color.rgb.b, 0), color.gray);
-
-
-
-	Point2 norm = (p2 - p1).Normalize();
-
-
-	double scale1 = (pre_c.power) * river_scale + 1;
-	double scale2 = (c.power) * river_scale + 1;
-
-	Point2 PerpA = Point2(-norm.y, norm.x) * radius * scale1;
-	Point2 PerpB = Point2(-norm.y, norm.x) * radius * scale2;
-	tris.push_back(Triangle({ p2, p1, (p1 - PerpA), color, color, c_trans }));
-	tris.push_back(Triangle({ p2, p1, (p1 + PerpA), color, color, c_trans }));
-	tris.push_back(Triangle({ p2, (p1 + PerpA), (p2 + PerpB), color, c_trans, c_trans }));
-	tris.push_back(Triangle({ p2, (p1 - PerpA), (p2 - PerpB), color, c_trans, c_trans }));
-
-
-	if (fade_in) {
-		RiverTriangle::DrawCircle(tris, point[0].point, 100, norm.GetAngle() + 90, 50, radius, river_scale, point[0].power, color);
-	}
-	if (fade_out) {
-		RiverTriangle::DrawCircle(tris, point[1].point, 100, norm.GetAngle() - 90, 50, radius, river_scale, point[1].power, color);
-	}
-
-}
-
-void RiverTriangle::CreateCardinalTri(Triangles& tris, RiverPointVector& point, VertexColor& color, double radius, double river_scale, double spacing, bool fade_in, bool fade_out) {
-	double result[3][2];
-	//memset(result, 0, sizeof(result));
-	CalcCardinal(point, result, 0);
-
-	double t = 0.0f;
-	double x, y;
-
-
-	t = spacing;
-	Point2 pre_p = point[0].point;
-
-	x = result[2][0] + t * (result[1][0] + result[0][0] * t);
-	y = result[2][1] + t * (result[1][1] + result[0][1] * t);
-
-	Point2 pre_norm = (Point2(x, y) - pre_p).Normalize();
-	double pre_angle_left = 1;
-	double pre_angle_right = 1;
-	//glBegin(GL_TRIANGLES);
-	color.rgb.a = 1;
-	VertexColor c_trans = VertexColor(Color(color.rgb.r, color.rgb.g, color.rgb.b, 0), color.gray);
-
-	while (t < 1) {
-
-		x = result[2][0] + t * (result[1][0] + result[0][0] * t);
-		y = result[2][1] + t * (result[1][1] + result[0][1] * t);
-
-		double x2 = result[2][0] + (t + spacing) * (result[1][0] + result[0][0] * (t + spacing));
-		double y2 = result[2][1] + (t + spacing) * (result[1][1] + result[0][1] * (t + spacing));
-		/*Color c;
-		if (point[0].GetCell()->GetDetail().GetElevation() == point[1].GetCell()->GetDetail().GetElevation()) {
-			c = Color(0, 1, 0);
-		}
-		else {
-			c = Color(1, 0, 0);
-		}*/
-
-		/*	std::cout << point[0].power << "\n";
-			std::cout << point[2].power << "\n";*/
-		Point2 new_p = Point2(x, y);
-		//Point2 next_p = Point2(x2, y2);
-		//Point2 norm = (new_p - pre_p);
-		//Point2 norm2 = (next_p - new_p);
-		//Point2 next_p = Point2(x2, y2);
-		//Point2 cul_norm = pre_norm;
-		Point2 next_norm = (new_p - pre_p);
-
-
-		double scale1 = (point[0].power * (1 - t) + point[2].power * t) * river_scale + 1;
-		double scale2 = (point[0].power * (1 - t + spacing) + point[2].power * t + spacing) * river_scale + 1;
-		/*if (norm != Point2(0, 0)) {
-			norm = norm.Normalize();
-
-			norm2 = norm2.Normalize();
-			Point2 PerpA = Point2(-norm.y, norm.x) * radius * scale1;
-			Point2 PerpB = Point2(-norm2.y, norm2.x) * radius * scale2;
-
-			tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpA), color, color, c_trans }));
-			tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpA), color, color, c_trans }));
-			tris.push_back(Triangle({ new_p, (pre_p + PerpA), (new_p + PerpB), color, c_trans, c_trans }));
-			tris.push_back(Triangle({ new_p, (pre_p - PerpA), (new_p - PerpB), color, c_trans, c_trans }));
-
-		}*/
-
-		AddCurvedTri(tris, point, color, c_trans, next_norm, pre_norm, new_p, pre_p, pre_angle_left, pre_angle_right, t, radius, scale1, scale2, spacing, t > 0.5);
-
-		if (t == spacing) {
-			if (fade_in) {
-				RiverTriangle::DrawCircle(tris, point[0].point, 100, pre_norm.GetAngle() + 90, 50, radius, river_scale, point[0].power, color);
-			}
-		}
-		pre_p = new_p;
-		pre_norm = next_norm;
-		t += spacing;
-	}
-
-	//glEnd();
-
-
-	//if (fade_in) {
-	//	//RiverTriangle::DrawCircle(tris, point[point.size() - 1].point, 100, pre_norm.GetAngle() - 90, 50, radius, river_scale, point[2].power);
-
-	//	double scale = radius * (point[0].power * river_scale + 1);
-	//	Point2 norm = GetCardinalDirection(result, 0, spacing);
-	//	Point2 PerpA = Point2(-norm.y, norm.x) * scale;
-
-	//	Point2 temp1 = point[0].point + PerpA;
-	//	Point2 temp2 = point[0].point - PerpA;
-	//	Point2 temp3 = (temp1 + temp2) / 2;
-	//	tris.push_back(Triangle({ temp3, temp1, point[0].GetCell()->site.p, c_half_red, c_trans, c_trans }));
-	//	tris.push_back(Triangle({ temp3, temp2, point[0].GetCell()->site.p, c_half_red, c_trans, c_trans }));
-	//
-	//}
-
-
-	if (fade_out) {
-		RiverTriangle::DrawCircle(tris, point[2].point, 100, pre_norm.GetAngle() - 90, 50, radius, river_scale, point[2].power, color);
-
-		/*	double scale = radius * (point[point.size() - 1].power * river_scale + 1);
-			Point2 norm = GetCardinalDirection(result, 1, 1 + spacing);
-			Point2 PerpA = Point2(-norm.y, norm.x) * scale;
-
-			Point2 temp1 = point[point.size() - 1].point + PerpA;
-			Point2 temp2 = point[point.size() - 1].point - PerpA;
-			Point2 temp3 = (temp1 + temp2) / 2;
-			tris.push_back(Triangle({ temp3, temp1, point[point.size() - 1].GetCell()->site.p, c_half_red, c_trans, c_trans }));
-			tris.push_back(Triangle({ temp3, temp2, point[point.size() - 1].GetCell()->site.p, c_half_red, c_trans, c_trans }));
-		*/
-	}
-}
-
-void RiverTriangle::AddCurvedTri(Triangles& tris, RiverPointVector& point, VertexColor& color, VertexColor c_trans, Point2& next_norm, Point2& pre_norm, Point2& new_p, Point2& pre_p, double& pre_angle_left, double& pre_angle_right, double t, double radius, double scale1, double scale2, double spacing, bool is_end) {
+void RiverTriangle::AddCurvedTri(Triangles& tris, RiverPointVector& point, const VertexColor& pre_color, const VertexColor next_color, Point2& next_norm, Point2& pre_norm, Point2& new_p, Point2& pre_p, double& pre_angle_left, double& pre_angle_right, double t, double radius, double pre_scale, double next_scale, double spacing, bool is_end) {
 	if (pre_norm != Point2(0, 0)) {
 		pre_norm = pre_norm.Normalize();
 		next_norm = next_norm.Normalize();
 
 
-		Point2 PerpPre = Point2(-pre_norm.y, pre_norm.x) * radius * scale1;
-		Point2 PerpNext = Point2(-next_norm.y, next_norm.x) * radius * scale2;
+		Point2 PerpPre = Point2(-pre_norm.y, pre_norm.x) * radius * pre_scale;
+		Point2 PerpNext = Point2(-next_norm.y, next_norm.x) * radius * next_scale;
 
 
 		double lange = 2;
@@ -462,7 +319,7 @@ void RiverTriangle::AddCurvedTri(Triangles& tris, RiverPointVector& point, Verte
 
 		double angle_left;
 		double angle_right;
-		
+
 		if (!is_end) {
 			int pow_size = 3;
 			double weight = 0.5;
@@ -485,7 +342,7 @@ void RiverTriangle::AddCurvedTri(Triangles& tris, RiverPointVector& point, Verte
 			angle_left = 1;
 			angle_right = 1;
 		}
-	
+
 
 		double curv_add = std::pow(std::abs(t - 0.5), 4) + std::clamp((std::abs(between) / 40), 0.0, spacing);
 
@@ -501,25 +358,185 @@ void RiverTriangle::AddCurvedTri(Triangles& tris, RiverPointVector& point, Verte
 			angle_left = angle_left * curv_weight + pre_angle_left * (1 - curv_weight);
 			angle_right = angle_right * curv_weight + pre_angle_right * (1 - curv_weight);
 		}
-		
+
 		double pre_test_left = std::clamp(pre_angle_left, 0.2, 1.0);
 		double pre_test_right = std::clamp(pre_angle_right, 0.2, 1.0);
 
 		double test_left = std::clamp(angle_left, 0.2, 1.0);
 		double test_right = std::clamp(angle_right, 0.2, 1.0);
 
-		tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpPre * pre_test_left), color, color, c_trans }));
-		tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpPre * pre_test_right), color, color, c_trans }));
-		tris.push_back(Triangle({ new_p, (pre_p - PerpPre * pre_test_left), (new_p - PerpNext * test_left), color, c_trans, c_trans }));
-		tris.push_back(Triangle({ new_p, (pre_p + PerpPre * pre_test_right), (new_p + PerpNext * test_right), color, c_trans, c_trans }));
-		
+		VertexColor pre_trans = pre_color;
+		pre_trans.rgb.a = 0;
+
+		VertexColor next_trans = next_color;
+		next_trans.rgb.a = 0;
+
+
+		tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpPre * pre_test_left), next_color, pre_color, pre_trans }));
+		tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpPre * pre_test_right), next_color, pre_color, pre_trans }));
+		tris.push_back(Triangle({ new_p, (pre_p - PerpPre * pre_test_left), (new_p - PerpNext * test_left), next_color, pre_trans, next_trans }));
+		tris.push_back(Triangle({ new_p, (pre_p + PerpPre * pre_test_right), (new_p + PerpNext * test_right), next_color, pre_trans, next_trans }));
+
 
 		pre_angle_left = angle_left;
 		pre_angle_right = angle_right;
 
 	}
 }
-void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, VertexColor& color, double radius, double river_scale, double spacing, bool fade_in, bool fade_out) {
+
+
+void RiverTriangle::CreateLineTri(Triangles& tris, RiverPointVector& point, Diagram* diagram, const double& color_rate, bool fade_in, bool fade_out) {
+	const GenerateSetting& main_setting = diagram->GetSetting();
+	const double sea_level = main_setting.GetSeaLevel();
+	const double radius = main_setting.GetRiverRadius();
+	const double river_scale = main_setting.GetRiverPowerScale();
+
+	const RiverPoint& pre_c = point[0];
+
+	Point2 p1 = pre_c.point;
+	const RiverPoint& c = point[1];
+	Point2 p2 = c.point;
+
+
+
+	Point2 norm = (p2 - p1).Normalize();
+
+
+	double scale1 = (pre_c.power) * river_scale + 1;
+	double scale2 = (c.power) * river_scale + 1;
+
+	VertexColor pre_color = VoronoiDiagramGenerator::CalcIslandColor((double)point[0].GetCell()->GetDetail().GetElevation() - 1, sea_level, color_rate);
+	VertexColor next_color = VoronoiDiagramGenerator::CalcIslandColor((double)point[1].GetCell()->GetDetail().GetElevation() - 1, sea_level, color_rate);
+	VertexColor color_trans = pre_color;
+	color_trans.rgb.a = 0;
+
+	Point2 PerpA = Point2(-norm.y, norm.x) * radius * scale1;
+	Point2 PerpB = Point2(-norm.y, norm.x) * radius * scale2;
+	tris.push_back(Triangle({ p2, p1, (p1 - PerpA), next_color, pre_color, color_trans }));
+	tris.push_back(Triangle({ p2, p1, (p1 + PerpA), next_color, pre_color, color_trans }));
+	tris.push_back(Triangle({ p2, (p1 + PerpA), (p2 + PerpB), next_color, color_trans, color_trans }));
+	tris.push_back(Triangle({ p2, (p1 - PerpA), (p2 - PerpB), next_color, color_trans, color_trans }));
+
+
+	if (fade_in) {
+		RiverTriangle::DrawCircle(tris, point[0].point, 100, norm.GetAngle() + 90, 50, radius, river_scale, point[0].power, pre_color);
+	}
+	if (fade_out) {
+		RiverTriangle::DrawCircle(tris, point[1].point, 100, norm.GetAngle() - 90, 50, radius, river_scale, point[1].power, next_color);
+	}
+
+}
+
+void RiverTriangle::CreateCardinalTri(Triangles& tris, RiverPointVector& point, Diagram* diagram, const double& color_rate, bool fade_in, bool fade_out) {
+	const GenerateSetting& main_setting = diagram->GetSetting();
+	const double sea_level = main_setting.GetSeaLevel();
+	const double radius = main_setting.GetRiverRadius();
+	const double river_scale = main_setting.GetRiverPowerScale();
+	const double spacing = main_setting.GetRiverCurvSpacing();
+	
+	double result[3][2];
+	//memset(result, 0, sizeof(result));
+	CalcCardinal(point, result, 0);
+
+	double t = 0.0f;
+	double x, y;
+
+
+	t = spacing;
+	Point2 pre_p = point[0].point;
+
+	x = result[2][0] + t * (result[1][0] + result[0][0] * t);
+	y = result[2][1] + t * (result[1][1] + result[0][1] * t);
+
+	Point2 pre_norm = (Point2(x, y) - pre_p).Normalize();
+	VertexColor pre_c = VoronoiDiagramGenerator::CalcIslandColor((double)point[0].GetCell()->GetDetail().GetElevation() - 1, sea_level, color_rate);
+	double pre_angle_left = 1;
+	double pre_angle_right = 1;
+	double pre_scale = point[0].power * river_scale + 1;
+
+	while (t < 1) {
+		int cul_point = t < 0.5 ? 0 : 1;
+		x = result[2][0] + t * (result[1][0] + result[0][0] * t);
+		y = result[2][1] + t * (result[1][1] + result[0][1] * t);
+
+		Point2 new_p = Point2(x, y);
+		Point2 next_norm = (new_p - pre_p);
+
+		double reverse_t = (1 - t);
+
+		double next_scale = (point[cul_point].power * reverse_t + point[cul_point + 1].power * t) * river_scale + 1;
+		
+		Cell* pre_cell = point[cul_point].GetCell();
+		Cell* next_cell = point[cul_point + 1].GetCell();
+
+
+		VertexColor pre_color;
+		VertexColor next_c;
+		if (diagram->GetImageFlag() == ALL_IMAGE) {
+			pre_c = Color::lake;
+			next_c = Color::lake;
+		}
+		else {
+			if (pre_cell == nullptr) {
+				double pre_elev = (double)point[0].GetCell()->GetDetail().GetElevation() - 1;
+				double next_elev = (double)point[2].GetCell()->GetDetail().GetElevation() - 1;
+
+				const VertexColor& pc = VoronoiDiagramGenerator::CalcIslandColor(pre_elev, sea_level, color_rate);
+				const VertexColor& nc = VoronoiDiagramGenerator::CalcIslandColor(next_elev, sea_level, color_rate);
+
+				pre_color.rgb = (pc.rgb * 0.5) + (nc.rgb * 0.5);
+				int gray = (int)(pc.gray * 0.5) + (int)(nc.gray * 0.5);
+				pre_color.gray = (uint16_t)std::min(gray, MAX_GRAY);
+			}
+			else {
+				pre_color = VoronoiDiagramGenerator::CalcIslandColor((double)pre_cell->GetDetail().GetElevation() - 1, sea_level, color_rate);
+			}
+			if (next_cell == nullptr) {
+				double pre_elev = (double)point[0].GetCell()->GetDetail().GetElevation() - 1;
+				double next_elev = (double)point[2].GetCell()->GetDetail().GetElevation() - 1;
+
+				const VertexColor& pc = VoronoiDiagramGenerator::CalcIslandColor(pre_elev, sea_level, color_rate);
+				const VertexColor& nc = VoronoiDiagramGenerator::CalcIslandColor(next_elev, sea_level, color_rate);
+
+				next_c.rgb = (pc.rgb * 0.5) + (nc.rgb * 0.5);
+				int gray = (int)(pc.gray * 0.5) + (int)(nc.gray * 0.5);
+				next_c.gray = (uint16_t)std::min(gray, MAX_GRAY);
+			}
+			else {
+				next_c = VoronoiDiagramGenerator::CalcIslandColor((double)next_cell->GetDetail().GetElevation() - 1, sea_level, color_rate);
+			}
+
+
+
+			next_c.rgb = pre_color.rgb * reverse_t + next_c.rgb * t;
+			next_c.gray = (uint16_t)(pre_color.gray * reverse_t + next_c.gray * t);
+		}
+
+		AddCurvedTri(tris, point, pre_c, next_c, next_norm, pre_norm, new_p, pre_p, pre_angle_left, pre_angle_right, t, radius, pre_scale, next_scale, spacing, t > 0.5);
+
+		if (t == spacing) {
+			if (fade_in) {
+				RiverTriangle::DrawCircle(tris, point[0].point, 100, pre_norm.GetAngle() + 90, 50, radius, river_scale, point[0].power, pre_c);
+			}
+		}
+		pre_c = next_c;
+		pre_scale = next_scale;
+		pre_p = new_p;
+		pre_norm = next_norm;
+		t += spacing;
+	}
+
+	if (fade_out) {
+		RiverTriangle::DrawCircle(tris, point[2].point, 100, pre_norm.GetAngle() - 90, 50, radius, river_scale, point[2].power, pre_c);
+	}
+}
+
+void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Diagram* diagram, const double& color_rate, bool fade_in, bool fade_out) {
+	const GenerateSetting& main_setting = diagram->GetSetting();
+	const double sea_level = main_setting.GetSeaLevel();
+	const double radius = main_setting.GetRiverRadius();
+	const double river_scale = main_setting.GetRiverPowerScale();
+	const double spacing = main_setting.GetRiverCurvSpacing();
 
 	double result[4][2];
 
@@ -540,8 +557,7 @@ void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Ve
 		}*/
 
 
-	color.rgb.a = 1;
-	VertexColor c_trans = VertexColor(Color(color.rgb.r, color.rgb.g, color.rgb.b, 0), color.gray);
+
 	t = spacing;
 	Point2 pre_p = point[0].point;
 
@@ -549,11 +565,10 @@ void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Ve
 	y = result[2][1] + t * (result[1][1] + result[0][1] * t);
 	
 	Point2 pre_norm = (Point2(x, y) - pre_p).Normalize();
-
+	VertexColor pre_c = VoronoiDiagramGenerator::CalcIslandColor((double)point[0].GetCell()->GetDetail().GetElevation() - 1, sea_level, color_rate);
 	double pre_angle_left = 1;
 	double pre_angle_right = 1;
-	//glColor4f(1.0f, 0.0f, 0.0f, 0.0f);
-	//glBegin(GL_TRIANGLES);
+	double pre_scale = point[0].power * river_scale + 1;
 	
 
 	while (t < 0.5f) {
@@ -561,32 +576,50 @@ void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Ve
 		x = result[2][0] + t * (result[1][0] + result[0][0] * t);
 		y = result[2][1] + t * (result[1][1] + result[0][1] * t);
 
-		double x2 = result[2][0] + (t + spacing) * (result[1][0] + result[0][0] * (t + spacing));
-		double y2 = result[2][1] + (t + spacing) * (result[1][1] + result[0][1] * (t + spacing));
+		//double x2 = result[2][0] + (t + spacing) * (result[1][0] + result[0][0] * (t + spacing));
+		//double y2 = result[2][1] + (t + spacing) * (result[1][1] + result[0][1] * (t + spacing));
 
-		
+		//
 		Point2 new_p = Point2(x, y);
 		//Point2 next_p = Point2(x2, y2);
 		//Point2 cul_norm = pre_norm;
 		Point2 next_norm = (new_p - pre_p);
 
 
+		
+		double t_scale = t * 2;
+		double reverse_t = 1 - t_scale;
+		double next_scale = (point[0].power * reverse_t + point[1].power * t_scale) * river_scale + 1;
+		
+		double pre_elev = (double)point[0].GetCell()->GetDetail().GetElevation() - 1;
+		double next_elev = (double)point[1].GetCell()->GetDetail().GetElevation() - 1;
 
-		double t_scale = (t - 0.5) * 2;
-		double t_scale2 = (t - 0.5 + spacing) * 2;
-		double scale1 = (point[0].power * (1 - t_scale) + point[1].power * t_scale) * river_scale + 1;
-		double scale2 = (point[0].power * (1 - t_scale2) + point[1].power * t_scale2) * river_scale + 1;
 
-		AddCurvedTri(tris, point, color, c_trans, next_norm, pre_norm, new_p, pre_p, pre_angle_left, pre_angle_right, t, radius, scale1, scale2, spacing);
+		VertexColor next_c;
+		if (diagram->GetImageFlag() == ALL_IMAGE) {
+			pre_c = Color::lake;
+			next_c = Color::lake;
+		}
+		else {
+			VertexColor pre_color = VoronoiDiagramGenerator::CalcIslandColor(pre_elev, sea_level, color_rate);
+			next_c = VoronoiDiagramGenerator::CalcIslandColor(next_elev, sea_level, color_rate);
+
+			next_c.rgb = pre_color.rgb * reverse_t + next_c.rgb * t_scale;
+			next_c.gray = (uint16_t)(pre_color.gray * reverse_t + next_c.gray * t_scale);
+
+		}
+		
+		AddCurvedTri(tris, point, pre_c, next_c, next_norm, pre_norm, new_p, pre_p, pre_angle_left, pre_angle_right, t, radius, pre_scale, next_scale, spacing);
 
 		
 
 		if (t == spacing) {
 			if (fade_in) {
-				RiverTriangle::DrawCircle(tris, point[0].point, 100, pre_norm.GetAngle() + 90, 50, radius, river_scale, point[0].power, color);
+				RiverTriangle::DrawCircle(tris, point[0].point, 100, pre_norm.GetAngle() + 90, 50, radius, river_scale, point[0].power, pre_c);
 			}
 		}
-
+		pre_c = next_c;
+		pre_scale = next_scale;
 		pre_norm = next_norm;
 		pre_p = new_p;
 		t += spacing;
@@ -613,6 +646,7 @@ void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Ve
 	pre_angle_right = 1;*/
 	for (int cubic_case = 0; cubic_case < SIZE - 3; cubic_case++)
 	{
+		int cul_point = cubic_case + 1;
 		memset(result, 0, sizeof(result));
 		for (int i = 0; i < 4; i++)
 		{
@@ -623,120 +657,41 @@ void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Ve
 			}
 		}
 
-		//if (point[cubic_case + 1].GetCell()->GetDetail().GetElevation() == point[cubic_case + 2].GetCell()->GetDetail().GetElevation()) {
-		//	glColor4f(0, 1, 0, 1);
-		//}
-		//else {
-		//	glColor4f(1, 0, 0, 1);
-		//}
-
-		//t = 0.0f;
-		////glBegin(GL_LINE_STRIP);
-		//while (t < 1.0f) {
-		//	x = (result[3][0] + t * (result[2][0] + t * (result[1][0] + result[0][0] * t))) * 0.5f;
-		//	y = (result[3][1] + t * (result[2][1] + t * (result[1][1] + result[0][1] * t))) * 0.5f;
-		//	glVertex2f((GLfloat)normalize(x, dimension), -(GLfloat)normalize(y, dimension));
-		//	t += 0.01f;
-		//}
-		////glEnd();
-
-
-
-
 
 		t = spacing;
-		//Point2 pre_p = point[0]->site.p;
-		//Point2 pre_norm = point[0]->site.p;
-
-		//glBegin(GL_TRIANGLES);
+		pre_scale = point[cul_point].power * river_scale + 1;
 
 		while (t < 1.0f) {
 
 			x = (result[3][0] + t * (result[2][0] + t * (result[1][0] + result[0][0] * t))) * 0.5f;
 			y = (result[3][1] + t * (result[2][1] + t * (result[1][1] + result[0][1] * t))) * 0.5f;
 
-			double x2 = (result[3][0] + (t + spacing) * (result[2][0] + (t + spacing) * (result[1][0] + result[0][0] * (t + spacing)))) * 0.5f;
-			double y2 = (result[3][1] + (t + spacing) * (result[2][1] + (t + spacing) * (result[1][1] + result[0][1] * (t + spacing)))) * 0.5f;
-
-
 			Point2 new_p = Point2(x, y);
-			//Point2 next_p = Point2(x2, y2);
-
-			//Point2 cul_norm = pre_norm;
 			Point2 next_norm = (new_p - pre_p);
-			//Point2 next_norm = (next_p - new_p);
 
-			double t_scale = t;
-			double t_scale2 = t + spacing;
-
-			double scale1 = (point[cubic_case].power * (1 - t_scale)	+ point[cubic_case + 1].power * t_scale)	* river_scale + 1;
-			double scale2 = (point[cubic_case].power * (1 - t_scale2)	+ point[cubic_case + 1].power * t_scale2)	* river_scale + 1;
+			double reverse_t = 1 - t;
+			double next_scale = (point[cul_point].power * reverse_t + point[cul_point + 1].power * t) * river_scale + 1;
 			
-			/*std::cout << "power: " << point[cubic_case + 1].power << "\n";
-			std::cout << "sacle: " << scale1 << ", " << scale2 << "\n";
-			std::cout << "radius: " << radius << "\n";
-			std::cout << "radius * scale1: " << radius * scale1 << "\n";
-			std::cout << "radius * scale2: " << radius * scale2 << "\n";*/
-			
-			AddCurvedTri(tris, point, color, c_trans, next_norm, pre_norm, new_p, pre_p, pre_angle_left, pre_angle_right, t, radius, scale1, scale2, spacing);
+			double pre_elev = (double)point[cul_point].GetCell()->GetDetail().GetElevation() - 1;
+			double next_elev = (double)point[cul_point + 1].GetCell()->GetDetail().GetElevation() - 1;
 
-			//if (cul_norm != Point2(0, 0)) {
-			//	cul_norm = cul_norm.Normalize();
-			//	next_norm = next_norm.Normalize();
-			//	
-			//
-			//	Point2 PerpPre = Point2(-cul_norm.y, cul_norm.x) * radius * scale1;
-			//	Point2 PerpNext = Point2(-next_norm.y, next_norm.x) * radius * scale2;
+			VertexColor next_c;
+			if (diagram->GetImageFlag() == ALL_IMAGE) {
+				pre_c = Color::lake;
+				next_c = Color::lake;
+			}
+			else {
 
-			//	Point2 middle_norm = (new_p - pre_p).Normalize();
-			//	//(next_p - new_p);
-			//	Point2 dir_norm = (next_norm - middle_norm);
-			//	Point2 dir_norm2 = (middle_norm - cul_norm);
+				VertexColor pre_color = VoronoiDiagramGenerator::CalcIslandColor(pre_elev, sea_level, color_rate);
+				next_c = VoronoiDiagramGenerator::CalcIslandColor(next_elev, sea_level, color_rate);
 
-			//	double lange = 2;
+				next_c.rgb = pre_color.rgb * reverse_t + next_c.rgb * t;
+				next_c.gray = (uint16_t)(pre_color.gray * reverse_t + next_c.gray * t);
+			}
+			AddCurvedTri(tris, point, pre_c, next_c, next_norm, pre_norm, new_p, pre_p, pre_angle_left, pre_angle_right, t, radius, pre_scale, next_scale, spacing);
 
-			//	int pow_size = 3;
-			//	double weight = 1;
-			//	double between = Point2::AngleBetween(next_norm, cul_norm);
-
-			//	double angle = std::clamp(between * weight, -lange, lange);
-
-			//	double angle_left = lange + angle;
-			//	double angle_right = lange - angle;
-			//	angle_left /= 2;
-			//	angle_right /= 2;
-
-			//	angle_left = std::max(angle_left, 0.2);
-			//	angle_right = std::max(angle_right, 0.2);
-
-			//	if (pre_angle_left == -1) {
-			//		pre_angle_left = angle_left;
-			//		pre_angle_right = angle_right;
-			//	}
-			//	double curv_add = std::pow(std::abs(t - 0.5) / 2, 2) + std::clamp((std::abs(between) / 40), 0.0, spacing);
-
-			//	double curv_weight = spacing + curv_add;
-			//	curv_weight = std::clamp(curv_weight, 0.0, 1.0);
-
-			//	angle_left = angle_left * curv_weight + pre_angle_left * (1 - curv_weight);
-			//	angle_right = angle_right * curv_weight + pre_angle_right * (1 - curv_weight);
-			//	
-			//	double pre_test_left = std::clamp(pre_angle_left, 0.2, 1.0);
-			//	double pre_test_right = std::clamp(pre_angle_right, 0.2, 1.0);
-			//	
-			//	double test_left = std::clamp(angle_left, 0.2, 1.0);
-			//	double test_right = std::clamp(angle_right, 0.2, 1.0);
-			//	
-			//	tris.push_back(Triangle({ new_p, pre_p, (pre_p - PerpPre * pre_test_left), color, color, c_trans }));
-			//	tris.push_back(Triangle({ new_p, pre_p, (pre_p + PerpPre * pre_test_right), color, color, c_trans }));
-			//	tris.push_back(Triangle({ new_p, (pre_p + PerpPre * pre_test_right), (new_p + PerpNext * test_right), color, c_trans, c_trans }));
-			//	tris.push_back(Triangle({ new_p, (pre_p - PerpPre * pre_test_left), (new_p - PerpNext * test_left), color, c_trans, c_trans }));
-
-			//	
-			//	pre_angle_left = angle_left;
-			//	pre_angle_right = angle_right;
-
-			//}
+			pre_c = next_c;
+			pre_scale = next_scale;
 			pre_norm = next_norm;
 			pre_p = new_p;
 			t += spacing;
@@ -752,8 +707,7 @@ void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Ve
 	// quadratic function
 	CalcCardinal(point, result, (int)SIZE - 3);
 
-
-
+	pre_scale = point[SIZE - 2].power * river_scale + 1;
 	t = 0.5f + spacing;
 	//glBegin(GL_TRIANGLES);
 	while (t < 1.0f) {
@@ -761,37 +715,41 @@ void RiverTriangle::CreateSplineTri(Triangles& tris, RiverPointVector& point, Ve
 		x = result[2][0] + t * (result[1][0] + result[0][0] * t);
 		y = result[2][1] + t * (result[1][1] + result[0][1] * t);
 
-		double x2 = result[2][0] + (t + spacing) * (result[1][0] + result[0][0] * (t + spacing));
-		double y2 = result[2][1] + (t + spacing) * (result[1][1] + result[0][1] * (t + spacing));
-
-		//x = round(x * 100) / 100;
-		//y = round(y * 100) / 100;
-
-		//x2 = round(x2 * 100) / 100;
-		//y2 = round(y2 * 100) / 100;
-
-
 		Point2 new_p = Point2(x, y);
-		//Point2 next_p = Point2(x2, y2);
-
-		//Point2 cul_norm = pre_norm;
 		Point2 next_norm = (new_p - pre_p);
 
 		double t_scale = (t - 0.5) * 2;
-		double t_scale2 = (t - 0.5 + spacing) * 2;
-		double scale1 = (point[SIZE - 2].power * (1 - t_scale)				+ point[SIZE - 1].power * t_scale)				* river_scale + 1;
-		double scale2 = (point[SIZE - 2].power * (1 - t_scale2)				+ point[SIZE - 1].power * t_scale2)				* river_scale + 1;
-		//scale1 = round(100 * scale1) / 100;
-		//scale2 = round(100 * scale2) / 100;
-		AddCurvedTri(tris, point, color, c_trans, next_norm, pre_norm, new_p, pre_p, pre_angle_left, pre_angle_right, t, radius, scale1, scale2, spacing, true);
+		double reverse_t = 1 - t_scale;
+		double next_scale = (point[SIZE - 2].power * reverse_t + point[SIZE - 1].power * t_scale) * river_scale + 1;
 
+		double pre_elev = (double)point[SIZE - 2].GetCell()->GetDetail().GetElevation() - 1;
+		double next_elev = (double)point[SIZE - 1].GetCell()->GetDetail().GetElevation() - 1;
+		
+		
+		VertexColor next_c;
+		if (diagram->GetImageFlag() == ALL_IMAGE) {
+			pre_c = Color::lake;
+			next_c = Color::lake;
+		}
+		else {
+
+			VertexColor pre_color = VoronoiDiagramGenerator::CalcIslandColor(pre_elev, sea_level, color_rate);
+			next_c = VoronoiDiagramGenerator::CalcIslandColor(next_elev, sea_level, color_rate);
+
+			next_c.rgb = pre_color.rgb * reverse_t + next_c.rgb * t_scale;
+			next_c.gray = (uint16_t)(pre_color.gray * reverse_t + next_c.gray * t_scale);
+		}
+		AddCurvedTri(tris, point, pre_c, next_c, next_norm, pre_norm, new_p, pre_p, pre_angle_left, pre_angle_right, t, radius, pre_scale, next_scale, spacing, true);
+		
+		pre_c = next_c;
+		pre_scale = next_scale;
 		pre_norm = next_norm;
 		pre_p = new_p;
 		t += spacing;
 	}
 
 	if (fade_out) {
-		RiverTriangle::DrawCircle(tris, point[SIZE - 1].point, 100, pre_norm.GetAngle() - 90, 50, radius, river_scale, point[SIZE - 1].power, color);
+		RiverTriangle::DrawCircle(tris, point[SIZE - 1].point, 100, pre_norm.GetAngle() - 90, 50, radius, river_scale, point[SIZE - 1].power, pre_c);
 	}
 
 	//if (fade_out) {
@@ -847,7 +805,9 @@ void RiverTriangle::DrawCircle(Triangles& tris, Point2 center, const int num_seg
 //
 //{};
 
-
+Diagram* RiverLine::GetDiagram() {
+	return diagram;
+}
 
 RiverLine* RiverLine::Create(Diagram* l_diagram, GenerateSetting& setting) {
 	RiverLine* item = new RiverLine(l_diagram, setting);
@@ -878,7 +838,6 @@ Triangles& RiverLine::GetTriangle() {
 
 void RiverLine::AddPoint(RiverPoint p) {
 	points.push_back(p);
-
 }
 
 RiverPointVector& RiverLine::GetPointArray() {
@@ -905,6 +864,7 @@ void RiverLine::AdjustPoint() {
 
 	//double f_scale = round(100 * main_setting.GetRiverRadius() * (main_setting.GetRiverPowerScale() * f_p.power + 1) / 2) / 100;
 	//double e_scale = round(100 * main_setting.GetRiverRadius() * (main_setting.GetRiverPowerScale() * e_p.power + 1) / 2) / 100;
+	const GenerateSetting& main_setting = GetDiagram()->GetSetting();
 	double f_scale = main_setting.GetRiverRadius() * (main_setting.GetRiverPowerScale() * f_p.power + 1) / 2;
 	double e_scale = main_setting.GetRiverRadius() * (main_setting.GetRiverPowerScale() * e_p.power + 1) / 2;
 
@@ -934,7 +894,7 @@ void RiverLine::AdjustPoint() {
 }
 
 
-void RiverLine::CreateTriangle(VertexColor& c) {
+void RiverLine::CreateTriangle(double color_rate) {
 	tris.clear();
 	if (points.size() > 3) {
 		/*	double start_result[3][2];
@@ -943,86 +903,96 @@ void RiverLine::CreateTriangle(VertexColor& c) {
 			memset(end_result, 0, sizeof(end_result));
 			CalcCardinal(start_result, 0);
 			CalcCardinal(end_result, (int)points.size() - 3);*/
-
-		RiverTriangle::CreateSplineTri(tris, points, c, main_setting.GetRiverRadius(), main_setting.GetRiverPowerScale(), main_setting.GetRiverCurvSpacing(), true, true); //true, true
+		RiverTriangle::CreateSplineTri(tris, points, GetDiagram(), color_rate, true, true); //true, true
 	}
 	else if (points.size() == 3) {
-		RiverTriangle::CreateCardinalTri(tris, points, c, main_setting.GetRiverRadius(), main_setting.GetRiverPowerScale(), main_setting.GetRiverCurvSpacing(), true, true);
+		RiverTriangle::CreateCardinalTri(tris, points, GetDiagram(), color_rate, true, true);
 	}
 	else {
-		RiverTriangle::CreateLineTri(tris, points, c, main_setting.GetRiverRadius(), main_setting.GetRiverPowerScale(), main_setting.GetRiverCurvSpacing(), true, true);
+		RiverTriangle::CreateLineTri(tris, points, GetDiagram(), color_rate, true, true);
 	}
 
 }
 
-
-
-void RiverCrossing::Clear() {
-	for (auto iter : RIVER_CROSSING_MAP) {
-		iter.second.GetTriangle().clear();
-	}
-	RIVER_CROSSING_MAP.clear();
-}
 
 Cell* RiverCrossing::GetCell() {
 	return cell;
 }
 
-RiverCrossing* RiverCrossing::Get(unsigned int cell_unique) {
-	if (RIVER_CROSSING_MAP.find(cell_unique) == RIVER_CROSSING_MAP.end()) {
+Triangles RiverCrossing::GetTriangle() {
+	return tris;
+}
+
+void RiverCrossingMap::Initialize(Diagram* diagram) {
+	mDiagram = diagram;
+}
+
+void RiverCrossingMap::Clear() {
+	for (auto iter : GetMap()) {
+		iter.second.GetTriangle().clear();
+	}
+	GetMap().clear();
+}
+
+Diagram* RiverCrossingMap::GetDiagram() {
+	return mDiagram;
+}
+
+RiverCrossing* RiverCrossingMap::Get(unsigned int cell_unique) {
+	if (GetMap().find(cell_unique) == GetMap().end()) {
 		return nullptr;
 	}
 	else {
-		return &RIVER_CROSSING_MAP[cell_unique];
+		return &GetMap()[cell_unique];
 	}
 }
 
-void RiverCrossing::AddRiver(RiverLine* river) {
+void RiverCrossingMap::AddRiver(RiverLine* river) {
 	Cell* f_c = river->GetFirstPoint().GetCell();
 	Cell* e_c = river->GetEndPoint().GetCell();
 	auto first_unique = f_c->GetUnique();
 	auto end_unique = e_c->GetUnique();
 
-	if (RIVER_CROSSING_MAP.find(first_unique) == RIVER_CROSSING_MAP.end()) {
-		RIVER_CROSSING_MAP[first_unique] = RiverCrossing(f_c);
+	if (GetMap().find(first_unique) == GetMap().end()) {
+		GetMap()[first_unique] = RiverCrossing(f_c);
 	}
 
 
-	if (RIVER_CROSSING_MAP.find(end_unique) == RIVER_CROSSING_MAP.end()) {
-		RIVER_CROSSING_MAP[end_unique] = RiverCrossing(e_c);
+	if (GetMap().find(end_unique) == GetMap().end()) {
+		GetMap()[end_unique] = RiverCrossing(e_c);
 	}
 
-	RiverCrossing& first_crossing = RIVER_CROSSING_MAP[first_unique];
-	RiverCrossing& end_crossing = RIVER_CROSSING_MAP[end_unique];
+	RiverCrossing& first_crossing = GetMap()[first_unique];
+	RiverCrossing& end_crossing = GetMap()[end_unique];
 
-	first_crossing.outputs.push_back(river);
-	end_crossing.inputs.push_back(river);
+	first_crossing.GetOutputs().push_back(river);
+	end_crossing.GetInputs().push_back(river);
 
 
 }
 
 
-void RiverCrossing::CreateCrossingPointTriagle(VertexColor& color, double radius, double river_scale, double spacing) {
+void RiverCrossingMap::CreateCrossingPointTriagle(double sea_level, double color_rate, double radius, double river_scale, double spacing) {
 	//return;
 	//radius *= std::sqrt(2);
 
-	for (auto& iter : RIVER_CROSSING_MAP) {
+	for (auto& iter : GetMap()) {
 		RiverCrossing& rc = iter.second;
-		rc.tris.clear();
-		if (rc.inputs.size() > 0 && rc.outputs.size() > 0) {
+		rc.GetTriangle().clear();
+		if (rc.GetInputs().size() > 0 && rc.GetOutputs().size() > 0) {
 			RiverPointVector points;
-			//RiverPoint& input_point = rc.inputs[0]->GetEndPoint();
-			//RiverPoint& ouput_point = rc.outputs[0]->GetFirstPoint();
+			//RiverPoint& input_point = rc.GetInputs()[0]->GetEndPoint();
+			//RiverPoint& ouput_point = rc.GetOutputs()[0]->GetFirstPoint();
 			double power = 0;
 			unsigned int power_stack = 0;
-			for (auto& p : rc.inputs) {
+			for (auto& p : rc.GetInputs()) {
 				power_stack += p->GetEndPoint().power;
 			}
-			for (auto& p : rc.outputs) {
+			for (auto& p : rc.GetOutputs()) {
 				power_stack += p->GetFirstPoint().power;
 			}
-			//power = round(((double)power_stack / (rc.inputs.size() + rc.outputs.size())) * 100) / 100;
-			power = (double)power_stack / (rc.inputs.size() + rc.outputs.size());
+			//power = round(((double)power_stack / (rc.GetInputs().size() + rc.GetOutputs().size())) * 100) / 100;
+			power = (double)power_stack / (rc.GetInputs().size() + rc.GetOutputs().size());
 
 			//RiverPoint middle_point = RiverPoint((input_point.power + ouput_point.power) / 2, rc.GetCell());
 			//points.push_back(input_point);
@@ -1033,9 +1003,17 @@ void RiverCrossing::CreateCrossingPointTriagle(VertexColor& color, double radius
 			//continue;
 			const int num_segments = 100;
 
-
+			
 			//glVertex2f(cx, cy);
-			color.rgb.a = 1;
+			VertexColor color;
+			if (GetDiagram()->GetImageFlag() == ALL_IMAGE) {
+				color = Color::lake;
+			}
+			else {
+				color = VoronoiDiagramGenerator::CalcIslandColor(rc.GetCell()->GetDetail().GetElevation() - 1, sea_level, color_rate);
+			}
+				
+			
 			VertexColor trans_c = VertexColor(Color(color.rgb.r, color.rgb.g, color.rgb.b, 0), color.gray);
 			for (int i = 0; i < num_segments; i++) {
 				double theta = 2.0f * PI_ * double(i) / double(num_segments);
@@ -1058,7 +1036,7 @@ void RiverCrossing::CreateCrossingPointTriagle(VertexColor& color, double radius
 				//x_2 = round(x_2 / 100) * 100;
 				//y_2 = round(y_2 / 100) * 100;
 
-				rc.tris.push_back(Triangle({
+				rc.GetTriangle().push_back(Triangle({
 					Point2(x_ + rc.GetCell()->site.p.x, y_ + rc.GetCell()->site.p.y),
 					Point2(x_2 + rc.GetCell()->site.p.x, y_2 + rc.GetCell()->site.p.y),
 					Point2(rc.GetCell()->site.p.x, rc.GetCell()->site.p.y),
@@ -1073,16 +1051,17 @@ void RiverCrossing::CreateCrossingPointTriagle(VertexColor& color, double radius
 	}
 }
 
-Triangles RiverCrossing::GetTriangle() {
+Triangles RiverCrossingMap::GetTriangle() {
 	Triangles trianlges;
-	for (auto& iter : RIVER_CROSSING_MAP) {
-		trianlges.insert(trianlges.end(), iter.second.tris.begin(), iter.second.tris.end());
+	for (auto& iter : GetMap()) {
+		trianlges.insert(trianlges.end(), iter.second.GetTriangle().begin(), iter.second.GetTriangle().end());
 	}
 	return trianlges;
 }
 
 
-void RiverLines::AddLine(RiverCrossing* corssing, RiverLine* line) {
+void RiverLines::AddLine(RiverLine* line) {
+	RiverCrossingMap& corssing = GetDiagram()->GetRiverCrossing();
 	//if (line.GetPointArray().size() > 0) {
 	if (line->GetPointArray().size() <= 1) return;
 	line->SetUsed();
@@ -1094,7 +1073,7 @@ void RiverLines::AddLine(RiverCrossing* corssing, RiverLine* line) {
 		int chance_cnt = 0;
 		std::vector<bool> list = std::vector<bool>(cnt - 1, false);
 		for (unsigned int i = 0, loop_cnt = cnt - 1; i < loop_cnt; i++) {
-			list[i] = Setting->GetRandom() >= chance;
+			list[i] = GetDiagram()->GetSetting().GetRandom() >= chance;
 			chance_cnt++;
 		}
 
@@ -1122,7 +1101,7 @@ void RiverLines::AddLine(RiverCrossing* corssing, RiverLine* line) {
 					p_dist = e->vertA->point.DistanceTo(e->vertB->point);
 				}
 				double dist = p_dist * CurveDistance;
-				double theta = 2.0f * PI_ * (Setting->GetRandom() / 360);
+				double theta = 2.0f * PI_ * (GetDiagram()->GetSetting().GetRandom() / 360);
 				double x = dist * cosf((float)theta);
 				double y = dist * sinf((float)theta);
 				//Point2 p = (vec[i - 1].point + vec[i].point) / 2 + Point2(main_setting.GetRandom(), main_setting.GetRandom()) * p_dist * main_setting.GetRiverAdditionalCurveDistance();
@@ -1135,7 +1114,7 @@ void RiverLines::AddLine(RiverCrossing* corssing, RiverLine* line) {
 		line->GetPointArray() = temp;
 	}
 
-	corssing->AddRiver(line);
+	corssing.AddRiver(line);
 	lines.push_back(line);
 	//std::cout << (*(lines.end() - 1)).GetPointArray().size() << "ADF\n";
 	//std::cout << &lines[lines.size() - 1] << "ADF\n";
@@ -1152,12 +1131,13 @@ void RiverLines::AdjustPoint() {
 	}
 }
 
-void RiverLines::CreateTriagle(VertexColor& c) {
+void RiverLines::CreateTriagle(double color_rate) {
 	for (auto river : lines) {
-		river->CreateTriangle(c);
+		river->CreateTriangle(color_rate);
 	}
 
 }
+
 
 
 #undef PI_

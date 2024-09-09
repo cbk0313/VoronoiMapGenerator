@@ -188,7 +188,7 @@ public:
 
 class RiverTriangle {
 private:
-	static void AddCurvedTri(Triangles& tris, RiverPointVector& point, VertexColor& color, VertexColor c_trans, Point2& cul_norm, Point2& next_norm, Point2& new_p, Point2& pre_p, double& pre_angle_left, double& pre_angle_right, double t, double radius, double scale1, double scale2, double spacing, bool is_end = false);
+	static void AddCurvedTri(Triangles& tris, RiverPointVector& point, const VertexColor& pre_color, const VertexColor next_color, Point2 & next_norm, Point2 & pre_norm, Point2& new_p, Point2& pre_p, double& pre_angle_left, double& pre_angle_right, double t, double radius, double pre_scale, double next_scale, double spacing, bool is_end = false);
 public:
 	static const double matrix_2[3][3];
 	static const double matrix_3[4][4];
@@ -202,9 +202,9 @@ public:
 	static Point2 GetCardinalPoint(double result[][2], double t);
 	static Point2 GetCardinalDirection(double result[][2], double prev, double next);
 
-	static void CreateLineTri(Triangles& tris, RiverPointVector& point, VertexColor& color, double radius, double river_scale, double spacing, bool fade_in = false, bool fade_out = false);
-	static void CreateCardinalTri(Triangles& tris, RiverPointVector& point, VertexColor& color, double radius, double river_scale, double spacing, bool fade_in = false, bool fade_out = false);
-	static void CreateSplineTri(Triangles& tris, RiverPointVector& point, VertexColor& color, double radius, double river_scale, double spacing, bool fade_in = false, bool fade_out = false);
+	static void CreateLineTri(Triangles& tris, RiverPointVector& point, Diagram* diagram, const double& color_rate, bool fade_in = false, bool fade_out = false);
+	static void CreateCardinalTri(Triangles& tris, RiverPointVector& point, Diagram* diagram, const double& color_rate, bool fade_in = false, bool fade_out = false);
+	static void CreateSplineTri(Triangles& tris, RiverPointVector& point, Diagram* diagram, const double& color_rate, bool fade_in = false, bool fade_out = false);
 	static void DrawCircle(Triangles& tris, Point2 center, const int num_segments, const double start, const int end, double radius, double river_scale, double power, VertexColor color);
 
 };
@@ -220,12 +220,9 @@ class RiverLine {
 	//double power_sacle;
 	//double curv_spacing;
 
-	GenerateSetting& main_setting;
-
 	RiverLine(Diagram* l_diagram, GenerateSetting& setting)
 		: used(false)
 		, diagram(l_diagram)
-		, main_setting(setting)
 		//, radius(_radius)
 		//, power_sacle(_power_sacle)
 		//, curv_spacing(0.02f)
@@ -237,7 +234,6 @@ class RiverLine {
 		, diagram(other.diagram)
 		, points(other.points)
 		, tris(other.tris)
-		, main_setting(other.main_setting)
 	{
 		//std::cout << "복사 생성자 호출 " << points.size() << std::endl;
 	}
@@ -245,7 +241,7 @@ class RiverLine {
 
 public:
 
-
+	Diagram* GetDiagram();
 	// Create new RiverLine.
 	static RiverLine* Create(Diagram* l_diagram, GenerateSetting& setting);
 	// Copy other.
@@ -254,7 +250,7 @@ public:
 	void SetUsed();
 	bool GetUsed();
 
-	void CreateTriangle(VertexColor& c);
+	void CreateTriangle(double color_rate);
 	// If no triangle was created, get an empty vector.
 	Triangles& GetTriangle();
 	// Add a point where a river flows. 
@@ -270,28 +266,45 @@ public:
 };
 
 class RiverCrossing;
-using RiverCrossingMap = std::unordered_map<unsigned int, RiverCrossing>;
 
 class RiverCrossing {
 
-	RiverCrossingMap RIVER_CROSSING_MAP = RiverCrossingMap();
+	//RiverCrossingMap RIVER_CROSSING_MAP = RiverCrossingMap();
 	std::vector<RiverLine*> inputs;
 	std::vector<RiverLine*> outputs;
-	Triangles tris;
 	Cell* cell;
-
+	Triangles tris;
 public:
 	RiverCrossing() {};
 	RiverCrossing(Cell* c) : cell(c) {};
 
-	void Clear();
+	//void Initialize(Diagram* diagram);
 	Cell* GetCell();
-	RiverCrossing* Get(unsigned int cell_unique);
-	void AddRiver(RiverLine* river);
-	void CreateCrossingPointTriagle(VertexColor& color, double radius, double river_scale, double spacing);
 	Triangles GetTriangle();
+
+	std::vector<RiverLine*>& GetInputs() { return inputs; };
+	std::vector<RiverLine*>& GetOutputs() { return outputs; };
 };
 
+class RiverCrossingMap {
+	Diagram* mDiagram;
+	std::unordered_map<unsigned int, RiverCrossing> mMap;
+public:
+
+	RiverCrossingMap() :mDiagram(nullptr) {};
+	RiverCrossingMap(Diagram* diagram) : mDiagram(diagram) {};
+	std::unordered_map<unsigned int, RiverCrossing>& GetMap() {
+		return mMap;
+	}
+	void Initialize(Diagram* diagram);
+
+	void Clear();
+	Diagram* GetDiagram();
+	RiverCrossing* Get(unsigned int cell_unique);
+	void AddRiver(RiverLine* river);
+	void CreateCrossingPointTriagle(double sea_level, double color_rate, double radius, double river_scale, double spacing);
+	Triangles GetTriangle();
+};
 
 class RiverLines {
 	friend class RiverEdge;
@@ -307,7 +320,7 @@ class RiverLines {
 	RiverLinkMap LINKED_RIVERS;
 	RiverCntMap RIVER_CNT;
 
-	GenerateSetting* Setting;
+	Diagram* mDiagram;
 public:
 	RiverLines()
 		: CurveChance(0)
@@ -318,9 +331,10 @@ public:
 		LINKED_RIVER_EDGES = RiverLinkMap();
 		LINKED_RIVERS = RiverLinkMap();
 		RIVER_CNT = RiverCntMap();
-		Setting = nullptr;
+		mDiagram = nullptr;
 	}
-	void Initialize(GenerateSetting& setting);
+	void Initialize(Diagram* diagram);
+	Diagram* GetDiagram();
 
 	void AddOceanConnect(Cell* c);
 	int GetOceanConnect(Cell* c);
@@ -338,8 +352,8 @@ public:
 	void AddLinkRiver(Cell* lakeA, Cell* lakeB);
 	bool CheckRiverLinked(Cell* lakeA, Cell* lakeB);
 	// Depending on settings, can add random points between points to make the river appear to flow more naturally.
-	void AddLine(RiverCrossing* corssing, RiverLine* line);
+	void AddLine(RiverLine* line);
 	std::vector<RiverLine*>& GetArray();
 	void AdjustPoint();
-	void CreateTriagle(VertexColor& c);
+	void CreateTriagle(double color_rate);
 };

@@ -271,8 +271,8 @@ void VoronoiDiagramGenerator::SaveImage(int flag, const char* filename, unsigned
 	std::cout << "file saved: " << filename << ", create time: " << duration << "ms, save time: " << duration2 - duration << ", result: " << duration2 << "ms \n";
 
 	if (restore) {
-		SetupRiverTriangle(Color::lake);
 		SetupColor(ALL_IMAGE);
+		SetupRiverTriangle();
 		CreateTriangle();
 	}
 
@@ -286,12 +286,7 @@ unsigned char* VoronoiDiagramGenerator::GetImage(int flag, unsigned int w, unsig
 
 	SetupColor(flag);
 	CreateTriangle();
-	if (flag == RIVER) {
-		SetupRiverTriangle(Color(1, 1, 1));
-	}
-	else {
-		SetupRiverTriangle(Color::lake);
-	}
+	SetupRiverTriangle();
 
 	if (image_flag != RIVER) {
 		for (Triangle tri : diagram->triangles) {
@@ -316,9 +311,9 @@ unsigned char* VoronoiDiagramGenerator::GetImage(int flag, unsigned int w, unsig
 	}
 
 	if (restore) {
-		SetupRiverTriangle(Color::lake);
 		SetupColor(ALL_IMAGE);
 		CreateTriangle();
+		SetupRiverTriangle();
 	}
 	return pixel_data;
 }
@@ -334,12 +329,7 @@ void VoronoiDiagramGenerator::CreateHeightmap(Heightmap& out_map, bool clear_ima
 
 	SetupColor(flag);
 	CreateTriangle();
-	if (flag == RIVER) {
-		SetupRiverTriangle(Color(1, 1, 1));
-	}
-	else {
-		SetupRiverTriangle(Color::lake);
-	}
+	SetupRiverTriangle();
 
 	//Heightmap* pixel_data = new Heightmap(w, h);
 	if (image_flag != RIVER) {
@@ -365,9 +355,9 @@ void VoronoiDiagramGenerator::CreateHeightmap(Heightmap& out_map, bool clear_ima
 	}
 
 	if (restore) {
-		SetupRiverTriangle(Color::lake);
 		SetupColor(ALL_IMAGE);
 		CreateTriangle();
+		SetupRiverTriangle();
 	}
 	
 	auto duration = 1000 * (std::clock() - start) / (double)CLOCKS_PER_SEC;
