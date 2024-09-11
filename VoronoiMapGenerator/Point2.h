@@ -46,37 +46,11 @@ public:
     double GetAngle() const;
     Point2 Normalize() const;
 
-    static double Dot(const Point2& a, const Point2& b) {
-        return a.x * b.x + a.y * b.y;
-    }
+    static double Dot(const Point2& a, const Point2& b);
 
-    static double Cross(const Point2& a, const Point2& b) {
-        return a.x * b.y - a.y * b.x;
-    }
-
-
-    static double AngleBetween(const Point2& vec1, const Point2& vec2) {
-    
-        double angle = AngleBetweenAbs(vec1, vec2);
-        angle = Cross(vec1, vec2) < 0 ? -angle : angle;
-
-        return angle;
-    }
-
-    static double AngleBetweenAbs(const Point2& vec1, const Point2& vec2) {
-        double dot = Dot(vec1, vec2);
-        double dist = vec1.DistanceFromOrigin() * vec2.DistanceFromOrigin();
-
-        if (dist == 0) {
-            return 0;
-        }
-
-        double cosTheta = dot / dist;
-        cosTheta = std::fmax(-1.0, std::fmin(1.0, cosTheta));
-
-        return std::acos(cosTheta) * 180.0 / 3.1415926f;
-    }
-
+    static double Cross(const Point2& a, const Point2& b);
+    static double AngleBetween(const Point2& vec1, const Point2& vec2);
+    static double AngleBetweenAbs(const Point2& vec1, const Point2& vec2);
 
     bool operator==( const Point2 &p ) const;
     bool operator!=( const Point2 &p ) const;

@@ -272,8 +272,8 @@ void VoronoiDiagramGenerator::SaveImage(int flag, const char* filename, unsigned
 
 	if (restore) {
 		SetupColor(ALL_IMAGE);
-		SetupRiverTriangle();
 		CreateTriangle();
+		SetupRiverTriangle();
 	}
 
 }

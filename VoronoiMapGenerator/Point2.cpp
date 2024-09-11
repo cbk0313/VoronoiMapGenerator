@@ -1,6 +1,7 @@
 #include "Point2.h"
 #include "Epsilon.h"
 #include <math.h>
+#include <algorithm>
 
 Point2::Point2() : x(0), y(0) {}
 
@@ -123,6 +124,40 @@ Point2 Point2::Normalize() const {
     double dist = DistanceFromOrigin();
     return Point2(x / dist, y / dist);
 }
+
+
+double Point2::Dot(const Point2& a, const Point2& b) {
+    return a.x * b.x + a.y * b.y;
+}
+
+double Point2::Cross(const Point2& a, const Point2& b) {
+    return a.x * b.y - a.y * b.x;
+}
+
+
+double Point2::AngleBetween(const Point2& vec1, const Point2& vec2) {
+
+    double angle = AngleBetweenAbs(vec1, vec2);
+    angle = Cross(vec1, vec2) < 0 ? -angle : angle;
+
+    return angle;
+}
+
+double Point2::AngleBetweenAbs(const Point2& vec1, const Point2& vec2) {
+    double dot = Dot(vec1, vec2);
+    double dist = vec1.DistanceFromOrigin() * vec2.DistanceFromOrigin();
+
+    if (dist == 0) {
+        return 0;
+    }
+
+    double cosTheta = dot / dist;
+    cosTheta = std::clamp(cosTheta, -1.0, 1.0);
+
+    return std::acos(cosTheta) * 180.0 / 3.1415926f;
+}
+
+
 
 bool Point2::operator==( const Point2 &p ) const {
     return x == p.x && y == p.y;
