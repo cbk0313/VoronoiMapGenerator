@@ -4,6 +4,7 @@
 #include "../Cell.h"
 #include "Triangle.h"
 
+
 class RiverEdge;
 class RiverLines;
 struct Cell;
@@ -185,10 +186,54 @@ public:
 };
 
 
+struct RiverDrawBox {
+	Point2& mPreMain;
+	const Point2& mNextMain;
+	
+	Point2& mPreLeft;
+	Point2& mNextLeft;
+
+	Point2& mPreRight;
+	Point2& mNextRight;
+
+	Point2& mPreNorm;
+	Point2& mNextNorm;
+
+	VertexColor& mPreColor;
+	const VertexColor& mNextColor;
+
+	RiverDrawBox(
+		Point2& preMain, Point2& nextMain, Point2& preLeft,
+		Point2& nextLeft, Point2& preRight, Point2& nextRight,
+		Point2& preNorm, Point2& nextNorm,
+		VertexColor& preColor, VertexColor& nextColor)
+		: mPreMain(preMain)
+		, mNextMain(nextMain)
+		, mPreLeft(preLeft)
+		, mNextLeft(nextLeft)
+		, mPreRight(preRight)
+		, mNextRight(nextRight)
+		, mPreNorm(preNorm)
+		, mNextNorm(nextNorm)
+		, mPreColor(preColor)
+		, mNextColor(nextColor)
+	{
+
+	}
+
+	void UpdatePrePoint() {
+		mPreMain = mNextMain;
+		mPreLeft = mNextLeft;
+		mPreRight = mNextRight;
+		mPreNorm = mNextNorm;
+		mPreColor = mNextColor;
+	}
+};
 
 class RiverTriangle {
 private:
-	static void AddCurvedTri(Triangles& tris, RiverPointVector& point, const VertexColor& pre_color, const VertexColor next_color, Point2 & next_norm, Point2 & pre_norm, Point2& new_p, Point2& pre_p, double& pre_angle_left, double& pre_angle_right, double t, double radius, double pre_scale, double next_scale, double spacing, bool is_end = false);
+	static void AddCurvedTri(Triangles& tris, RiverPointVector& point, RiverDrawBox& drawBox, double& pre_angle_left, double& pre_angle_right, double t, double radius, double spacing, bool is_end = false);
+	static void CalcColor(Diagram* diagram, VertexColor& pre_c, VertexColor& next_c, RiverPoint& pre_p, RiverPoint& next_p, const double& color_rate, double t);
 public:
 	static const double matrix_2[3][3];
 	static const double matrix_3[4][4];
@@ -199,14 +244,23 @@ public:
 	// https://wtg-study.tistory.com/102
 
 	static void CalcCardinal(RiverPointVector& point, double result[][2], int start = 0);
+	static void CalcSpline(RiverPointVector& point, double result[][2], int cubic_case = 0);
+
+	static void CalcCardinalEdge(RiverPointVector& point, RiverPointVector& left_point, RiverPointVector& right_point, Diagram* diagram, double main_result[][2], double left_result[][2], double right_result[][2], int start = 0);
+	static void CalcSplineEdge(RiverPointVector& point, RiverPointVector& left_point, RiverPointVector& right_point, Diagram* diagram, double main_result[][2], double left_result[][2], double right_result[][2], int cubic_case, int cul_point);
+
 	static Point2 GetCardinalPoint(double result[][2], double t);
-	static Point2 GetCardinalDirection(double result[][2], double prev, double next);
+	static Point2 GetCardinalDirection(double result[][2], double t);
+
+	static Point2 GetSplinePoint(double result[][2], double t);
+	static Point2 GetSplineDirection(double result[][2], double t);
+
 
 	static void CreateLineTri(Triangles& tris, RiverPointVector& point, Diagram* diagram, const double& color_rate, bool fade_in = false, bool fade_out = false);
 	static void CreateCardinalTri(Triangles& tris, RiverPointVector& point, Diagram* diagram, const double& color_rate, bool fade_in = false, bool fade_out = false);
 	static void CreateSplineTri(Triangles& tris, RiverPointVector& point, Diagram* diagram, const double& color_rate, bool fade_in = false, bool fade_out = false);
 	static void DrawCircle(Triangles& tris, Point2 center, const int num_segments, const double start, const int end, double radius, double river_scale, double power, VertexColor color);
-
+	
 };
 class RiverLine {
 
@@ -280,7 +334,7 @@ public:
 
 	//void Initialize(Diagram* diagram);
 	Cell* GetCell();
-	Triangles GetTriangle();
+	Triangles& GetTriangle();
 
 	std::vector<RiverLine*>& GetInputs() { return inputs; };
 	std::vector<RiverLine*>& GetOutputs() { return outputs; };
