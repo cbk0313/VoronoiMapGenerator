@@ -14,7 +14,6 @@ struct UnionArray;
 
 struct BoundingBox;
 class Diagram;
-using UDiagram = Diagram;
 
 class Diagram {
 
@@ -22,15 +21,15 @@ class Diagram {
 	friend class RiverEdge;
 	friend class RiverLine;
 	//UDiagram(GenerateSetting& setting) : river_lines(RiverLines(setting)) {}
-	Diagram() : ADDED_COUNT(0), max_elevation(1), min_elevation(-1), max_moisture(0), CellUnique(0) {}
-	/*UDiagram(const FObjectInitializer& ObjectInitializer)
-		: Super(ObjectInitializer)
-		, ADDED_COUNT(0)
-	{};*/
-
+	Diagram() 
+		: ADDED_COUNT(0)
+		, max_elevation(1)
+		, min_elevation(-1)
+		, max_moisture(0)
+		, mImageFlag(0)
+		, CellUnique(0)
+	{}
 	GenerateSetting mSetting;
-
-	void Initialize(GenerateSetting& setting);
 
 	std::vector<Cell*> cells;
 	std::vector<Edge*> edges;
@@ -56,7 +55,7 @@ class Diagram {
 
 public:
 	unsigned int CellUnique;
-
+	void Initialize(GenerateSetting& setting);
 	unsigned int GetCellUnique() { return CellUnique; }
 	std::vector<Cell*>& GetCells() { return cells; }
 	std::vector<Edge*>& GetEdges() { return edges; }

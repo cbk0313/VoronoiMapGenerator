@@ -23,7 +23,10 @@ GenerateSetting::GenerateSetting()
 	, river_additional_curve_chance(0.5)
 	, river_additional_curve_distance(0.5)
 	, randgen(RandomGenerator(0))
-{};
+	, cell_size(0)
+{
+	cell_size = (dimension / sqrt(nPoints)) / 2;
+};
 
 
 
@@ -35,6 +38,7 @@ GenerateSetting::GenerateSetting(MapType _type, int _seed, signed int _nPoints,
 	double _lake_radius_max, double _lake_radius_min, double _river_radius, double _river_power_scale,
 	double _river_curv_spacing, double _river_additional_curve_chance, double _additional_curve_distance)
 	: randgen(RandomGenerator(_seed))
+	, cell_size(0)
 {
 
 	SetMapType(_type);
@@ -60,5 +64,7 @@ GenerateSetting::GenerateSetting(MapType _type, int _seed, signed int _nPoints,
 	SetRiverCurvSpacing(_river_curv_spacing);
 	SetRiverAdditionalCurveChance(_river_additional_curve_chance);
 	SetRiverAdditionalCurveDistance(_additional_curve_distance);
+
+	cell_size = (dimension / sqrt(nPoints)) / 2;
 };
 

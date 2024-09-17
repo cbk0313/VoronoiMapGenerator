@@ -289,10 +289,9 @@ void Triangle::DrawTransparentGrayscale(Heightmap& pixel_data, unsigned int w, u
 				double alpha = std::clamp<double>(c.a, 0.0, 1.0);
 				double pixel_alpha = 1. - alpha;
 
-				//unsigned int mix_c = (unsigned int)(pixel_c * pixel_alpha + c_gray * alpha);
+
 				//uint16_t mix_c = std::max(pixel_c, (uint16_t)(c_gray * alpha));
-				uint16_t mix_c = std::max(pixel_c, (uint16_t)(c_gray * alpha));
-				//std::cout << alpha << ", " << cast_c << "\n";
+				uint16_t mix_c = (uint16_t)std::min(MAX_GRAY, (int)((double)c_gray * alpha + (double)pixel_c * pixel_alpha));
 				DrawGrayscalePixel(pixel_data, w, h, x, y, mix_c);
 			}
 			else if (begin_draw) {
@@ -304,7 +303,6 @@ void Triangle::DrawTransparentGrayscale(Heightmap& pixel_data, unsigned int w, u
 	
 	
 }
-
 
 
 void Triangle::AdjustSize(unsigned int w, unsigned int h, double dimension) {

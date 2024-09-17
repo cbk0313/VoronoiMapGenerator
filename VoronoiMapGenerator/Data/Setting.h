@@ -55,6 +55,8 @@ private:
 	double river_curv_spacing;
 	double river_additional_curve_chance;
 	double river_additional_curve_distance;
+
+	double cell_size;
 private:
 	RandomGenerator randgen;
 public:
@@ -91,6 +93,8 @@ public:
 	inline void SetRiverAdditionalCurveChance(double new_curvSpacing) { river_additional_curve_chance = new_curvSpacing; };
 	inline void SetRiverAdditionalCurveDistance(double new_dist) { river_additional_curve_distance = new_dist; };
 
+	inline int GetPoints() const { return nPoints; };
+	inline int GetDimension() const { return dimension; };
 	inline MapType GetMapType() const { return type; };
 	inline int GetSeed() const { return seed; };
 	inline double GetSiteRange() const { return site_range; };
@@ -110,6 +114,7 @@ public:
 	inline double GetRiverCurvSpacing() const { return river_curv_spacing; };
 	inline double GetRiverAdditionalCurveChance() const { return river_additional_curve_chance; };
 	inline double GetRiverAdditionalCurveDistance() const { return river_additional_curve_distance; };
+	inline double GetCellSize() const { return cell_size; };
 
 	inline double GetRandom() const {
 		return randgen.GetRandom(); // RAND_MAX 

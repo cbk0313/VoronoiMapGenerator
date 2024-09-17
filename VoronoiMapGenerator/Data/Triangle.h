@@ -24,7 +24,7 @@ public:
 	void DrawTransparentGrayscale(Heightmap& pixel_data, unsigned int w, unsigned int h);
 
 	void AdjustSize(unsigned int w, unsigned int h, double dimension);
-
+	bool IsInside(const Point2& p) const;
 private:
 	double MinX() const;
 	double MaxX() const;
@@ -36,7 +36,7 @@ private:
 	unsigned int FindLeftmostXGivenY(unsigned int y, unsigned int max_x);
 	unsigned int FindRightmostXGivenY(unsigned int y, unsigned int max_x);
 
-	bool IsInside(const Point2& p) const;
+	
 	Color InterpolateColor(const Point2& p) const;
 	uint16_t InterpolateGray(const Point2& p) const;
 	void DrawPixel(unsigned char* pixel_data, unsigned int w, unsigned int h, unsigned int x, unsigned int y, const CharColor& c) const;

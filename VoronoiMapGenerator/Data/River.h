@@ -169,9 +169,10 @@ struct RiverPoint {
 
 	Cell* cell;
 public:
+	int elevation;
 	unsigned int power;
 	Point2 point;
-	RiverPoint(unsigned int pow, Cell* c, Point2 p = Point2(0, 0)) : power(pow), cell(c) {
+	RiverPoint(unsigned int pow, int elev, Cell* c, Point2 p = Point2(0, 0)) : cell(c), elevation(elev), power(pow) {
 		if (c != nullptr) {
 			point = c->site.p;
 		}
@@ -183,6 +184,8 @@ public:
 	Cell* GetCell() {
 		return cell;
 	}
+
+	double GetRiverWidth(Diagram* diagram);
 };
 
 
@@ -233,7 +236,7 @@ struct RiverDrawBox {
 class RiverTriangle {
 private:
 	static void AddCurvedTri(Triangles& tris, RiverPointVector& point, RiverDrawBox& drawBox, double& pre_angle_left, double& pre_angle_right, double t, double radius, double spacing, bool is_end = false);
-	static void CalcColor(Diagram* diagram, VertexColor& pre_c, VertexColor& next_c, RiverPoint& pre_p, RiverPoint& next_p, const double& color_rate, double t);
+	static VertexColor CalcColor(Diagram* diagram, VertexColor& pre_c, RiverPoint& pre_p, RiverPoint& next_p, const double& color_rate, double t);
 public:
 	static const double matrix_2[3][3];
 	static const double matrix_3[4][4];
@@ -247,8 +250,9 @@ public:
 	static void CalcSpline(RiverPointVector& point, double result[][2], int cubic_case = 0);
 
 	static void CalcCardinalEdge(RiverPointVector& point, RiverPointVector& left_point, RiverPointVector& right_point, Diagram* diagram, double main_result[][2], double left_result[][2], double right_result[][2], int start = 0);
-	static void CalcSplineEdge(RiverPointVector& point, RiverPointVector& left_point, RiverPointVector& right_point, Diagram* diagram, double main_result[][2], double left_result[][2], double right_result[][2], int cubic_case, int cul_point);
-
+	static void CalcSplineEdge(RiverPointVector& points, RiverPointVector& left_points, RiverPointVector& right_points, Diagram* diagram, double main_result[][2], double start_cardinal_result[][2], double end_cardinal_result[][2]);
+	static void AddPoint(RiverPointVector& left_points, RiverPointVector& right_points, RiverPoint& point, Diagram* diagram, Point2 dir);
+	
 	static Point2 GetCardinalPoint(double result[][2], double t);
 	static Point2 GetCardinalDirection(double result[][2], double t);
 
@@ -259,28 +263,20 @@ public:
 	static void CreateLineTri(Triangles& tris, RiverPointVector& point, Diagram* diagram, const double& color_rate, bool fade_in = false, bool fade_out = false);
 	static void CreateCardinalTri(Triangles& tris, RiverPointVector& point, Diagram* diagram, const double& color_rate, bool fade_in = false, bool fade_out = false);
 	static void CreateSplineTri(Triangles& tris, RiverPointVector& point, Diagram* diagram, const double& color_rate, bool fade_in = false, bool fade_out = false);
-	static void DrawCircle(Triangles& tris, Point2 center, const int num_segments, const double start, const int end, double radius, double river_scale, double power, VertexColor color);
+	static void DrawCircle(Triangles& tris, Point2 center, const int num_segments, const double start, const int end, double radius, VertexColor color);
 	
 };
+
 class RiverLine {
-
-
 
 	bool used;
 	Diagram* diagram;
 	RiverPointVector points;
 	Triangles tris;
-	//double radius;
-	//double power_sacle;
-	//double curv_spacing;
 
-	RiverLine(Diagram* l_diagram, GenerateSetting& setting)
+	RiverLine(Diagram* l_diagram)
 		: used(false)
 		, diagram(l_diagram)
-		//, radius(_radius)
-		//, power_sacle(_power_sacle)
-		//, curv_spacing(0.02f)
-
 	{};
 
 	RiverLine(const RiverLine& other)
@@ -297,7 +293,7 @@ public:
 
 	Diagram* GetDiagram();
 	// Create new RiverLine.
-	static RiverLine* Create(Diagram* l_diagram, GenerateSetting& setting);
+	static RiverLine* Create(Diagram* l_diagram);
 	// Copy other.
 	static RiverLine* Create(const RiverLine& other);
 	// Sets that it has been used
@@ -316,7 +312,7 @@ public:
 	RiverPoint& GetFirstPoint();
 	RiverPoint& GetEndPoint();
 	void AdjustPoint();
-
+	void RepairPoint();
 };
 
 class RiverCrossing;
@@ -356,7 +352,7 @@ public:
 	Diagram* GetDiagram();
 	RiverCrossing* Get(unsigned int cell_unique);
 	void AddRiver(RiverLine* river);
-	void CreateCrossingPointTriagle(double sea_level, double color_rate, double radius, double river_scale, double spacing);
+	void CreateCrossingPointTriagle(Diagram* diagram, double color_rate);
 	Triangles GetTriangle();
 };
 
@@ -409,5 +405,6 @@ public:
 	void AddLine(RiverLine* line);
 	std::vector<RiverLine*>& GetArray();
 	void AdjustPoint();
+	void RepairPoint();
 	void CreateTriagle(double color_rate);
 };

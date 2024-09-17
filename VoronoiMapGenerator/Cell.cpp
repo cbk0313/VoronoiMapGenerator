@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <limits>
 #include "Diagram.h"
+#include "Data/Triangle.h"
 
 //unsigned int Cell::s_unique = 0;
 
@@ -68,6 +69,16 @@ cellBoundingBox Cell::getBoundingBox() {
 	}
 
 	return cellBoundingBox(xmin, ymin, xmax, ymax);
+}
+
+bool Cell::IsInside(Point2 pos) {
+	for (HalfEdge* hf : halfEdges) {
+		Edge* e = hf->edge;
+		Triangle triA = Triangle{site.p, e->vertA->point, e->p };
+		Triangle triB = Triangle{site.p, e->vertB->point, e->p };
+		if (triA.IsInside(pos) || triB.IsInside(pos)) return true;
+	}
+	return false;
 }
 
 // Return whether a point is inside, on, or outside the cell:

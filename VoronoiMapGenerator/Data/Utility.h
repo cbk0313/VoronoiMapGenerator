@@ -6,7 +6,7 @@
 #define ROUND_DECIMAL_2 100
 #define ROUND_DECIMAL_1 10
 
-namespace VoronoiMapGenerator {
+namespace voronoi_map_generator {
 	inline double Round3(double num) {
 		return round(num * ROUND_DECIMAL_3) / ROUND_DECIMAL_3;
 	}

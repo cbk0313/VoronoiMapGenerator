@@ -133,9 +133,3 @@ public:
 
 
 
-
-inline void VoronoiDiagramGenerator::detachBeachSection(treeNode<BeachSection>* section) {
-	circleEventQueue->removeCircleEvent(section);
-	beachLine->removeNode(section);
-}
-

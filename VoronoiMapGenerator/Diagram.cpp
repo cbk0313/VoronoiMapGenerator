@@ -90,7 +90,7 @@ const GenerateSetting& Diagram::GetSetting() const {
 }
 
 Vertex* Diagram::createVertex(double x, double y) {
-	Vertex* vert = vertexPool.newElement(Point2(VoronoiMapGenerator::Round2(x), VoronoiMapGenerator::Round2(y)));
+	Vertex* vert = vertexPool.newElement(Point2(voronoi_map_generator::Round2(x), voronoi_map_generator::Round2(y)));
 	vertices.push_back(vert);
 
 	return vert;

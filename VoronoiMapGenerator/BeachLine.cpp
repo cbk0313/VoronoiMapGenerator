@@ -7,6 +7,14 @@
 #include <forward_list>
 #include <limits>
 
+
+
+inline void VoronoiDiagramGenerator::detachBeachSection(treeNode<BeachSection>* section) {
+	circleEventQueue->removeCircleEvent(section);
+	beachLine->removeNode(section);
+}
+
+
 treeNode<BeachSection>* VoronoiDiagramGenerator::addBeachSection(Site* site) {
 	double x = site->p.x;
 	double directrix = site->p.y;

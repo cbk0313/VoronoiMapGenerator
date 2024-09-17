@@ -46,6 +46,7 @@ public:
 	Cell(Point2 _site, Diagram* diagram);
 	unsigned int GetUnique() { return unique; };
 	CellDetail& GetDetail() { return detail; };
+	bool IsInside(Point2 pos);
 
 	//Cell* GetHasRiver();
 	//void SetHasRiver(Cell* c);

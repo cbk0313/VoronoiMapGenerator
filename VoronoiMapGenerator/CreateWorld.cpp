@@ -1112,7 +1112,6 @@ void VoronoiDiagramGenerator::CreateRiver() {
 		}
 	}
 
-
 	for (auto item : diagram->islandUnion.unions) {
 		auto island = item.second;
 
@@ -1124,10 +1123,13 @@ void VoronoiDiagramGenerator::CreateRiver() {
 
 
 				auto river_pos = RiverEdge::GetPos(lake, lake);
-				using Temp = std::tuple<RiverEdge*, RiverLine*/*, bool*/>;
+				using Temp = std::tuple<RiverEdge*, RiverLine*, int/*, bool*/>;
 				std::stack<Temp> buf;
 				if (diagram->river_lines.GetRiverEdges().find(river_pos) != diagram->river_lines.GetRiverEdges().end()) {
-					buf.push(std::make_tuple(diagram->river_lines.GetRiverEdges()[river_pos], RiverLine::Create(diagram, setting)/*, true*/));
+					RiverEdge* e = diagram->river_lines.GetRiverEdges()[river_pos];
+					if (e != nullptr) {
+						buf.push(std::make_tuple(e, RiverLine::Create(diagram), e->GetStart()->GetDetail().GetElevation()/*, true*/));
+					}
 				}
 
 
@@ -1136,14 +1138,19 @@ void VoronoiDiagramGenerator::CreateRiver() {
 					buf.pop();
 					RiverEdge* e = get<0>(value);
 					RiverLine* c_arr = RiverLine::Create(*get<1>(value));
+					int elev = get<2>(value);
 					//bool is_valid = get<2>(value);
 
 					if (e == nullptr) continue;
 					
 					if (e->IsStart()) {
-						c_arr->AddPoint(RiverPoint(e->GetPower(), e->GetStart()));
+						elev = std::min<int>(elev, e->GetStart()->GetDetail().GetElevation());
+						c_arr->AddPoint(RiverPoint(e->GetPower(), elev, e->GetStart()));
 					}
-					else c_arr->AddPoint(RiverPoint(e->GetPower(), e->GetEnd()));
+					else {
+						elev = std::min<int>(elev, e->GetEnd()->GetDetail().GetElevation());
+						c_arr->AddPoint(RiverPoint(e->GetPower(), elev, e->GetEnd()));
+					}
 
 					if ((e->GetNexts().size() == 0 || e->IsEnd())) {
 						if (c_arr->GetPointArray().size() > 1/* && is_valid*/) {
@@ -1188,7 +1195,7 @@ void VoronoiDiagramGenerator::CreateRiver() {
 								//}
 
 								if (valid) {
-									buf.push(std::make_tuple(next_e, c_arr));
+									buf.push(std::make_tuple(next_e, c_arr, elev));
 								}
 							}
 						}
@@ -1197,9 +1204,11 @@ void VoronoiDiagramGenerator::CreateRiver() {
 								diagram->river_lines.AddLine(c_arr);
 							//}
 							for (auto next_e : e->GetNexts()) {
-								RiverLine* new_line = RiverLine::Create(diagram, setting);
-								new_line->AddPoint(RiverPoint(next_e->GetPower(), next_e->GetStart()));
-								buf.push(std::make_tuple(next_e, new_line/*, true*/));
+								RiverLine* new_line = RiverLine::Create(diagram);
+								elev = std::min<int>(elev, next_e->GetEnd()->GetDetail().GetElevation());
+
+								new_line->AddPoint(RiverPoint(next_e->GetPower(), elev, next_e->GetStart()));
+								buf.push(std::make_tuple(next_e, new_line, elev/*, true*/));
 							}
 						}
 
@@ -1218,9 +1227,10 @@ void VoronoiDiagramGenerator::CreateRiver() {
 
 void VoronoiDiagramGenerator::SetupRiverTriangle() {
 	double color_rate = CalcIslandColorRate();
+	diagram->river_lines.AdjustPoint();
 	diagram->river_lines.CreateTriagle(color_rate);
-	diagram->river_cross.CreateCrossingPointTriagle((double)GetSetting().GetSeaLevel(), color_rate, setting.GetRiverRadius(), setting.GetRiverPowerScale(), 0.1);
-
+	diagram->river_cross.CreateCrossingPointTriagle(diagram, color_rate);
+	diagram->river_lines.RepairPoint();
 }
 
 void VoronoiDiagramGenerator::SetupBiome() {

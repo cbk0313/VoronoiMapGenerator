@@ -505,12 +505,14 @@ int main() {
 
 			int flag = VoronoiDiagramGenerator::ISLAND | VoronoiDiagramGenerator::COAST | VoronoiDiagramGenerator::OCEAN;
 			vdg.CreateHeightmap(map, true, flag, IMAGE_WIDTH, IMAGE_HEIGHT, false);
+			vdg.CreateHeightmap(map, false, VoronoiDiagramGenerator::RIVER, IMAGE_WIDTH, IMAGE_HEIGHT, false);
 			map.SaveImage("voronoi_map_island_grayscale.png");
 
 			map.BoxBlur(10);
 			map.SaveImage("voronoi_map_island_BoxBlur_grayscale.png");
 
 			vdg.CreateHeightmap(map, true, flag, IMAGE_WIDTH, IMAGE_HEIGHT, false);
+			vdg.CreateHeightmap(map, false, VoronoiDiagramGenerator::RIVER, IMAGE_WIDTH, IMAGE_HEIGHT, false);
 			map.GaussianBlur(3, 1.0);
 			map.SaveImage("voronoi_map_island_GaussianBlur_grayscale.png");
 
