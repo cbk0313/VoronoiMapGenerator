@@ -15,9 +15,9 @@ Fortune's algorithm implementation used the source code at the address below.
 FastNoiseLite was used to generate the terrain (https://github.com/Auburn/FastNoiseLite?tab=readme-ov-file)  
 
 // PS) 언리얼엔진용 플러그인 제작하기 전 프로토타입 프로그램입니다.  
-// 플러그인을 어느정도 만들긴 했지만 엔진에 있는 Water 기능이 무거워 추가 작업이 필요하고, Heightmap 생성 후 렌드스케이프에 적용하는 과정에서 엔진 소스코드를 가져와서 라이센스 문제 때문에 공유 문제도 있어 일단 중지 입니다!  
+// 플러그인을 어느정도 만들긴 했지만 엔진에 있는 Water 기능이 무거워 추가 작업이 필요하고, Heightmap 생성 후 렌드스케이프에 적용하는 과정에서 엔진 소스코드를 가져와서 라이센스 문제도 있어서 공유는 한참 뒤에 될 것 같습니다.  
 // PS) This is a prototype program before creating a plugin for Unreal Engine.  
-// Although i have created a plug-in to some extent, the water function in the engine is heavy so additional work is needed. In the process of creating the heightmap and applying it to Landscape, there are sharing issues due to licensing with importing the engine source code, so plans to share it will be at a later date.  
+// Although i have created a plug-in to some extent, the water function in the engine is heavy so additional work is needed. In the process of creating the heightmap and applying it to Landscape, there are sharing issues due to licensing with importing the engine source code, so plans to public it will be at a later date.  
   
 # Overview
 강, 해안가, 강물, 평지가 구현되어 있습니다.  
