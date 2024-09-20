@@ -18,6 +18,10 @@ namespace voronoi_map_generator {
 	inline double Round1(double num) {
 		return round(num * ROUND_DECIMAL_1) / ROUND_DECIMAL_1;
 	}
+
+	inline double ConvertRange(double value, double oldMin, double oldMax, double newMin, double newMax) {
+		return (value - oldMin) / (oldMax - oldMin) * (newMax - newMin) + newMin;
+	}
 }
 
 

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include "Heightmap.h"
+#include "Utility.h"
 
 
 double Triangle::MinX() const {
@@ -282,13 +283,13 @@ void Triangle::DrawTransparentGrayscale(Heightmap& pixel_data, unsigned int w, u
 			if (IsInside(Point2(x, y))) {
 				begin_draw = true;
 				Color c = InterpolateColor(Point2(x, y));
+				c.a = CurveAdjust(c.a);
+				//std::cout << c.a << "\n";
 				uint16_t c_gray = InterpolateGray(Point2(x, y));
-
 				uint16_t pixel_c = GetGrayscalePixelColor(pixel_data, w, h, x, y);
 
 				double alpha = std::clamp<double>(c.a, 0.0, 1.0);
 				double pixel_alpha = 1. - alpha;
-
 
 				//uint16_t mix_c = std::max(pixel_c, (uint16_t)(c_gray * alpha));
 				uint16_t mix_c = (uint16_t)std::min(MAX_GRAY, (int)((double)c_gray * alpha + (double)pixel_c * pixel_alpha));
@@ -304,6 +305,15 @@ void Triangle::DrawTransparentGrayscale(Heightmap& pixel_data, unsigned int w, u
 	
 }
 
+double Triangle::CurveAdjust(double ratio) {
+	double result[3] = { -1, 2, 0 };
+	return CalcCardinalY(result, ratio);
+}
+
+
+double Triangle::CalcCardinalY(double result[], double t) {
+	return result[2] + t * (result[1] + result[0] * t);
+}
 
 void Triangle::AdjustSize(unsigned int w, unsigned int h, double dimension) {
 	for (int i = 0; i < 3; i++) {

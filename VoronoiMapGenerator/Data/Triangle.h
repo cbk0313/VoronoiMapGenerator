@@ -25,6 +25,9 @@ public:
 
 	void AdjustSize(unsigned int w, unsigned int h, double dimension);
 	bool IsInside(const Point2& p) const;
+
+	double CurveAdjust(double ratio);
+	double CalcCardinalY(double result[], double t);
 private:
 	double MinX() const;
 	double MaxX() const;
@@ -35,7 +38,6 @@ private:
 	bool IsYBetweenPoints(const Point2& p1, const Point2& p2, double y);
 	unsigned int FindLeftmostXGivenY(unsigned int y, unsigned int max_x);
 	unsigned int FindRightmostXGivenY(unsigned int y, unsigned int max_x);
-
 	
 	Color InterpolateColor(const Point2& p) const;
 	uint16_t InterpolateGray(const Point2& p) const;
