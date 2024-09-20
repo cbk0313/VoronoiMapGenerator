@@ -27,15 +27,12 @@ You can check peak and highest peak. additionally moisture is implemented.
 
 아래는 생성된 하이트맵 이미지와 다른 예시 사진입니다.  
 Below are the generated heightmap images and other example.  
-![voronoi_map_islnad](https://github.com/cbk0313/VoronoiMapGenerator/assets/66576971/a390d0e4-72ac-4e6e-a85b-92a767ff0fed)
-![voronoi_map_lake](https://github.com/cbk0313/VoronoiMapGenerator/assets/66576971/936bfed4-a17b-438b-a5fc-ae7dd6520162)
-![voronoi_map_river](https://github.com/cbk0313/VoronoiMapGenerator/assets/66576971/135cf5cd-0c37-4173-85b4-14e7ff078f01)
-![voronoi_map_all](https://github.com/cbk0313/VoronoiMapGenerator/assets/66576971/43ec84c3-09f9-4270-b5ab-b7d51cb62e60)
-![island_example1](https://github.com/cbk0313/VoronoiMapGenerator/assets/66576971/610d0cba-da1e-491f-bb0b-a24a215e80ef)
-![island_example2](https://github.com/cbk0313/VoronoiMapGenerator/assets/66576971/4b1edd51-d859-4da3-9258-7dedb3a22ed4)
+![스크린샷 2024-09-21 034828](https://github.com/user-attachments/assets/5c6b3b4c-ed7c-42f3-8582-9586e8ca5f0e)
+![스크린샷 2024-09-21 034920](https://github.com/user-attachments/assets/5c03a0d5-7c42-4f89-ad36-527c18f15c29)
+![voronoi_map_river_grayscale](https://github.com/user-attachments/assets/880a08c6-1edf-4f9f-966a-f666ed66a4b2)
   
-Import heightmap into UE5 Landscape  
-![스크린샷 2024-07-07 063914](https://github.com/cbk0313/VoronoiMapGenerator/assets/66576971/53214962-8201-4b3b-ac7d-779bffa6a720)
+Import heightmap by VoronoiMapGenerator Plugin(UE5) 
+![스크린샷 2024-09-21 010516](https://github.com/user-attachments/assets/e0877589-0e90-4718-99b9-8931215e0b57)
   
 # Performance
 CPU: 5800X3D  
