@@ -731,17 +731,28 @@ void RiverTriangle::DrawCircle(Triangles& tris, Point2 center, const int num_seg
 }
 
 
-//
-//RiverLine::RiverLine(double radius, double powerScale, double curvSpacing)
-//	: used(false)
-//	, Radius(radius)
-//	, PowerScale(powerScale)
-//	, CurvSpacing(curvSpacing)
-//	//, radius(_radius)
-//	//, power_sacle(_power_sacle)
-//	//, curv_spacing(0.02f)
-//
-//{};
+RiverPoint::RiverPoint(unsigned int pow, int elev, Cell* c, Point2 p = Point2(0, 0))
+	: cell(c)
+	, elevation(elev)
+	, power(pow) {
+	if (c != nullptr) {
+		point = c->site.p;
+	}
+	else {
+		point = p;
+	}
+};
+
+Cell* RiverPoint::GetCell() {
+	return cell;
+}
+
+double RiverPoint::GetRiverWidth(Diagram* diagram) {
+	const GenerateSetting& main_setting = diagram->GetSetting();
+	const double radius = main_setting.GetRiverRadius();
+	const double river_scale = main_setting.GetRiverPowerScale();
+	return std::min(main_setting.GetCellSize(), radius * (power * (river_scale + 1)));
+}
 
 Diagram* RiverLine::GetDiagram() {
 	return diagram;
@@ -1079,8 +1090,7 @@ void RiverLines::AddLine(RiverLine* line) {
 				double theta = 2.0f * PI_ * (GetDiagram()->GetSetting().GetRandom() / 360);
 				double x = dist * cosf((float)theta);
 				double y = dist * sinf((float)theta);
-				//Point2 p = (vec[i - 1].point + vec[i].point) / 2 + Point2(main_setting.GetRandom(), main_setting.GetRandom()) * p_dist * main_setting.GetRiverAdditionalCurveDistance();
-				RiverPoint rp = RiverPoint((unsigned int)power, elev, nullptr, p + Point2(x, y));
+				RiverPoint rp = RiverPoint((unsigned int)power, elev, nullptr /*Bad code!! It will be deleted*/, p + Point2(x, y));
 				temp.push_back(rp);
 			}
 			temp.push_back(vec[i]);
@@ -1117,14 +1127,6 @@ void RiverLines::CreateTriagle(double color_rate) {
 		river->CreateTriangle(color_rate);
 	}
 
-}
-
-
-double RiverPoint::GetRiverWidth(Diagram* diagram) {
-	const GenerateSetting& main_setting = diagram->GetSetting();
-	const double radius = main_setting.GetRiverRadius();
-	const double river_scale = main_setting.GetRiverPowerScale();
-	return std::min(main_setting.GetCellSize(), radius * (power * (river_scale + 1)));
 }
 
 #undef PI_

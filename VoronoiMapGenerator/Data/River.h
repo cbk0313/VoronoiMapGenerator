@@ -172,19 +172,9 @@ public:
 	int elevation;
 	unsigned int power;
 	Point2 point;
-	RiverPoint(unsigned int pow, int elev, Cell* c, Point2 p = Point2(0, 0)) : cell(c), elevation(elev), power(pow) {
-		if (c != nullptr) {
-			point = c->site.p;
-		}
-		else {
-			point = p;
-		}
-	};
+	RiverPoint(unsigned int pow, int elev, Cell* c, Point2 p = Point2(0, 0));
 
-	Cell* GetCell() {
-		return cell;
-	}
-
+	Cell* GetCell();
 	double GetRiverWidth(Diagram* diagram);
 };
 
