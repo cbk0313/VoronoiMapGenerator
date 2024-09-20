@@ -731,7 +731,7 @@ void RiverTriangle::DrawCircle(Triangles& tris, Point2 center, const int num_seg
 }
 
 
-RiverPoint::RiverPoint(unsigned int pow, int elev, Cell* c, Point2 p = Point2(0, 0))
+RiverPoint::RiverPoint(unsigned int pow, int elev, Cell* c, Point2 p)
 	: cell(c)
 	, elevation(elev)
 	, power(pow) {
