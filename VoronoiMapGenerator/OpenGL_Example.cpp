@@ -291,6 +291,22 @@ void draw_image(VoronoiDiagramGenerator* vdg, unsigned int dimension) {
 	}
 	glEnd();
 
+	//glBegin(GL_LINES);
+	//for (RiverLine* line : diagram->GetRiverLines().GetArray()) {
+	//	for (int i = 1; i < line->GetPointArray().size(); i++) {
+	//		RiverPoint& riverPoint = line->GetPointArray()[i - 1];
+	//		//std::cout << riverPoint.power << std::endl;
+	//		Point2& pre_point = line->GetPointArray()[i - 1].point;
+	//		Point2& point = line->GetPointArray()[i].point;
+	//		glColor4f(0, 0, 0, 1);
+	//		glVertex3d((GLfloat)normalize(pre_point[0], dimension), -(GLfloat)normalize(pre_point[1], dimension), 0.0);
+	//		glVertex3d((GLfloat)normalize(point[0], dimension), -(GLfloat)normalize(point[1], dimension), 0.0);
+
+
+	//	}
+	//}
+	//glEnd();
+
 	if (draw_white_dot || draw_special_dot) {
 
 		for (Cell* c : diagram->GetCells()) {
