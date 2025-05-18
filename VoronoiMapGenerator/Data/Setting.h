@@ -130,5 +130,5 @@ public:
 
 	inline void Srand() { randgen = RandomGenerator(seed); }
 
-
+	double GetRiverWidth(double power) const;
 };

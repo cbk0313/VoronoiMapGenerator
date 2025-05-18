@@ -290,8 +290,9 @@ void RiverTriangle::CalcCardinal(RiverPointVector& point, double result[][2], in
 
 void RiverTriangle::CalcCardinalEdge(RiverPointVector& point, RiverPointVector& left_point, RiverPointVector& right_point, Diagram* diagram, double main_result[][2], double left_result[][2], double right_result[][2], int start) {
 	const GenerateSetting& main_setting = diagram->GetSetting();
-	const double radius = main_setting.GetRiverRadius();
-	const double river_scale = main_setting.GetRiverPowerScale();
+	//const double radius = main_setting.GetRiverRadius();
+	//const double river_scale = main_setting.GetRiverPowerScale();
+
 	for (int i = 0; i < 3; i++) {
 		double dx = main_result[1][0] + (main_result[0][0]) * i;
 		double dy = main_result[1][1] + (main_result[0][1]) * i;
@@ -326,7 +327,6 @@ void RiverTriangle::CalcCardinalEdge(RiverPointVector& point, RiverPointVector& 
 void RiverTriangle::AddPoint(RiverPointVector& left_points, RiverPointVector& right_points, RiverPoint& point, Diagram* diagram, Point2 dir) {
 	const GenerateSetting& main_setting = diagram->GetSetting();
 	double length = point.GetRiverWidth(diagram);
-
 	Point2 cross_norm = Point2(-dir.y, dir.x).Normalize();
 	Point2 new_dot = point.point + cross_norm * length;
 	/*if (point.cell && !point.cell->IsInside(new_dot)) {
@@ -749,9 +749,11 @@ Cell* RiverPoint::GetCell() {
 
 double RiverPoint::GetRiverWidth(Diagram* diagram) {
 	const GenerateSetting& main_setting = diagram->GetSetting();
-	const double radius = main_setting.GetRiverRadius();
-	const double river_scale = main_setting.GetRiverPowerScale();
-	return std::min(main_setting.GetCellSize(), radius * (power * (river_scale + 1)));
+	//const double radius = main_setting.GetRiverRadius();
+	//const double river_scale = main_setting.GetRiverPowerScale();
+	//
+	//return std::min(main_setting.GetCellSize(), radius * ((1 + power) * (river_scale + 1)));
+	return main_setting.GetRiverWidth(power);
 }
 
 Diagram* RiverLine::GetDiagram() {
@@ -994,10 +996,10 @@ void RiverCrossingMap::CreateCrossingPointTriagle(Diagram* diagram, double color
 				color = VoronoiDiagramGenerator::CalcIslandColor(CALC_RIVER_ELEVE(elev), main_setting.GetSeaLevel(), color_rate);
 			}
 
-			const double radius = main_setting.GetRiverRadius();
-			const double river_scale = main_setting.GetRiverPowerScale();
-			double length = std::min(main_setting.GetCellSize(), radius * (power * (river_scale + 1)));
-
+			//const double radius = main_setting.GetRiverRadius();
+			//const double river_scale = main_setting.GetRiverPowerScale();
+			//double length = std::min(main_setting.GetCellSize(), radius * ((1+power) * (river_scale + 1)));
+			double length = main_setting.GetRiverWidth(power);
 			
 			VertexColor trans_c = VertexColor(Color(color.rgb.r, color.rgb.g, color.rgb.b, 0), color.gray);
 			for (int i = 0; i < num_segments; i++) {

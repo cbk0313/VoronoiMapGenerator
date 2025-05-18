@@ -68,3 +68,10 @@ GenerateSetting::GenerateSetting(MapType _type, int _seed, signed int _nPoints,
 	cell_size = (dimension / sqrt(nPoints)) / 2;
 };
 
+
+double GenerateSetting::GetRiverWidth(double power) const {
+	const double radius = GetRiverRadius();
+	const double river_scale = GetRiverPowerScale();
+
+	return std::min(GetCellSize(), radius * ((1 + power) * (river_scale + 1)));
+}
