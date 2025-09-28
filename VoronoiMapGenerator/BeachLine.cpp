@@ -182,6 +182,7 @@ void VoronoiDiagramGenerator::removeBeachSection(treeNode<BeachSection>* section
 	treeNode<BeachSection>* prev = section->prev;
 	treeNode<BeachSection>* next = section->next;
 	std::vector<treeNode<BeachSection>*> disappearingTransitions;
+	disappearingTransitions.reserve(4); // Optimize: Reserve small size for typical use case
 	std::forward_list<treeNode<BeachSection>*> toBeDetached;
 	disappearingTransitions.push_back(section);
 

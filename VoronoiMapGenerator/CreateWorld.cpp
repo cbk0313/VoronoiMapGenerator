@@ -48,7 +48,7 @@ void VoronoiDiagramGenerator::CreateWorld(int flag, bool trans_edge, bool create
 	}
 }
 
-DistRadius VoronoiDiagramGenerator::GetMinDist(std::vector<PointDist>& points, Point2& c_p, double radius) {
+DistRadius VoronoiDiagramGenerator::GetMinDist(std::vector<PointDist>& points, const Point2& c_p, double radius) {
 	double min_dist = radius;
 	double min_r = radius;
 	for (PointDist& p : points) {
@@ -131,6 +131,7 @@ void VoronoiDiagramGenerator::CreateLand() {
 
 
 	std::vector<PointDist> islands;
+	islands.reserve(setting.GetIslandCount()); // Optimize: Reserve exact size
 
 	for (unsigned int i = 0; i < setting.GetIslandCount(); i++) {
 		Point2 p = Point2((setting.GetRandomRound() - 0.5) * 2 * island_range, (setting.GetRandomRound() - 0.5) * 2 * island_range);
@@ -140,19 +141,34 @@ void VoronoiDiagramGenerator::CreateLand() {
 	}
 
 
+	// Cache constants outside loop
+	const double scale = 3000;
+	const double island_scale = 1000;
+	const double inv_scale = 1.0 / scale;
+	const double inv_island_scale = 1.0 / island_scale;
+	const double radius = setting.GetRadius();
+	const double inv_radius = 1.0 / radius;
+	const double flat_scale = 600;
+	const double inv_flat_scale = 1.0 / flat_scale;
+
 	for (Cell* c : diagram->cells) {
+		// Cache position calculations
+		const Point2& pos = c->site.p;
 
-		double scale = 3000;
-		double island_scale = 1000;
+		double dist = Point2::Distance(pos, center);
+		DistRadius p_dist = GetMinDist(islands, pos, radius);
 
-		double dist = Point2::Distance(c->site.p, center);
-		DistRadius p_dist = GetMinDist(islands, c->site.p, setting.GetRadius());
-
-		double dist_scale = (1 - pow(dist / setting.GetRadius(), 1));
+		double dist_scale = (1 - pow(dist * inv_radius, 1));
 		double island_dist_scale = (1 - pow(p_dist.first / p_dist.second, 2)) * 3;
 
-		double value = noise.GetNoise(round(c->site.p.x / scale), round(c->site.p.y / scale));
-		double island_value = (1 + (island_noise.GetNoise(round(c->site.p.x / island_scale), round(c->site.p.y / island_scale))));
+		// Optimize noise coordinate calculations
+		double noise_x = round(pos.x * inv_scale);
+		double noise_y = round(pos.y * inv_scale);
+		double island_noise_x = round(pos.x * inv_island_scale);
+		double island_noise_y = round(pos.y * inv_island_scale);
+
+		double value = noise.GetNoise(noise_x, noise_y);
+		double island_value = (1 + (island_noise.GetNoise(island_noise_x, island_noise_y)));
 
 		bool IS_GROUND;
 		switch (setting.GetMapType())
@@ -169,11 +185,12 @@ void VoronoiDiagramGenerator::CreateLand() {
 		}
 
 		// Set Land
-		if (IS_GROUND || (pow(island_value, 2) > 1 && island_dist_scale > 1)) { 
+		if (IS_GROUND || (pow(island_value, 2) > 1 && island_dist_scale > 1)) {
 			c->GetDetail().SetTerrain(Terrain::LAND);
 
-			double flat_scale = 600;
-			double flat_x = round(c->site.p.x / flat_scale), flat_y = round(c->site.p.y / flat_scale);
+			// Optimize flat coordinate calculations
+			double flat_x = round(pos.x * inv_flat_scale);
+			double flat_y = round(pos.y * inv_flat_scale);
 
 			flat_noise.DomainWarp(flat_x, flat_y);
 			double flat_value = flat_noise.GetNoise(flat_x, flat_y);
@@ -274,6 +291,7 @@ void VoronoiDiagramGenerator::CreateLake() {
 	//lake_noise.SetFrequency(0.2);
 
 	std::vector<PointDist> lakes;
+	lakes.reserve(setting.GetLakeCount()); // Optimize: Reserve exact size
 	double lake_range = setting.GetRadius() * 1;
 	double lake_step = setting.GetLakeRadiusMax() - setting.GetLakeRadiusMin();
 	for (unsigned int i = 0; i < setting.GetLakeCount(); i++) {
@@ -282,30 +300,45 @@ void VoronoiDiagramGenerator::CreateLake() {
 	}
 
 	std::vector<Cell*> lakeCells;
-	for (Cell* c : diagram->cells) {
+	lakeCells.reserve(diagram->cells.size() / 10); // Optimize: Reserve estimated size (10% of cells)
+	// Cache lake constants
+	const double lake_scale = 500;
+	const double inv_lake_scale = 1.0 / lake_scale;
+	const double lake_threshold = 0.4 - lakeScale;
 
-		double lake_scale = 500;
-		DistRadius lake_dist = GetMinDist(lakes, c->site.p, setting.GetRadius());
+	for (Cell* c : diagram->cells) {
+		const Point2& pos = c->site.p;
+
+		DistRadius lake_dist = GetMinDist(lakes, pos, setting.GetRadius());
 		double lake_dist_scale = (1 - (lake_dist.first / lake_dist.second));
-		double x = (c->site.p.x / lake_scale), y = (c->site.p.y / lake_scale);
+
+		// Optimize coordinate calculation
+		double x = pos.x * inv_lake_scale;
+		double y = pos.y * inv_lake_scale;
 		lake_noise.DomainWarp(x, y);
 		double lake_value = (1 + (lake_noise.GetNoise(x, y)));
-		if ((pow(lake_value, 2) > 0.4 - lakeScale) && lake_dist_scale > 0) {
+
+		if ((pow(lake_value, 2) > lake_threshold) && lake_dist_scale > 0) {
 			lakeCells.push_back(c);
 		}
-
 	}
 
 
 
+	// Optimize: Replace goto with cleaner logic and early continue
 	for (Cell* c : lakeCells) {
+		bool canBeLake = true;
 		for (HalfEdge* he : c->halfEdges) {
-			if (!he->edge->lSite || !he->edge->rSite || he->edge->lSite->cell->GetDetail().GetTerrain() == Terrain::OCEAN || he->edge->rSite->cell->GetDetail().GetTerrain() == Terrain::OCEAN) {
-				goto LAKE_LOOP_POINT;
+			if (!he->edge->lSite || !he->edge->rSite ||
+				he->edge->lSite->cell->GetDetail().GetTerrain() == Terrain::OCEAN ||
+				he->edge->rSite->cell->GetDetail().GetTerrain() == Terrain::OCEAN) {
+				canBeLake = false;
+				break;
 			}
 		}
-		c->GetDetail().SetTerrain(Terrain::LAKE);
-	LAKE_LOOP_POINT:;
+		if (canBeLake) {
+			c->GetDetail().SetTerrain(Terrain::LAKE);
+		}
 	}
 
 
@@ -630,7 +663,7 @@ void VoronoiDiagramGenerator::SetupLandUnion() {
 			CellDetail& rd = r_cell->GetDetail();
 			Terrain l_t = ld.GetTerrain();
 			Terrain r_t = rd.GetTerrain();
-			if (IS_LAND(l_t) && IS_LAND(r_t)) { // land ¶¥ °øÀ¯
+			if (IS_LAND(l_t) && IS_LAND(r_t)) { // land ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 				ld.SetUnionCell(Terrain::LAND, r_cell);
 			}
 
@@ -1564,7 +1597,7 @@ void VoronoiDiagramGenerator::SetupColor(int flag) {
 					if (avg / 5 > dist) {
 						if (tcd.GetElevation() <= COAST_ELEVATION) {
 
-							if (vA->elev > COAST_ELEVATION && vB->elev > COAST_ELEVATION) { // µÑ ´Ù ¶¥
+							if (vA->elev > COAST_ELEVATION && vB->elev > COAST_ELEVATION) { // ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½
 								vA->color = vA->elev > vB->elev ? vA->color : vB->color;
 								vB->color = vA->color;
 								e->color = vA->color;

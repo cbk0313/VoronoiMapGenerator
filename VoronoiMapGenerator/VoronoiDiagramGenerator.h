@@ -91,7 +91,7 @@ private:
 	void SetupRiverTriangle();
 	void CreateTriangle();
 
-	std::pair<double, double> GetMinDist(std::vector<std::pair<Point2, double>>& points, Point2& center, double radius);
+	std::pair<double, double> GetMinDist(std::vector<std::pair<Point2, double>>& points, const Point2& center, double radius);
 
 public:
 	VoronoiDiagramGenerator() : has_created_ocean(false), has_set_color(false), image_flag(ALL_IMAGE), diagram(nullptr), circleEventQueue(nullptr), boundingBox(BoundingBox()), beachLine(nullptr) {};

@@ -167,18 +167,33 @@ void  VoronoiDiagramGenerator::Relax() {
 	//std::vector<Point2> sites;
 	sites.clear();
 	sites.reserve(diagram->cells.size());
+
+	// Move vectors outside loop to avoid repeated allocations
 	std::vector<Point2> verts;
 	std::vector<Vector2> vectors;
+	size_t maxEdgeCount = 0;
+
+	// Pre-calculate maximum edge count to minimize reallocations
+	for (Cell* c : diagram->cells) {
+		maxEdgeCount = std::max<size_t>(maxEdgeCount, c->halfEdges.size());
+	}
+	verts.reserve(maxEdgeCount);
+	vectors.reserve(maxEdgeCount);
+
 	//replace each site with its cell's centroid:
 	//    subdivide the cell into adjacent triangles
-	//    find those triangles' centroids (by averaging corners) 
+	//    find those triangles' centroids (by averaging corners)
 	//    and areas (by computing vector cross product magnitude)
 	//    combine the triangles' centroids through weighted average
 	//	  to get the whole cell's centroid
 	for (Cell* c : diagram->cells) {
 		size_t edgeCount = c->halfEdges.size();
-		verts.resize(edgeCount);
-		vectors.resize(edgeCount);
+
+		// Resize vectors only if needed (most cases won't need reallocation)
+		if (verts.size() < edgeCount) {
+			verts.resize(edgeCount);
+			vectors.resize(edgeCount);
+		}
 
 		for (size_t i = 0; i < edgeCount; ++i) {
 			verts[i] = c->halfEdges[i]->startPoint()->point;
@@ -188,16 +203,23 @@ void  VoronoiDiagramGenerator::Relax() {
 		Point2 centroid(0.0, 0.0);
 		double totalArea = 0.0;
 		for (size_t i = 1; i < edgeCount - 1; ++i) {
-			double area = voronoi_map_generator::Round2((vectors[i + 1].x * vectors[i].y - vectors[i + 1].y * vectors[i].x) / 2);
+			// Calculate area without intermediate rounding
+			double area = (vectors[i + 1].x * vectors[i].y - vectors[i + 1].y * vectors[i].x) / 2;
 			totalArea += area;
-			totalArea = voronoi_map_generator::Round2(totalArea);
-			centroid.x += area * voronoi_map_generator::Round2((verts[0].x + verts[i].x + verts[i + 1].x) / 3);
-			centroid.y += area * voronoi_map_generator::Round2((verts[0].y + verts[i].y + verts[i + 1].y) / 3);
-			centroid.x = voronoi_map_generator::Round2(centroid.x);
-			centroid.y = voronoi_map_generator::Round2(centroid.y);
+
+			// Calculate triangle centroid without intermediate rounding
+			double triangleCentroidX = (verts[0].x + verts[i].x + verts[i + 1].x) / 3;
+			double triangleCentroidY = (verts[0].y + verts[i].y + verts[i + 1].y) / 3;
+
+			centroid.x += area * triangleCentroidX;
+			centroid.y += area * triangleCentroidY;
 		}
-		centroid.x /= totalArea;
-		centroid.y /= totalArea;
+
+		// Only round the final result
+		if (totalArea != 0.0) {
+			centroid.x = voronoi_map_generator::Round2(centroid.x / totalArea);
+			centroid.y = voronoi_map_generator::Round2(centroid.y / totalArea);
+		}
 		//centroid.Epsilon();
 		sites.push_back(centroid);
 	}

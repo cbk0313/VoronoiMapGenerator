@@ -365,3 +365,5 @@ FodyWeavers.xsd
 # Created image file
 /VoronoiMapGenerator/*.bmp
 /VoronoiMapGenerator/*.png
+/VoronoiMapGenerator/AGENTS.md
+/VoronoiMapGenerator/CLAUDE.md

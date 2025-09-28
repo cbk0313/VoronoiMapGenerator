@@ -32,6 +32,7 @@ Cell::Cell(Point2 _site, Diagram* diagram)
 
 std::vector<Cell*> Cell::getNeighbors() {
 	std::vector<Cell*> neighbors;
+	neighbors.reserve(halfEdges.size()); // Optimize: Reserve based on halfEdges count
 	Edge* e;
 
 	size_t edgeCount = halfEdges.size();

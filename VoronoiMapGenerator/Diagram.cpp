@@ -77,8 +77,10 @@ void Diagram::Initialize(GenerateSetting& setting) {
 	mSetting.Srand();
 
 	RIVER_EDGES = std::vector< RiverEdge*>();
+	RIVER_EDGES.reserve(100); // Optimize: Reserve initial capacity for river edges
 	RIVER_DELETE_QUEUE = std::queue<RiverEdge*>();
 	RIVER_LINE_ARR = std::vector<RiverLine*>();
+	RIVER_LINE_ARR.reserve(50); // Optimize: Reserve initial capacity for river lines
 	ADDED_COUNT = 0;
 	CellUnique = 0;
 	river_lines.Initialize(this);
